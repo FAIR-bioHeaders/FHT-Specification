@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json",
-  "title": "FHR",
-  "description": "FAIR Header Reference genome Schema for Genome Assemblies",
+  "$id": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/FHT.json",
+  "title": "FHT",
+  "description": "FAIR Header Reference transcriptome Schema for Genome Assemblies",
   "type": "object",
   "properties": {
     "schema":{
@@ -11,15 +11,15 @@
     },
     "schemaVersion":{
       "type": "number",
-      "description": "Version of FHR"
+      "description": "Version of FHT"
     },
-    "genome":{
+    "transcriptome":{
       "type": "string",
       "description": "Name of the Genome"
     },
-    "genomeSynonym": {
+    "transcriptomeSynonym": {
       "type": "array",
-      "description": "Other common names of the genome",
+      "description": "Other common names of the transcriptome",
       "items": {
         "type":"string"
       }
@@ -46,7 +46,7 @@
       "type": "array",
       "items": {
         "type": "object",
-        "description": "Author of the FHR Instance (Person or Org)",
+        "description": "Author of the FHT Instance (Person or Org)",
         "properties": {
           "name": {
             "type": "string"
@@ -71,7 +71,7 @@
     "dateCreated":{
       "type": "string",
       "format": "date",
-      "description": "Date the genome assembly was created"
+      "description": "Date the transcriptome assembly was created"
     },
     "voucherSpecimen":{
       "type": "string",
@@ -79,7 +79,7 @@
     },
     "accessionID":{
       "type": "object",
-      "description": "accessionID genome assembly was created",
+      "description": "accessionID transcriptome assembly was created",
       "properties": {
         "name": {
           "type": "string"
@@ -92,7 +92,7 @@
     },
     "instrument": {
       "type": "array",
-      "description": "Physical tools and instruments used in the creation of the genome assembly",
+      "description": "Physical tools and instruments used in the creation of the transcriptome assembly",
       "items": {
         "type": "string"
       }
@@ -100,15 +100,15 @@
     "scholarlyArticle": {
       "type": "string",
       "pattern": "^10.",
-      "description": "Scholarly article genome was published e.g. 10.5281/zenodo.6762550 "
+      "description": "Scholarly article transcriptome was published e.g. 10.5281/zenodo.6762550 "
     },
     "documentation": {
       "type": "string",
-      "description": "Documentation about the genome"
+      "description": "Documentation about the transcriptome"
     },
     "identifier": {
       "type": "array",
-      "description": "Identifies of the genome",
+      "description": "Identifies of the transcriptome",
       "items": {
         "type": "string",
         "pattern": "[a-z0-9]*:.*"
@@ -116,7 +116,7 @@
     },
     "relatedLink": {
       "type": "array",
-      "description": "Related URLS to the genome",
+      "description": "Related URLS to the transcriptome",
       "items": {
         "type": "string",
         "format": "uri"
@@ -133,39 +133,39 @@
     "masking": {
       "type": "string",
       "pattern": "(not-masked|hard-masked|soft-masked|repeat-masked|unknown)",
-    "description": "masking applied to the genome assembly"
+    "description": "masking applied to the transcriptome assembly"
     },
     "vitalStats": {
       "type": "object",
-      "description": "general statistics about the genome assembly",
+      "description": "general statistics about the transcriptome assembly",
       "properties": {
         "L50": { 
             "type": "integer",
-            "description": "L50 of the genome assembly"
+            "description": "L50 of the transcriptome assembly"
         },
         "N50": { 
             "type": "integer",
-             "description": "N50 of the genome assembly"
+             "description": "N50 of the transcriptome assembly"
         },
         "L90": { 
             "type": "integer" ,
-            "description": "L90 of the genome assembly"
+            "description": "L90 of the transcriptome assembly"
         },
         "totalBasePairs": { 
             "type": "integer" ,
-            "description": "total base pairs of the genome assembly"
+            "description": "total base pairs of the transcriptome assembly"
         },
         "numberContigs": { 
             "type": "integer" ,
-            "description": "number of contigs of the genome assembly"
+            "description": "number of contigs of the transcriptome assembly"
         },
         "numberScaffolds": { 
             "type": "integer" ,
-            "description": "number of scaffolds of the genome assembly"
+            "description": "number of scaffolds of the transcriptome assembly"
         },
         "readTechnology": { 
             "type": "string",
-            "description": "read technology of the genome assembly (short, long, hifi, etc...)"
+            "description": "read technology of the transcriptome assembly (short, long, hifi, etc...)"
         }
       }
     },
@@ -174,7 +174,7 @@
   "required": [
     "schema",
     "schemaVersion",
-    "genome",
+    "transcriptome",
     "taxon",
     "version",
     "metadataAuthor",

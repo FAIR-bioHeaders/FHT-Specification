@@ -1,16 +1,16 @@
-# FHR-Specification
-FHR (<u>Fair</u> <u>H</u>eader <u>R</u>eference genome): a simple FAIR enough metadata structure for reference genomes that you can TRUST
+# FHT-Specification (Work In Progress)
+FHT (<u>Fair</u> <u>H</u>eader <u>R</u>eference transcriptome): a simple FAIR enough metadata structure for reference transcriptomes that you can TRUST
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762549.svg)](https://doi.org/10.5281/zenodo.6762549)
 
-Part of what FHR sets off to do is make sure that we can map back to Schema.org as much as possible, this will be useful for microdata and rdfa conversions for users that want to embed data into genome webpages. We also want to be able to split out the header if we have to, we can make the coding easy on ourselves if we throw yaml into the header itself. or something that is a regex away from yaml. I think it's important that the header has a secondary character after the comment delineator to indicate that this is part of the header, otherwise a simple mistake in a regex for the header could easily grab regular comments in the fasta file. I also think that the secondary header delineating character should be on the keyboard, and not a yaml special character, this leaves the tilde as the best option. I could imagine it would look something like this:
+Part of what FHT sets off to do is make sure that we can map back to Schema.org as much as possible, this will be useful for microdata and rdfa conversions for users that want to embed data into transcriptome webpages. We also want to be able to split out the header if we have to, we can make the coding easy on ourselves if we throw yaml into the header itself. or something that is a regex away from yaml. I think it's important that the header has a secondary character after the comment delineator to indicate that this is part of the header, otherwise a simple mistake in a regex for the header could easily grab regular comments in the fasta file. I also think that the secondary header delineating character should be on the keyboard, and not a yaml special character, this leaves the tilde as the best option. I could imagine it would look something like this:
 
-_NOTE_: This is the FFRGS Specification Repo, if you would like to convert between data serialization, or validate your ffrgs instance, see [FHR-File-Converter](https://github.com/FAIR-bioHeaders/FHR-File-Converter)
+_NOTE_: This is the FFRGS Specification Repo, if you would like to convert between data serialization, or validate your ffrgs instance, see [FHT-File-Converter](https://github.com/FAIR-bioHeaders/FHT-File-Converter)
 
 ```
-;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json
+;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/FHT.json
 ;~schemaVersion: 1
-;~genome: Example species
-;~genomeSynonym: eg. species
+;~transcriptome: Example species
+;~transcriptomeSynonym: eg. species
 ;~taxon:
 ;~  name: Example species
 ;~  uri: https://identifiers.org/taxonomy:0000
@@ -34,7 +34,7 @@ _NOTE_: This is the FFRGS Specification Repo, if you would like to convert betwe
 ;~identifier:
 ;~- eg:1024512256128643216842
 ;~relatedLink:
-;~- https://example.org/example-species/our_genome
+;~- https://example.org/example-species/our_transcriptome
 ;~funding: 'some'
 ;~reuseConditions: 'public domain'
 ;~masking: semi-masked
@@ -53,10 +53,10 @@ FFRGS utilizes schema.org as much as possible for later integration
 Specialised instances of Schema.org (we want as few of these as possible):
  
 - `schemaVersion` (String) - Version of FFRGS (Currently always "1.0")
-- `genome` (String) - ( Schema.org name )
+- `transcriptome` (String) - ( Schema.org name )
 - `version` (String) - ( Schema.org version ) Version of the Genome
 - `license` (String) - ( Schema.org license ) License used (url or name of common license) 
-- `funding` (String) - ( Schema.org funding ) Name of Grant used in the creation of the genome
+- `funding` (String) - ( Schema.org funding ) Name of Grant used in the creation of the transcriptome
  
 These will always be remaps of properties, so:
 
@@ -68,7 +68,7 @@ Genome: <name>
 Instances of Schema.org entities, where we just want a name and url because we’re not storing that data here: 
  
 - `author` - ( Schema.org author ) (URL and String)
-- `assembler` - creator of the genome ( Schema.org Person or Organisation ) (URL and String)
+- `assembler` - creator of the transcriptome ( Schema.org Person or Organisation ) (URL and String)
 - `location` (URL) (Schema.org place)  (URL and String)
 - `assemblySoftware` (Schema.org SoftwareApplication) (URL and String) [Optional]
 - `voucherSpecimen` (String) - ( Schema.org Thing ) (URL and String)
@@ -99,70 +99,70 @@ These are all direct use:
 
 Another benefit of having this easy conversion is that we can submit the spec to say bioschema without much work after publishing. 
 
-## Citing FHR
-Information on Citations of FHR
+## Citing FHT
+Information on Citations of FHT
 
 
 ### Citing the Validation Tool
 cite the validation tool when directly interacting with the tool or library
-The APA citation for the [FHR validation/converter software](https://github.com/FAIR-bioHeaders/FHR-File-Converter) is:
+The APA citation for the [FHT validation/converter software](https://github.com/FAIR-bioHeaders/FHT-File-Converter) is:
 
 ```
-Molik, D., & Wright, A. FHR File Converster [Computer software]. https://github.com/FAIR-bioHeaders/FHR-File-Converter
+Molik, D., & Wright, A. FHT File Converster [Computer software]. https://github.com/FAIR-bioHeaders/FHT-File-Converter
 ```
 
 Or in bibtex:
 ```bibtex
-% Citation For FHR Validation/Converter Software
-@software{FHR_File_Converter,
+% Citation For FHT Validation/Converter Software
+@software{FHT_File_Converter,
     author = {Molik, David and Wright, Adam},
     year = {2023},
     license = {PDDL-1.0},
-    title = {{FHR File Converster}},
-    url = {https://github.com/FAIR-bioHeaders/FHR-File-Converter},
+    title = {{FHT File Converster}},
+    url = {https://github.com/FAIR-bioHeaders/FHT-File-Converter},
     doi = {10.5281/zenodo.6762547}
 }
 ```
 ### Citing the Specification
 cite the specification when directly interacting with the specification (pull requests, comments on schema)
-The APA citation for the [FHR specification](https://github.com/FAIR-bioHeaders/FHR-Specification) is:
+The APA citation for the [FHT specification](https://github.com/FAIR-bioHeaders/FHT-Specification) is:
 
 ```
-Molik, D., & Wright, A.  FHR Specification [Data set]. https://github.com/FAIR-bioHeaders/FHR-Specification
+Molik, D., & Wright, A.  FHT Specification [Data set]. https://github.com/FAIR-bioHeaders/FHT-Specification
 ```
 
 Or in bibtex:
 ```bibtex
-% Citation For FHR Specification
-@misc{FHR_Specification,
+% Citation For FHT Specification
+@misc{FHT_Specification,
     author = {Molik, David and Wright, Adam},
     year = {2023},
-    title = {{FHR Specification}},
-    url = {https://github.com/FAIR-bioHeaders/FHR-Specification},
+    title = {{FHT Specification}},
+    url = {https://github.com/FAIR-bioHeaders/FHT-Specification},
     doi = {10.5281/zenodo.6762549}
 }
 ```
 ### Citing the Preprint
-**(best option)** cite the preprint talking about the effort, or want a broad citation of FHR
-The APA citation for the [FHR preprint](https://www.biorxiv.org/content/10.1101/2023.11.29.569306v1) is:
+**(best option)** cite the preprint talking about the effort, or want a broad citation of FHT
+The APA citation for the [FHT preprint](https://www.biorxiv.org/content/10.1101/2023.11.29.569306v1) is:
 
 ```
-Wright, A., Wilkinson, M. D., Mungall, C., Cain, S., Richards, S., Sternberg, P., ... & Molik, D. C. (2023). Data Resources and Analyses Fair Header Reference genome: A Trustworthy standard. bioRxiv, 2023-11.
+Wright, A., Wilkinson, M. D., Mungall, C., Cain, S., Richards, S., Sternberg, P., ... & Molik, D. C. (2023). Data Resources and Analyses Fair Header Reference transcriptome: A Trustworthy standard. bioRxiv, 2023-11.
 ```
 
 Or in bibtex:
 ```bibtex
-% Citation For FHR Pre-print
+% Citation For FHT Pre-print
 @article {Wright2023,
-	author = {Adam Wright and Mark D Wilkinson and Chris Mungall and Scott Cain and Stephen Richards and Paul Sternberg and Ellen Provin and Jonathan L Jacobs and Scott Geib and Daniela Raciti and Karen Yook and Lincoln Stein and David C Molik},
-	title = {DATA RESOURCES AND ANALYSES FAIR Header Reference genome: A TRUSTworthy standard},
+	author = {Adam Wright and David C Molik},
+	title = {FAIR Header Reference transcriptome: A TRUSTworthy standard},
 	elocation-id = {2023.11.29.569306},
 	year = {2023},
 	doi = {10.1101/2023.11.29.569306},
 	publisher = {Cold Spring Harbor Laboratory},
-	abstract = {The lack of interoperable data standards among reference genome data-sharing platforms inhibits cross-platform analysis while increasing the risk of data provenance loss. Here, we describe the FAIR-bioHeaders Reference genome (FHR), a metadata standard guided by the principles of Findability, Accessibility, Interoperability, and Reuse (FAIR) in addition to the principles of Transparency, Responsibility, User focus, Sustainability, and Technology (TRUST). The objective of FHR is to provide an extensive set of data serialisation methods and minimum data field requirements while still maintaining extensibility, flexibility, and expressivity in an increasingly decentralised genomic data ecosystem. The effort needed to implement FHR is low; FHR{\textquoteright}s design philosophy ensures easy implementation while retaining the benefits gained from recording both machine and human-readable provenance.Competing Interest StatementThe authors have declared no competing interest.},
-	URL = {https://www.biorxiv.org/content/early/2023/12/01/2023.11.29.569306},
-	eprint = {https://www.biorxiv.org/content/early/2023/12/01/2023.11.29.569306.full.pdf},
+	abstract = {},
+	URL = {},
+	eprint = {},
 	journal = {bioRxiv}
 }
 ```

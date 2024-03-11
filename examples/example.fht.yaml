@@ -1,10 +1,10 @@
-schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHR-Specification/main/fhr.json
+schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/FHT.json
 schemaVersion: 1
 taxon:
   name: Bombas huntii
   uri: https://identifiers.org/taxonomy:9606
-genome: Bombas huntii
-genomeSynonym:
+transcriptome: Bombas huntii
+transcriptomeSynonym:
   - B. huntii
 version: 0.0.1
 metadataAuthor:
@@ -30,5 +30,5 @@ masking: soft-masked
 identifier:
 - beetlebase:TC010103
 relatedLink:
-- http://wfleabase.org/genome/Daphnia_pulex/dpulex_jgi060905/fasta/
+- http://wfleabase.org/transcriptome/Daphnia_pulex/dpulex_jgi060905/fasta/
 checksum: md5:7582b26fcb0a9775b87c38f836e97c42
