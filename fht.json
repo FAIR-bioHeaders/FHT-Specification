@@ -75,7 +75,7 @@
     },
     "voucherSpecimen":{
       "type": "string",
-      "description": "Description of the physical sample"
+      "description": "Description of the physical sample(s) from which the transcriptome was derived. This may include details such as tissue type, developmental stage, environmental conditions, or any other relevant characteristics."
     },
     "accessionID":{
       "type": "object",
@@ -128,45 +128,48 @@
     },
     "license": {
       "type": "string",
-      "description": "license for the use of the Genome"
+      "description": "license for the use of the Transciptome"
     },
     "masking": {
       "type": "string",
-      "pattern": "(not-masked|hard-masked|soft-masked|repeat-masked|unknown)",
-    "description": "masking applied to the transcriptome assembly"
+      "pattern": "(not-masked|repeat-masked|poly-A-T-masked|quality-masked|unknown)",
+      "description": "Masking applied to the transcriptome assembly, if any."
     },
     "vitalStats": {
       "type": "object",
-      "description": "general statistics about the transcriptome assembly",
+      "description": "General statistics about the transcriptome assembly",
       "properties": {
-        "L50": { 
-            "type": "integer",
-            "description": "L50 of the transcriptome assembly"
-        },
-        "N50": { 
-            "type": "integer",
-             "description": "N50 of the transcriptome assembly"
-        },
-        "L90": { 
-            "type": "integer" ,
-            "description": "L90 of the transcriptome assembly"
-        },
-        "totalBasePairs": { 
-            "type": "integer" ,
-            "description": "total base pairs of the transcriptome assembly"
-        },
-        "numberContigs": { 
-            "type": "integer" ,
-            "description": "number of contigs of the transcriptome assembly"
-        },
-        "numberScaffolds": { 
-            "type": "integer" ,
-            "description": "number of scaffolds of the transcriptome assembly"
-        },
-        "readTechnology": { 
-            "type": "string",
-            "description": "read technology of the transcriptome assembly (short, long, hifi, etc...)"
-        }
+	    "N50": {
+	    "type": "integer",
+	    "description": "N50 of the transcriptome assembly, representing the contig length at which half of the total assembly size is contained in contigs of this size or larger."
+      },
+      "totalTranscripts": {
+	    "type": "integer",
+	    "description": "Total number of transcripts assembled, providing an indication of the complexity and coverage of the transcriptome."
+      },
+	    "averageTranscriptLength": {
+	    "type": "number",
+	    "description": "Average length of transcripts, offering insights into the typical size of transcribed sequences."
+      },
+      "GCContent": {
+	    "type": "number",
+	    "description": "GC content of the transcriptome, representing the percentage of nucleotides that are either guanine (G) or cytosine (C)."
+      },
+      "isoformDiversity": {
+	    "type": "integer",
+	    "description": "Number of alternative isoforms identified in the transcriptome assembly, highlighting the complexity of gene expression patterns and alternative splicing events."
+      },
+      "expressionLevels": {
+	    "type": "string",
+	    "description": "Metrics related to expression levels, such as TPM (Transcripts Per Million) or FPKM (Fragments Per Kilobase Million), quantifying the abundance of transcripts and gene expression."
+      },
+      "transcriptomeCompleteness": {
+	    "type": "string",
+	    "description": "Assessment of transcriptome completeness, typically evaluated using metrics such as BUSCO (Benchmarking Universal Single-Copy Orthologs) completeness scores or comparison against reference transcriptome databases. This field provides insight into the comprehensiveness and coverage of the assembled transcriptome."
+      },
+      "novelTranscripts": {
+	    "type": "integer",
+	    "description": "Number and proportion of transcripts identified as novel, not previously annotated or characterized. This metric indicates the extent to which the transcriptome assembly contributes to the discovery of previously uncharacterized transcripts, enhancing our understanding of gene expression dynamics and transcriptomic diversity."
       }
     },
     "checksum": { "$ref": "#/definitions/sha2" }
