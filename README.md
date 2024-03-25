@@ -4,7 +4,7 @@ FHT (<u>Fair</u> <u>H</u>eader <u>R</u>eference transcriptome): a simple FAIR en
 
 Part of what FHT sets off to do is make sure that we can map back to Schema.org as much as possible, this will be useful for microdata and rdfa conversions for users that want to embed data into transcriptome webpages. We also want to be able to split out the header if we have to, we can make the coding easy on ourselves if we throw yaml into the header itself. or something that is a regex away from yaml. I think it's important that the header has a secondary character after the comment delineator to indicate that this is part of the header, otherwise a simple mistake in a regex for the header could easily grab regular comments in the fasta file. I also think that the secondary header delineating character should be on the keyboard, and not a yaml special character, this leaves the tilde as the best option. I could imagine it would look something like this:
 
-_NOTE_: This is the FFRGS Specification Repo, if you would like to convert between data serialization, or validate your ffrgs instance, see [FHT-File-Converter](https://github.com/FAIR-bioHeaders/FHT-File-Converter)
+_NOTE_: This is the FHT Specification Repo, if you would like to convert between data serialization, or validate your FHT instance, see [FHT-File-Converter](https://github.com/FAIR-bioHeaders/FHT-File-Converter)
 
 ```
 ;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/FHT.json
@@ -47,12 +47,12 @@ AAAATCGATCGGCATA
 ``` 
  
 ## Metadata Draft v0.2 (fasta yaml header with easy microdata conversions)
-FFRGS utilizes schema.org as much as possible for later integration
+FHT utilizes schema.org as much as possible for later integration
 
 ---
 Specialised instances of Schema.org (we want as few of these as possible):
  
-- `schemaVersion` (String) - Version of FFRGS (Currently always "1.0")
+- `schemaVersion` (String) - Version of FHT (Currently always "1.0")
 - `transcriptome` (String) - ( Schema.org name )
 - `version` (String) - ( Schema.org version ) Version of the Genome
 - `license` (String) - ( Schema.org license ) License used (url or name of common license) 
@@ -140,29 +140,5 @@ Or in bibtex:
     title = {{FHT Specification}},
     url = {https://github.com/FAIR-bioHeaders/FHT-Specification},
     doi = {10.5281/zenodo.6762549}
-}
-```
-### Citing the Preprint
-**(best option)** cite the preprint talking about the effort, or want a broad citation of FHT
-The APA citation for the [FHT preprint](https://www.biorxiv.org/content/10.1101/2023.11.29.569306v1) is:
-
-```
-Wright, A., Wilkinson, M. D., Mungall, C., Cain, S., Richards, S., Sternberg, P., ... & Molik, D. C. (2023). Data Resources and Analyses Fair Header Reference transcriptome: A Trustworthy standard. bioRxiv, 2023-11.
-```
-
-Or in bibtex:
-```bibtex
-% Citation For FHT Pre-print
-@article {Wright2023,
-	author = {Adam Wright and David C Molik},
-	title = {FAIR Header Reference transcriptome: A TRUSTworthy standard},
-	elocation-id = {2023.11.29.569306},
-	year = {2023},
-	doi = {10.1101/2023.11.29.569306},
-	publisher = {Cold Spring Harbor Laboratory},
-	abstract = {},
-	URL = {},
-	eprint = {},
-	journal = {bioRxiv}
 }
 ```
