@@ -99,46 +99,31 @@ These are all direct use:
 
 Another benefit of having this easy conversion is that we can submit the spec to say bioschema without much work after publishing. 
 
-## Citing FHT
-Information on Citations of FHT
+## Related FHR citations
+
+These DOI records identify FHR resources; they must not be represented as
+FHT-specific release DOIs. For FHT-specific citation metadata, use the resource
+actually referenced by your work rather than relabeling an FHR DOI.
 
 
-### Citing the Validation Tool
-cite the validation tool when directly interacting with the tool or library
-The APA citation for the [FHT validation/converter software](https://github.com/FAIR-bioHeaders/FHT-File-Converter) is:
+Chicago bibliography entries are used below. Cite the published paper for a
+general description of FHR; cite the specification or converter when using that
+resource directly. The software and specification links are concept DOIs; for a
+specific release, use the corresponding version DOI from Zenodo. Authors and
+years follow the records resolved by the concept DOIs at the v0.3 documentation
+update, and can change as later records are published.
 
-```
-Molik, D., & Wright, A. FHT File Converster [Computer software]. https://github.com/FAIR-bioHeaders/FHT-File-Converter
-```
+### Published paper
 
-Or in bibtex:
-```bibtex
-% Citation For FHT Validation/Converter Software
-@software{FHT_File_Converter,
-    author = {Molik, David and Wright, Adam},
-    year = {2023},
-    license = {PDDL-1.0},
-    title = {{FHT File Converster}},
-    url = {https://github.com/FAIR-bioHeaders/FHT-File-Converter},
-    doi = {10.5281/zenodo.6762547}
-}
-```
-### Citing the Specification
-cite the specification when directly interacting with the specification (pull requests, comments on schema)
-The APA citation for the [FHT specification](https://github.com/FAIR-bioHeaders/FHT-Specification) is:
+Wright, Adam, Mark D. Wilkinson, Christopher Mungall, Scott Cain, Stephen Richards, Paul Sternberg, Ellen Provin, Jonathan L. Jacobs, Scott Geib, Daniela Raciti, Karen Yook, Lincoln Stein, and David C. Molik. “FAIR Header Reference Genome: A TRUSTworthy Standard.” *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122. https://doi.org/10.1093/bib/bbae122.
 
-```
-Molik, D., & Wright, A.  FHT Specification [Data set]. https://github.com/FAIR-bioHeaders/FHT-Specification
-```
+### Specification
 
-Or in bibtex:
-```bibtex
-% Citation For FHT Specification
-@misc{FHT_Specification,
-    author = {Molik, David and Wright, Adam},
-    year = {2023},
-    title = {{FHT Specification}},
-    url = {https://github.com/FAIR-bioHeaders/FHT-Specification},
-    doi = {10.5281/zenodo.6762549}
-}
-```
+Molik, David. *FHR Specification*. Data set. 2022. https://doi.org/10.5281/zenodo.6762549.
+
+### Converter
+
+Molik, David, and Adam Wright. *FHR File Converter*. Computer software. 2024. https://doi.org/10.5281/zenodo.6762547.
+
+Machine-readable entries are maintained in
+[FHR-Citation](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/main/citation.bib).
