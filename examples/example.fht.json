@@ -1,5 +1,5 @@
 {
-    "$schema":"https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/FHT.json",
+    "$schema":"https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json",
     "$id":"https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/examples/example.FHT.json",
     "schema":"https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/FHT.jso",
     "schemaVersion": 1.0,

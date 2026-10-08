@@ -7,7 +7,7 @@ Part of what FHT sets off to do is make sure that we can map back to Schema.org 
 _NOTE_: This is the FHT Specification Repo, if you would like to convert between data serialization, or validate your FHT instance, see [FHT-File-Converter](https://github.com/FAIR-bioHeaders/FHT-File-Converter)
 
 ```
-;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/FHT.json
+;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json
 ;~schemaVersion: 1
 ;~transcriptome: Example species
 ;~transcriptomeSynonym: eg. species
