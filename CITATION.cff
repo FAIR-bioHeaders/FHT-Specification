@@ -33,4 +33,5 @@ keywords:
   - gfa
   - microdata
   - transcriptome assembly
-license: PDDL-1.0
+license: MPL-2.0
+# Historical permissions and third-party exceptions are documented in LICENSE.
