@@ -33,4 +33,6 @@ keywords:
   - gfa
   - microdata
   - transcriptome assembly
-license: PDDL-1.0
+license: MPL-2.0
+license-url: 'https://github.com/FAIR-bioHeaders/FHT-Specification/blob/main/LICENSE'
+# Historical permissions and third-party exceptions are documented in LICENSE.
