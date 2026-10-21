@@ -4,7 +4,7 @@ FHT (<u>Fair</u> <u>H</u>eader <u>R</u>eference transcriptome): a simple FAIR en
 
 Part of what FHT sets off to do is make sure that we can map back to Schema.org as much as possible, this will be useful for microdata and rdfa conversions for users that want to embed data into transcriptome webpages. We also want to be able to split out the header if we have to, we can make the coding easy on ourselves if we throw yaml into the header itself. or something that is a regex away from yaml. I think it's important that the header has a secondary character after the comment delineator to indicate that this is part of the header, otherwise a simple mistake in a regex for the header could easily grab regular comments in the fasta file. I also think that the secondary header delineating character should be on the keyboard, and not a yaml special character, this leaves the tilde as the best option. I could imagine it would look something like this:
 
-_NOTE_: This is the FHT Specification Repo, if you would like to convert between data serialization, or validate your FHT instance, see [FHT-File-Converter](https://github.com/FAIR-bioHeaders/FHT-File-Converter)
+_NOTE_: This is the FHT Specification Repo. Conversion and validation for FAIR-bioHeaders formats belong to the family [FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools); FHT support in that toolkit is not available yet ([issue #9](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/9)). The former FHT-File-Converter repository has been retired; its GitHub URL no longer resolves.
 
 ```
 ;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json
