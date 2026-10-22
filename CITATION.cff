@@ -20,7 +20,7 @@ identifiers:
   - type: doi
     value: 10.1101/2023.11.29.569306
     description: Preprint DOI
-repository-code: 'https://github.com/FAIR-bioHeaders/FHT-File-Converter'
+repository-code: 'https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools'
 repository-artifact: 'https://github.com/FAIR-bioHeaders/FHT-Specification'
 abstract: >-
   FHT Astract  
