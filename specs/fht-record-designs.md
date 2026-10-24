@@ -2,9 +2,9 @@
 
 Status: **proposal for #6**, October 24, 2026. These are field-level record
 designs, not schema-valid serialized fixtures or headers. No checksum, ORCID,
-taxonomy, run accession or release URL is fabricated. The implementation under
-Implementation issues #7 and #8 must create actual fixtures after adoption and calculate exact
-checksums with the reviewed toolkit. Read [the decisions](fht-field-decisions.md)
+taxonomy, run accession or release URL is fabricated. Implementation issues #7
+and #8 must create actual fixtures after adoption and calculate exact checksums
+with the reviewed toolkit. Read [the decisions](fht-field-decisions.md)
 and [revised spec 005](005-rna-transcriptome-header/spec.md) together.
 
 ## Minimal field set and the decision each enables
