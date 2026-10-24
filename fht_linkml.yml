@@ -1,0 +1,283 @@
+id: https://w3id.org/fhr/fht
+name: FHTLinkML
+description: >-
+  FHT (FAIR Header Transcriptome) metadata for transcriptome FASTA files.
+  The FHT class imports the pinned v0.4 FAIR-bioHeaders core and shared
+  objects, then adds the transcriptome subject and the reviewed FHT-specific
+  slots. Provenance values are producer assertions, not checks. This is the
+  initial development contract proposed by #6 and implemented for review by
+  #7; it is not a published or toolkit-supported release.
+prefixes:
+  linkml: https://w3id.org/linkml/
+  sdo: http://schema.org/
+  fhr: https://w3id.org/fair-bioheaders/terms#
+default_prefix: fhr
+default_range: string
+imports:
+- linkml:types
+- schemas/core-v0.4
+- schemas/shared
+slots:
+  transcriptome:
+    description: Name of the transcriptome resource described by the file
+    slot_uri: sdo:name
+    required: true
+  transcriptomeSynonym:
+    description: Other supplied names for the transcriptome
+    slot_uri: sdo:alternateName
+    multivalued: true
+    minimum_cardinality: 1
+  assemblyType:
+    description: >-
+      How the transcript sequences or models were constructed, using the D2
+      definitions. A composite or uncertain history must not be guessed; the
+      record remains incomplete until the case is reviewed.
+    range: AssemblyType
+    required: true
+  moleculeType:
+    description: >-
+      One producer-supported biological molecule class that applies to the whole
+      described set. Omit for unknown or heterogeneous sets; total RNA and cDNA
+      are preparation contexts, not uniform biological classes.
+    range: MoleculeType
+  assemblySoftware:
+    description: >-
+      Software used to construct or extract the transcript set, with its real
+      version and ordered options. Extraction is a process too.
+    range: Software
+    multivalued: true
+    inlined_as_list: true
+    minimum_cardinality: 1
+  sample:
+    description: >-
+      Supplied biological sample context. Repeat the object for pooled material;
+      each item carries only the values actually known for that source. This is
+      not a complete BioSample record and does not establish a uniform pooled
+      identity.
+    range: Sample
+    multivalued: true
+    inlined_as_list: true
+    minimum_cardinality: 1
+  libraryStrategy:
+    description: >-
+      One supplied library strategy term for the whole set, using the producer's
+      ENA term where applicable. Omit when experiments differ or the value is
+      unknown; this slot is not an ENA-controlled enum.
+  strandedness:
+    description: >-
+      Supplied library strandedness under the FHT read/read-1 convention:
+      forward means the single read or read 1 is sense relative to the
+      originating transcript, reverse means antisense. Unknown or mixed
+      protocols are omitted, never defaulted to unstranded.
+    range: Strandedness
+  sequencingRuns:
+    description: >-
+      Actual SRA/ENA/DDBJ run accessions supporting the set. An SRS sample
+      accession is not a run and must not be substituted.
+    multivalued: true
+    minimum_cardinality: 1
+    pattern: ^(SRR|ERR|DRR)[0-9]+$
+  vitalStats:
+    description: >-
+      Producer-reported measurements for the whole file. Counts describe FASTA
+      records, including isoforms, not genes. Omit statistics that were not
+      measured; a measured zero remains zero.
+    range: VitalStats
+    inlined: true
+  completeness:
+    description: >-
+      Optional BUSCO completeness counts from the actual run. Report the
+      measured lineage, including a dotted dataset version; do not rename it to
+      satisfy the current shared pattern (shared #170).
+    range: Completeness
+    inlined: true
+  derivedFrom:
+    description: >-
+      Reviewed FAIR-bioHeaders parent-file relationships only. This contract
+      permits an FHT filteredFrom parent or an FHR transcribedFrom parent when
+      the transcript bases were extracted from that genome; genome guidance
+      alone never justifies transcribedFrom. Annotation coordinates and other
+      sources stay in relatedLink/documentation until the shared relationship
+      vocabulary is decided (#54). The shared DerivedFrom object requires the
+      parent's FHR-family checksum; an accession alone is not a verified family
+      link.
+    range: DerivedFrom
+    multivalued: true
+    inlined_as_list: true
+    minimum_cardinality: 1
+  assemblyAuthor:
+    description: >-
+      Legacy-compatible attribution for the people or organizations that
+      assembled the transcript set, distinct from the header authors in
+      metadataAuthor and from the deposit submitter. Preserve supplied legacy
+      values; do not merge the two author roles.
+    range: Author
+    multivalued: true
+    inlined_as_list: true
+    minimum_cardinality: 1
+  instrument:
+    description: >-
+      Legacy-compatible free-text sequencing instrument names. Prefer
+      sequencingRuns when run accessions exist; do not infer an instrument from
+      a run accession or a software name.
+    slot_uri: sdo:instrument
+    multivalued: true
+    minimum_cardinality: 1
+classes:
+  FHT:
+    description: Metadata for a transcriptome FASTA file.
+    class_uri: sdo:Dataset
+    tree_root: true
+    slots:
+    - schema
+    - schemaVersion
+    - transcriptome
+    - transcriptomeSynonym
+    - assemblyType
+    - moleculeType
+    - taxon
+    - version
+    - metadataAuthor
+    - assemblyAuthor
+    - dateCreated
+    - assemblySoftware
+    - sample
+    - libraryStrategy
+    - strandedness
+    - sequencingRuns
+    - instrument
+    - vitalStats
+    - completeness
+    - derivedFrom
+    - identifier
+    - accessionID
+    - scholarlyArticle
+    - documentation
+    - relatedLink
+    - funding
+    - reuseConditions
+    - voucherSpecimen
+    - checksum
+    slot_usage:
+      schema:
+        description: >-
+          URL of the FHT JSON Schema this record follows (FHT-Specification raw
+          main, a release tag URL, or its w3id URL). It identifies the header
+          type and contract; it is not a transcriptome or project identifier.
+        pattern: '^(https://raw\.githubusercontent\.com/FAIR-bioHeaders/FHT-Specification/(main|v[0-9]+\.[0-9]+\.[0-9]+)/fht\.json|https://w3id\.org/fair-bioheaders/fht/v[0-9]+\.[0-9]+\.[0-9]+/?)$'
+      schemaVersion:
+        description: Version of the FHT schema contract ("MAJOR.MINOR")
+        equals_string: "1.0"
+      transcriptome:
+        description: Name of the transcriptome resource described by the file
+      assemblyType:
+        description: Construction case for the whole described transcript set
+      taxon:
+        description: Biological scope supplied by the producer
+      version:
+        description: Version of the transcriptome resource
+      metadataAuthor:
+        description: Authors responsible for the header assertions
+      assemblyAuthor:
+        description: Attributions for the assembly or extraction, when supplied
+      dateCreated:
+        description: Date the transcriptome resource was created, not the sample collection date
+      checksum:
+        description: Exact-file SHA-512/256 checksum under the shared exclusion rules
+      identifier:
+        description: Identifier of the transcriptome itself
+      accessionID:
+        description: Accession of the transcriptome itself
+      scholarlyArticle:
+        description: DOI of an article about the transcriptome
+      documentation:
+        description: Documentation about the transcriptome
+      relatedLink:
+        description: Related source, project, sample, experiment or protocol URLs
+      reuseConditions:
+        description: Reuse conditions or license supplied for the transcriptome
+  Sample:
+    description: >-
+      One supplied biological sample context. Pooled material is represented by
+      repeated items, not by one fabricated uniform value.
+    class_uri: fhr:Sample
+    attributes:
+      tissue:
+        description: Supplied tissue or anatomical source label
+      tissueIdentifier:
+        description: >-
+          CURIE for the supplied tissue concept, preferably UBERON, PO or CL.
+          The pattern checks CURIE form, not that the identifier resolves.
+        pattern: ^[A-Za-z][A-Za-z0-9._-]*:[A-Za-z0-9._-]+$
+      developmentalStage:
+        description: Supplied developmental stage or life stage
+      condition:
+        description: Supplied treatment, disease or other condition context
+      strain:
+        description: Supplied strain, breed or cultivar
+  VitalStats:
+    description: Optional producer-reported statistics for the whole file
+    class_uri: fhr:VitalStats
+    attributes:
+      totalTranscripts:
+        description: Number of FASTA records, including isoforms
+        range: integer
+        minimum_value: 0
+      N50:
+        description: >-
+          Nucleotide length at which half the total sequence length is in
+          records of that length or longer; computed from all sequence symbols
+        range: integer
+        minimum_value: 1
+      averageTranscriptLength:
+        description: >-
+          Mean number of sequence symbols per record, excluding deflines and
+          line endings
+        range: float
+        minimum_value: 0
+enums:
+  AssemblyType:
+    description: How the transcript set was constructed (D2)
+    permissible_values:
+      de novo:
+        description: >-
+          Reconstructed from reads without using a reference genome to construct
+          or group the assembly. Later alignment used only for QC does not
+          reclassify it; no genome parent is required.
+      genome-guided:
+        description: >-
+          Read evidence plus a reference constructed transcript models or grouped
+          the reads used for reconstruction. Guidance alone does not prove that
+          bases were extracted from the genome.
+      annotation-derived:
+        description: >-
+          Extracted from an existing annotation's coordinates and the matching
+          genome, without assembling new models from read evidence in this step.
+  MoleculeType:
+    description: >-
+      Restricted biological molecule classes for the whole described set (D1).
+      These are not preparation methods, and matching a string does not prove
+      per-record INSDC compliance.
+    permissible_values:
+      mRNA:
+        description: Messenger RNA transcripts
+      rRNA:
+        description: Ribosomal RNA transcripts
+      tRNA:
+        description: Transfer RNA transcripts
+      transcribed RNA:
+        description: >-
+          Transcribed RNA that cannot be assigned more specifically, without
+          inferring a coding or non-coding subclass
+  Strandedness:
+    description: >-
+      FHT library strandedness normalization (D3), not an ENA enum. It describes
+      the library read/read-1 orientation, not genomic plus/minus orientation or
+      the orientation of exported transcript sequences.
+    permissible_values:
+      unstranded:
+        description: The supplied protocol is explicitly unstranded
+      forward:
+        description: The single read or read 1 is sense relative to the originating transcript
+      reverse:
+        description: The single read or read 1 is antisense relative to the originating transcript
