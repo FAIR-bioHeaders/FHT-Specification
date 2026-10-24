@@ -1,0 +1,16 @@
+{
+  "description": "Pinned shared LinkML imports for the FHT development contract. The files are copied verbatim from FAIR-bioHeaders-Specification and must be replaced from a reviewed release, not edited by hand.",
+  "source_repository": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification",
+  "source_commit": "980029e5886a1a56a2d2545bfe59c7107539d38d",
+  "source_release": "v0.4.0/v0.4.1 (schemas/core.yaml and schemas/shared.yaml are identical at both tags and at the pinned commit)",
+  "files": {
+    "schemas/core-v0.4.yaml": {
+      "source_path": "schemas/core.yaml",
+      "sha256": "2bd657ece8c8cbfb4dfbba1f68cb3f708c1ab91baa0fcd50d97ddc58b7e96b5e"
+    },
+    "schemas/shared.yaml": {
+      "source_path": "schemas/shared.yaml",
+      "sha256": "0e7e08d52c739cf245ed76093f22b6f37d6d6e4c4db76b1007619d60ef6a1043"
+    }
+  }
+}

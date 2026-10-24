@@ -1,118 +1,96 @@
-# FHT-Specification (Work In Progress)
+# FHT-Specification
 
-The [October 24 field-design research and proposed decisions](specs/fht-field-decisions.md)
-include a [proposed spec 005 revision](specs/005-rna-transcriptome-header/spec.md)
-and [minimal/rich record designs](specs/fht-record-designs.md). David approved this initial development design for adoption on PR #20 merge,
-which closes issue #6. The decision record assigns remaining model details,
-implementation and release work to their own issues. These documents do not change
-the legacy schema below, release an FHT contract, or establish toolkit support.
+FHT (FAIR Header Transcriptome) is a FAIR metadata header for reference
+transcriptome FASTA files. It records who asserted the metadata, when, for which
+taxon, how the transcript set was constructed and how to verify the exact file
+bytes. The published paper describes the shared FAIR Header Reference concept:
+Wright et al., *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122.
 
-FHT (<u>Fair</u> <u>H</u>eader <u>R</u>eference transcriptome): a simple FAIR enough metadata structure for reference transcriptomes that you can TRUST
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762549.svg)](https://doi.org/10.5281/zenodo.6762549)
+**Status: development contract for review under issue #7.** The LinkML model and
+generated JSON Schema implement the design approved for #6. They are not a
+published release, not adopted community guidance, and not supported by the
+family toolkit yet. No release tag, w3id alias, DOI or toolkit support is
+established by this repository state. See
+[the contract and migration record](docs/FHT-MIGRATION.md).
 
-Part of what FHT sets off to do is make sure that we can map back to Schema.org as much as possible, this will be useful for microdata and rdfa conversions for users that want to embed data into transcriptome webpages. We also want to be able to split out the header if we have to, we can make the coding easy on ourselves if we throw yaml into the header itself. or something that is a regex away from yaml. I think it's important that the header has a secondary character after the comment delineator to indicate that this is part of the header, otherwise a simple mistake in a regex for the header could easily grab regular comments in the fasta file. I also think that the secondary header delineating character should be on the keyboard, and not a yaml special character, this leaves the tilde as the best option. I could imagine it would look something like this:
+- Schema source: [`fht_linkml.yml`](fht_linkml.yml)
+- Generated contract: [`fht.json`](fht.json)
+- Design and evidence: [`specs/fht-field-decisions.md`](specs/fht-field-decisions.md)
+- Minimal and rich designs: [`specs/fht-record-designs.md`](specs/fht-record-designs.md)
+- Revised spec 005 proposal: [`specs/005-rna-transcriptome-header/spec.md`](specs/005-rna-transcriptome-header/spec.md)
+- Legacy draft schema: [`legacy/fht-v0.1.json`](legacy/fht-v0.1.json)
 
-_NOTE_: This is the FHT Specification Repo. Conversion and validation for FAIR-bioHeaders formats belong to the family [FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools); FHT support in that toolkit is not available yet ([issue #9](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/9)). The former FHT-File-Converter repository has been retired; its GitHub URL no longer resolves.
+Conversion, validation and checksum computation belong to the family
+[FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools);
+FHT support there is pending ([issue #9](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/9)).
+The former FHT-File-Converter repository is retired.
 
-```
+## Header shape
+
+FHT uses the family `;~` comment block. The checksum below is a placeholder: real
+headers must carry a computed SHA-512/256, never a hand-written or invented
+value. See `docs/FORMAT.md` in the shared specification for the exact format and
+escaping rules.
+
+```text
 ;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json
-;~schemaVersion: 1
-;~transcriptome: Example species
-;~transcriptomeSynonym: eg. species
+;~schemaVersion: "1.0"
+;~transcriptome: Example species reference transcriptome
+;~assemblyType: de novo
 ;~taxon:
 ;~  name: Example species
 ;~  uri: https://identifiers.org/taxonomy:0000
-;~version: 0.0.1
+;~version: "1.0"
 ;~metadataAuthor:
-;~  name: Adam Wright
-;~  uri: https://orcid.org/0000-0002-5719-4024
-;~assembler:
-;~  name: David Molik
-;~  uri: https://orcid.org/0000-0003-3192-6538
-;~dateCreated: '2022-03-21'
-;~accessionID:
-;~  name: VoucheringDatbase
-;~  url: https://example.org/awesome_species/project-1024
-;~instrument:
-;~- Amazing Sequencer IIe
-;~- Neato Sequencer
-;~voucherSpecimen: Located in Freezer 33, Drawer 137
-;~scholarlyArticle: https://doi.org/10.1371/journal.pntd.0008755
-;~documentation: 'Built assembly from... '
-;~identifier:
-;~- eg:1024512256128643216842
-;~relatedLink:
-;~- https://example.org/example-species/our_transcriptome
-;~funding: 'some'
-;~reuseConditions: 'public domain'
-;~masking: semi-masked
-;~checksum: md5:7582b26fcb0a9775b87c38f836e97c42
->Contig 1
-AAAATCGATCGGCATA
-.
-.
-.
-``` 
- 
-## Metadata Draft v0.2 (fasta yaml header with easy microdata conversions)
-FHT utilizes schema.org as much as possible for later integration
-
----
-Specialised instances of Schema.org (we want as few of these as possible):
- 
-- `schemaVersion` (String) - Version of FHT (Currently always "1.0")
-- `transcriptome` (String) - ( Schema.org name )
-- `version` (String) - ( Schema.org version ) Version of the Genome
-- `license` (String) - ( Schema.org license ) License used (url or name of common license) 
-- `funding` (String) - ( Schema.org funding ) Name of Grant used in the creation of the transcriptome
- 
-These will always be remaps of properties, so:
-
-``` 
-Genome: <name>
+;~- name: Example author
+;~dateCreated: "2026-10-24"
+;~checksum: <computed SHA-512/256>
+>transcript_1
+ACGTACGT
 ```
 
----
-Instances of Schema.org entities, where we just want a name and url because we’re not storing that data here: 
- 
-- `author` - ( Schema.org author ) (URL and String)
-- `assembler` - creator of the transcriptome ( Schema.org Person or Organisation ) (URL and String)
-- `location` (URL) (Schema.org place)  (URL and String)
-- `assemblySoftware` (Schema.org SoftwareApplication) (URL and String) [Optional]
-- `voucherSpecimen` (String) - ( Schema.org Thing ) (URL and String)
+The nine required fields are `schema`, `schemaVersion`, `transcriptome`,
+`assemblyType`, `taxon`, `version`, `metadataAuthor`, `dateCreated` and
+`checksum`. Optional fields cover biological molecule class, software, sample
+context, library strategy/strandedness, run accessions, statistics, BUSCO
+completeness, reviewed parent links and shared provenance/identity fields. Omit
+unknown optional values; do not use `null`, empty strings or invented
+placeholders.
 
-These will be names, and urls:
+### Construction types
 
-``` 
-author: 
- name: Name
- url: https://link 
+| Value | Use case |
+| --- | --- |
+| `de novo` | Reads reconstructed without a reference genome constructing or grouping the assembly |
+| `genome-guided` | Read evidence plus a reference constructed models or grouped reads |
+| `annotation-derived` | Sequences extracted from existing annotation coordinates and the matching genome |
+
+A composite or uncertain history is not guessed. The record is incomplete until
+the case is reviewed. Genome guidance alone does not justify a `transcribedFrom`
+parent link.
+
+## Verify the schema in this repository
+
+```sh
+python -m pip install -r requirements-linkml.txt
+python -m unittest discover -s tests -v
+python json-schema-generator.py
+git diff --exit-code fht.json
+python scripts/check_provenance.py
 ```
 
----
-Direct use of Schema.org entities:
- 
-- `dateCreated` (DataTime) (Schema.org dateCreated) (date)
-- `instrument` (Schema.org instrument) (URL or String) [Optional]
-- `scholarlyArticle` (Schema.org ScholarlyArticle) (URL) [Optional]
-- `documentation` (Schema.org documentation) (URL or String) [Optional]
-- `identifier` (Schema.org identifier ) (String) [Optional]
-- `relatedLink` (Schema.org relatedLink) (URL) [Optional]
-
-``` 
-These are all direct use:
- 
-- `dateCreated`: <date>
-```
-
-Another benefit of having this easy conversion is that we can submit the spec to say bioschema without much work after publishing. 
+The tests validate the generated contract, required and optional fields, enum and
+numeric constraints, reviewed parent pairs, legacy-compatible fields and exact
+generation from the model. They do not validate real FASTA bytes; byte-backed
+positive/rejection fixtures are owned by #8. The historical files under
+`examples/` predate this contract and are review inputs, not valid FHT 1.0
+fixtures.
 
 ## Related FHR citations
 
 These DOI records identify FHR resources; they must not be represented as
 FHT-specific release DOIs. For FHT-specific citation metadata, use the resource
 actually referenced by your work rather than relabeling an FHR DOI.
-
 
 Chicago bibliography entries are used below. Cite the published paper for a
 general description of FHR; cite the specification or converter when using that
@@ -123,15 +101,15 @@ update, and can change as later records are published.
 
 ### Published paper
 
-Wright, Adam, Mark D. Wilkinson, Christopher Mungall, Scott Cain, Stephen Richards, Paul Sternberg, Ellen Provin, Jonathan L. Jacobs, Scott Geib, Daniela Raciti, Karen Yook, Lincoln Stein, and David C. Molik. “FAIR Header Reference Genome: A TRUSTworthy Standard.” *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122. https://doi.org/10.1093/bib/bbae122.
+Wright, Adam, Mark D. Wilkinson, Christopher Mungall, Scott Cain, Stephen Richards, Paul Sternberg, Ellen Provin, Jonathan L. Jacobs, Scott Geib, Daniela Raciti, Karen Yook, Lincoln Stein, and David C. Molik. “FAIR Header Reference Genome: A TRUSTworthy Standard.” *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122. <https://doi.org/10.1093/bib/bbae122>.
 
 ### Specification
 
-Molik, David. *FHR Specification*. Data set. 2022. https://doi.org/10.5281/zenodo.6762549.
+Molik, David. *FHR Specification*. Data set. 2022. <https://doi.org/10.5281/zenodo.6762549>.
 
 ### Converter
 
-Molik, David, and Adam Wright. *FHR File Converter*. Computer software. 2024. https://doi.org/10.5281/zenodo.6762547.
+Molik, David, and Adam Wright. *FHR File Converter*. Computer software. 2024. <https://doi.org/10.5281/zenodo.6762547>.
 
 Machine-readable entries are maintained in
 [FHR-Citation](https://github.com/FAIR-bioHeaders/FHR-Citation/blob/main/citation.bib).

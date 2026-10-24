@@ -63,8 +63,9 @@ prove TSA deposit eligibility or successful checksum/parent verification.
 For the rich M3 case, intentionally leave read/library/sample groups absent if
 the source annotation does not establish them. For rich M1/M2, retain per-run
 differences externally instead of forcing conflicting experiment values into a
-single file-wide scalar. Counts describe records, not genes; BUSCO scores do
-not establish that every transcript is complete or experimentally expressed.
+single file-wide scalar. FASTA-record counts describe records, not genes; BUSCO
+counts describe ortholog groups. BUSCO scores do not establish that every
+transcript is complete or experimentally expressed.
 
 ## Required implementation acceptance after adoption
 

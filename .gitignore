@@ -457,3 +457,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/vim,linux,emacs,macos,windows,libreoffice,latex
+
+### Python ###
+__pycache__/
+*.pyc
