@@ -1,6 +1,6 @@
 # FHT minimal and rich record designs
 
-Status: **proposal for #6**, October 24, 2026. These are field-level record
+Status: **initial design approved by David for adoption on PR #20 merge**, October 24, 2026. These are field-level record
 designs, not schema-valid serialized fixtures or headers. No checksum, ORCID,
 taxonomy, run accession or release URL is fabricated. Implementation issues #7
 and #8 must create actual fixtures after adoption and calculate exact checksums

@@ -1,11 +1,11 @@
 # Feature specification proposal: RNA and transcriptome FASTA header (FHT)
 
-Status: **unadopted schema-contract proposal**, October 24, 2026.
+Status: **initial development design approved by David; adoption recorded on PR #20 merge**, October 24, 2026.
 This is a proposed revision of shared spec 005 at
 `980029e5886a1a56a2d2545bfe59c7107539d38d`, developed in the owning FHT repository.
 It does not replace the shared publication copy until maintainers review and
 coordinate it there. [Research/decisions](../fht-field-decisions.md) provides the
-evidence, compatibility impact and unresolved adoption decisions for #6.
+evidence, compatibility impact, maintainer decision and owned follow-ups for #6.
 
 ## User cases
 
@@ -64,7 +64,7 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
 
 ## Implementation and success criteria
 
-This PR's deliverable is the research/design proposal. After approval, #7 owns
+PR #20 completes #6's initial design and consultation disposition on merge. #7 owns
 the LinkML model, generated schema, drift/equivalence checks, version selection and
 shared publication handoff; #8 owns minimal/rich positive and rejected byte-backed
 RNA/cDNA fixtures and exact checksums; #9 owns installed toolkit support and

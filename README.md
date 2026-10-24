@@ -2,9 +2,10 @@
 
 The [October 24 field-design research and proposed decisions](specs/fht-field-decisions.md)
 include a [proposed spec 005 revision](specs/005-rna-transcriptome-header/spec.md)
-and [minimal/rich record designs](specs/fht-record-designs.md). These are
-unadopted contract proposals for issue #6; they do not change the legacy schema
-below, release an FHT contract, or establish toolkit support.
+and [minimal/rich record designs](specs/fht-record-designs.md). David approved this initial development design for adoption on PR #20 merge,
+which closes issue #6. The decision record assigns remaining model details,
+implementation and release work to their own issues. These documents do not change
+the legacy schema below, release an FHT contract, or establish toolkit support.
 
 FHT (<u>Fair</u> <u>H</u>eader <u>R</u>eference transcriptome): a simple FAIR enough metadata structure for reference transcriptomes that you can TRUST
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6762549.svg)](https://doi.org/10.5281/zenodo.6762549)

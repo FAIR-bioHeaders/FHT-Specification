@@ -1,6 +1,6 @@
 # FHT to INSDC: conditional mapping strategy
 
-Status: **unadopted design proposal**, revised October 24, 2026. This supersedes
+Status: **conditional mapping accompanying the approved initial FHT design**, revised October 24, 2026. This supersedes
 the earlier mapping document's submission-ready/completeness conclusions.
 Read the [coverage matrix](insdc-fht-coverage.md),
 [research and decisions](fht-field-decisions.md),
@@ -67,15 +67,15 @@ and actual validator support exist. A JSON Schema metadata profile cannot itself
 check FASTA alphabet, base percentages or sequence lengths; a separate content
 validator/workflow is needed. No new profile ID or LinkML class is assigned here.
 
-Proposed base changes in the decision record have their own contract review.
+Base design choices are recorded in the decision record; exact model implementation still requires its own contract review.
 Future target requirements must identify whether they need a profile, new field,
 external metadata, content validation or no header action. Do not label every
 missing target field covered merely because a future profile could be written.
 
 ## Remaining coordination
 
-- #6: review the research-backed field and construction recommendations; record
-  adoption or rejection and any disposition of further consultation.
+- #6: initial field-design and consultation disposition completed by PR #20 on
+  merge, following David's recorded approval; further feedback remains welcome.
 - #7: implement the approved core imports, exact model/types, migration, schema
   generation and versioning, coordinating final artifacts with shared publication.
 - #8/#9: actual fixtures, conformance and installed toolkit support.

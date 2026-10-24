@@ -1,9 +1,25 @@
 # FHT field design: research and proposed decisions
 
-Status: **schema-contract change proposal; not adopted**. Researched October 24,
-2026 for [issue #6](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/6).
-Sources support the recommendations below; none constitutes curator endorsement.
-Maintainer review must decide adoption before implementation under #7.
+Status: **initial development design approved by David; recorded for adoption on
+merge of PR #20**, October 24, 2026, for
+[issue #6](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/6).
+This is a schema-contract design decision, not a released schema. Public sources
+support the design; they do not constitute curator endorsement.
+
+## Maintainer decision and closure boundary
+
+David explicitly approved the required minimum, construction cases, optional
+moleculeType, strand convention, numerical/unknown-value rules and proceeding
+with the existing meeting feedback plus research. Further consultation is welcome
+but is not a prerequisite for completing this initial design issue. David stated
+that he expects Adam to agree; no separate direct approval from Adam is attributed
+by this record. The repository's joint schema/release authority remains unchanged.
+
+On merge, PR #20 completes #6's design/consultation disposition. The definitions
+below and the revised spec/design tables are the implementation baseline, not
+claims of finished schema generation, toolkit support, INSDC completeness or release.
+Exact sample serialization and parent-link constraints are explicitly assigned
+to #7 for subsequent reviewed contract work. The independent #157 gate remains.
 
 ## Baseline and evidence
 
@@ -154,22 +170,42 @@ Legacy expression/completeness strings must not be guessed into typed numerical
 objects. #7 owns the reviewed migration and generated schema, and #8 the actual
 byte-backed fixtures. No new FHT version or persistent identifier is assigned here.
 
-## Acceptance and remaining human decisions
+## Acceptance disposition and owned follow-up work
 
 The [revised spec 005 proposal](005-rna-transcriptome-header/spec.md) and
 [minimal/rich designs](fht-record-designs.md) make these recommendations reviewable.
 They do not change the shared publication copy or make the legacy schema conform.
 
-| #6 requirement | Evidence/delivery here | Remaining decision |
+| #6 requirement | Decision/delivery in PR #20 | Follow-up owner |
 | --- | --- | --- |
-| Consultation record | Existing October 22 meeting summary plus dated public-source research above | Confirm whether that evidence suffices; do not call online research curator consultation |
-| Required-field rationale and minimal case | Nine-field design and rationale in record-designs document | Review the required set |
-| Three construction cases | D2 definitions and case designs | Approve classification rules and exceptional composite cases |
-| Optional context | D3 | Approve unchanged base optionality |
-| Names, types, cardinality, units, unknowns, vocabulary | D1–D4 and revised FR requirements | Explicit contract approval, including optional moleculeType and proposed strand normalization |
-| Spec 005, decision record, minimal/rich designs | This decision proposal plus two linked documents | Coordinate the reviewed revision into shared publication |
+| Consultation record | Existing October 22 meeting summary and dated public-source research accepted by David as sufficient for this design stage; no invented endorsement | Additional community feedback remains welcome, without keeping #6 open indefinitely |
+| Required-field rationale/minimal case | Approve the nine-field design and rationale | #7 implements the exact core constraints; #8 creates actual fixtures |
+| Three construction cases | Approve D2 definitions; no guessed composite classification or mandatory de novo genome parent | #7 reviews exceptional/composite cases and parent rules |
+| Optional context | Approve D3 base optionality | #7 models it; profiles/submission requirements remain separate |
+| Names, units, unknowns, vocabulary | Approve D1–D4, including optional moleculeType and the explicit strand convention | #7 reviews exact sample serialization, FHT parent types/relationships/cardinality and migration |
+| Spec 005 and minimal/rich designs | Revised development spec and design tables delivered here | #7 coordinates the reviewed shared-publication revision; #8 validates byte-backed fixtures |
 
-Do not close #6 as completed solely because this research lands. Joint maintainer
-adoption/recorded disposition remains outstanding, as does the independent #157
-coverage gate. Scientific sources resolve category errors; they cannot choose
-the project's requiredness or grant community endorsement for us.
+### Follow-up acceptance after #6 closes
+
+- **#7 — model and migration:** exact sample shape/controlled identifiers; allowed
+  FHT parent types, relationship semantics and identity/cardinality requirements;
+  ambiguous/composite history policy; pinned shared imports; generated schema and
+  drift/equivalence; explicit retained author/reuse/statistics migration; shared
+  publication coordination and version selection. These require their own review,
+  not silent interpretation of this record.
+- **#8 — fixtures:** actual minimal/rich and rejection records for all three cases,
+  measured statistics, omitted/zero values, exact RNA/cDNA bytes and parent outcomes.
+- **#9 — runtime/consumers:** toolkit implementation, typed round trips and installed
+  package/bundle provenance after the reviewed schema exists.
+- **#10 — publication/pilot:** maintainer-controlled release/aliases and a real
+  public use case under the existing acceptance criteria.
+- **[Shared #170](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/170)
+  — BUSCO lineage grammar:** separately review dotted dataset versions across
+  importing types; preserve measured names rather than coercing them.
+- **[Shared #157](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/157)
+  — INSDC coverage:** retain its independent assessment/disposition requirements.
+
+Issue #6 closes on PR #20's merge as completion of this initial design and consultation
+disposition. None of these downstream issues is closed by that merge. A merge
+records acceptance of the development baseline; it does not publish an FHT schema
+or certify community endorsement or INSDC submission readiness.

@@ -106,6 +106,6 @@ draft, not adopted requirements.
    remain necessary. A profile cannot make unsupported fields or validators exist.
 
 The [mapping strategy](insdc-fht-mapping-strategy.md) records these boundaries.
-The proposed spec revision and minimal/rich designs remain unadopted. No schema
+The initial development design is approved by David for adoption on PR #20 merge. No schema
 bytes, field values, curator approval, toolkit support or new profile is established
-by this review. #6 retains the adoption decision; #7 owns implementation.
+by this coverage review. PR #20 closes #6's initial design decision on merge; #7 owns implementation.
