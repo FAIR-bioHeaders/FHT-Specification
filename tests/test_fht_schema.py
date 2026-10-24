@@ -140,6 +140,28 @@ class FhtSchemaTests(unittest.TestCase):
             "Additional properties",
         )
 
+    def test_empty_strings_and_empty_sample_objects_are_rejected(self):
+        self.assert_invalid(self.record(transcriptome=""), "does not match")
+        self.assert_invalid(self.record(transcriptome="   "), "does not match")
+        self.assert_invalid(
+            self.record(transcriptomeSynonym=[""]), "does not match"
+        )
+        self.assert_invalid(self.record(libraryStrategy=""), "does not match")
+        self.assert_invalid(self.record(libraryStrategy="   "), "does not match")
+        self.assert_invalid(self.record(instrument=[""]), "does not match")
+        for key in (
+            "tissue",
+            "developmentalStage",
+            "condition",
+            "strain",
+        ):
+            self.assert_invalid(
+                self.record(sample=[{key: ""}]), "does not match"
+            )
+        self.assert_invalid(
+            self.record(sample=[{}]), "is not valid under any of the given schemas"
+        )
+
     def test_sequencing_runs_are_run_accessions(self):
         self.assert_valid(self.record(sequencingRuns=["SRR123456", "ERR7", "DRR1"]))
         self.assert_invalid(self.record(sequencingRuns=[]), "should be non-empty")

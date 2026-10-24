@@ -270,6 +270,7 @@
         "instrument": {
           "description": "Legacy-compatible free-text sequencing instrument names. Prefer sequencingRuns when run accessions exist; do not infer an instrument from a run accession or a software name.",
           "items": {
+            "pattern": "\\S",
             "type": "string"
           },
           "minItems": 1,
@@ -277,6 +278,7 @@
         },
         "libraryStrategy": {
           "description": "One supplied library strategy term for the whole set, using the producer's ENA term where applicable. Omit when experiments differ or the value is unknown; this slot is not an ENA-controlled enum.",
+          "pattern": "\\S",
           "type": "string"
         },
         "metadataAuthor": {
@@ -347,11 +349,13 @@
         },
         "transcriptome": {
           "description": "Name of the transcriptome resource described by the file",
+          "pattern": "\\S",
           "type": "string"
         },
         "transcriptomeSynonym": {
           "description": "Other supplied names for the transcriptome",
           "items": {
+            "pattern": "\\S",
             "type": "string"
           },
           "minItems": 1,
@@ -421,18 +425,22 @@
       "properties": {
         "condition": {
           "description": "Supplied treatment, disease or other condition context",
+          "pattern": "\\S",
           "type": "string"
         },
         "developmentalStage": {
           "description": "Supplied developmental stage or life stage",
+          "pattern": "\\S",
           "type": "string"
         },
         "strain": {
           "description": "Supplied strain, breed or cultivar",
+          "pattern": "\\S",
           "type": "string"
         },
         "tissue": {
           "description": "Supplied tissue or anatomical source label",
+          "pattern": "\\S",
           "type": "string"
         },
         "tissueIdentifier": {
@@ -442,7 +450,34 @@
         }
       },
       "title": "Sample",
-      "type": "object"
+      "type": "object",
+      "anyOf": [
+        {
+          "required": [
+            "tissue"
+          ]
+        },
+        {
+          "required": [
+            "tissueIdentifier"
+          ]
+        },
+        {
+          "required": [
+            "developmentalStage"
+          ]
+        },
+        {
+          "required": [
+            "condition"
+          ]
+        },
+        {
+          "required": [
+            "strain"
+          ]
+        }
+      ]
     },
     "Software": {
       "additionalProperties": false,
@@ -640,6 +675,7 @@
     "instrument": {
       "description": "Legacy-compatible free-text sequencing instrument names. Prefer sequencingRuns when run accessions exist; do not infer an instrument from a run accession or a software name.",
       "items": {
+        "pattern": "\\S",
         "type": "string"
       },
       "minItems": 1,
@@ -647,6 +683,7 @@
     },
     "libraryStrategy": {
       "description": "One supplied library strategy term for the whole set, using the producer's ENA term where applicable. Omit when experiments differ or the value is unknown; this slot is not an ENA-controlled enum.",
+      "pattern": "\\S",
       "type": "string"
     },
     "metadataAuthor": {
@@ -717,11 +754,13 @@
     },
     "transcriptome": {
       "description": "Name of the transcriptome resource described by the file",
+      "pattern": "\\S",
       "type": "string"
     },
     "transcriptomeSynonym": {
       "description": "Other supplied names for the transcriptome",
       "items": {
+        "pattern": "\\S",
         "type": "string"
       },
       "minItems": 1,

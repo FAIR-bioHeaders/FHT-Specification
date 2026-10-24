@@ -108,9 +108,10 @@ explicit derivative with a new checksum, never a header-parser fix.
 `sample` is an optional **array** of `Sample` objects. Each object has optional
 `tissue`, `tissueIdentifier`, `developmentalStage`, `condition` and `strain`.
 `tissueIdentifier` is a CURIE (for example `UBERON:0000473`); the pattern checks
-form, not resolution. Pooled material is represented by repeated entries, each
-with only its own supplied values. Do not collapse a pool into one fabricated
-uniform sample or treat a header entry as a complete BioSample record.
+form, not resolution. Each entry must carry at least one supplied field, and its
+text fields must be non-empty. Pooled material is represented by repeated
+entries, each with only its own supplied values. Do not collapse a pool into one
+fabricated uniform sample or treat a header entry as a complete BioSample record.
 
 ### Construction cases and parents
 
@@ -152,8 +153,10 @@ the array is present.
   deflines and line endings.
 
 `completeness` reuses the shared BUSCO count object (`lineageDataset`,
-`buscoVersion`, `mode`, four disjoint counts and `total`). Counts describe
-records, not genes, and BUSCO is not a quality cutoff.
+`buscoVersion`, `mode`, four disjoint counts and `total`). BUSCO counts describe
+ortholog groups, not FASTA records or genes; `total` is the number of BUSCO
+groups searched. Only `vitalStats.totalTranscripts` counts FASTA records. BUSCO
+is not a quality cutoff.
 
 The shared lineage pattern currently accepts `_odb` plus digits. Dotted dataset
 versions such as `odb12.2` are **not renamed** to pass it; that shared grammar
@@ -171,7 +174,7 @@ metadata; do not guess values or silently promote a legacy record.
 | `schema` | Keep a valid FHT contract URL. The old value may be malformed; correct the URL, not the transcriptome identity |
 | `schemaVersion` | Number `1`/`1.0` becomes string `"1.0"` |
 | `transcriptome`, `transcriptomeSynonym`, `taxon`, `version` | Retained. Do not repair a supplied taxon URI or synonym |
-| `metadataAuthor` | Retained as header authors. Legacy `url` is not an `Author` member: map to `uri` only when it is a valid ORCID/ROR URL, otherwise preserve the value in `documentation`/`relatedLink` |
+| `metadataAuthor` | Retained as header authors. Legacy `url` is not an `Author` member: map to `uri` only when it is a valid ORCID URL; the pinned shared pattern does not accept ROR or other organization URLs, so preserve those in `documentation`/`relatedLink` |
 | `assemblyAuthor` | Retained as optional attribution, distinct from header authors and from a deposit submitter. Never merge the roles |
 | `dateCreated` | Retained; it is resource creation, not sample collection |
 | `assemblySoftware` | Legacy string becomes an array of shared `Software` objects: `name` from the supplied value. Add `version`/options only when actually supplied; never invent a version |

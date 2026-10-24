@@ -42,7 +42,7 @@ escaping rules.
 ;~  uri: https://identifiers.org/taxonomy:0000
 ;~version: "1.0"
 ;~metadataAuthor:
-;~  name: Example author
+;~- name: Example author
 ;~dateCreated: "2026-10-24"
 ;~checksum: <computed SHA-512/256>
 >transcript_1

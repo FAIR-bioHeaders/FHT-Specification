@@ -22,11 +22,13 @@ slots:
     description: Name of the transcriptome resource described by the file
     slot_uri: sdo:name
     required: true
+    pattern: '\S'
   transcriptomeSynonym:
     description: Other supplied names for the transcriptome
     slot_uri: sdo:alternateName
     multivalued: true
     minimum_cardinality: 1
+    pattern: '\S'
   assemblyType:
     description: >-
       How the transcript sequences or models were constructed, using the D2
@@ -63,6 +65,7 @@ slots:
       One supplied library strategy term for the whole set, using the producer's
       ENA term where applicable. Omit when experiments differ or the value is
       unknown; this slot is not an ENA-controlled enum.
+    pattern: '\S'
   strandedness:
     description: >-
       Supplied library strandedness under the FHT read/read-1 convention:
@@ -123,6 +126,7 @@ slots:
     slot_uri: sdo:instrument
     multivalued: true
     minimum_cardinality: 1
+    pattern: '\S'
 classes:
   FHT:
     description: Metadata for a transcriptome FASTA file.
@@ -204,6 +208,7 @@ classes:
     attributes:
       tissue:
         description: Supplied tissue or anatomical source label
+        pattern: '\S'
       tissueIdentifier:
         description: >-
           CURIE for the supplied tissue concept, preferably UBERON, PO or CL.
@@ -211,10 +216,13 @@ classes:
         pattern: ^[A-Za-z][A-Za-z0-9._-]*:[A-Za-z0-9._-]+$
       developmentalStage:
         description: Supplied developmental stage or life stage
+        pattern: '\S'
       condition:
         description: Supplied treatment, disease or other condition context
+        pattern: '\S'
       strain:
         description: Supplied strain, breed or cultivar
+        pattern: '\S'
   VitalStats:
     description: Optional producer-reported statistics for the whole file
     class_uri: fhr:VitalStats

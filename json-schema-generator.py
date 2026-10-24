@@ -69,6 +69,24 @@ def apply_common_rules(generated):
     return generated
 
 
+def apply_sample_rules(generated):
+    """Require each Sample entry to carry at least one supplied value."""
+    sample = generated.get("$defs", {}).get("Sample")
+    if sample is None:
+        raise ValueError("generated schema has no Sample definition")
+    sample["anyOf"] = [
+        {"required": [name]}
+        for name in (
+            "tissue",
+            "tissueIdentifier",
+            "developmentalStage",
+            "condition",
+            "strain",
+        )
+    ]
+    return generated
+
+
 def apply_fht_parent_rules(generated):
     """Restrict derivedFrom to reviewed FHT/FHR parent relationships."""
     parent = generated.get("$defs", {}).get("DerivedFrom")
@@ -103,6 +121,7 @@ def generate():
     generated["title"] = "FHT"
     for key in ("metamodel_version", "version"):
         generated.pop(key, None)
+    generated = apply_sample_rules(generated)
     return apply_fht_parent_rules(generated)
 
 
