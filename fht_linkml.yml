@@ -89,9 +89,12 @@ slots:
     inlined: true
   completeness:
     description: >-
-      Optional BUSCO completeness counts from the actual run. Report the
-      measured lineage, including a dotted dataset version; do not rename it to
-      satisfy the current shared pattern (shared #170).
+      Optional BUSCO completeness counts from the actual run. lineageDataset
+      must match the pinned shared pattern (a name ending in _odb plus digits,
+      such as hymenoptera_odb10), so dotted dataset versions such as
+      hymenoptera_odb12.2 are rejected. Do not rename a dotted lineage to pass
+      the pattern; omit completeness and keep the measured lineage and counts
+      in documentation until shared #170 decides dotted lineage support.
     range: Completeness
     inlined: true
   derivedFrom:

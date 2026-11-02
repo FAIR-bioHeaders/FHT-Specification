@@ -190,9 +190,11 @@ metadata; do not guess values or silently promote a legacy record.
 | `checksum` | Legacy `md5:` values are not valid FHT checksums. Recompute SHA-512/256 from the exact file with the reviewed toolkit; never convert an MD5 string |
 | Unknown legacy keys | Not accepted by the closed schema. Decide explicitly whether to retain them in documentation; do not silently drop supplied metadata |
 
-The legacy examples in `examples/` are historical review inputs, not valid FHT
-1.0 fixtures. Actual byte-backed positive and rejection fixtures, including RNA
-and cDNA bytes, are owned by #8.
+The legacy examples are preserved verbatim in `legacy/examples/` as historical
+review inputs, not valid FHT 1.0 fixtures. `examples/` holds synthetic examples
+that validate against `fht.json`, one per construction type, checked by
+`tests/test_examples.py`. Actual byte-backed positive and rejection conformance
+fixtures, including RNA and cDNA bytes, are owned by #8.
 
 ## Verification and publication boundary
 

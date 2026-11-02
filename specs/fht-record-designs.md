@@ -2,9 +2,12 @@
 
 Status: **initial design approved by David for adoption on PR #20 merge**, October 24, 2026. These are field-level record
 designs, not schema-valid serialized fixtures or headers. No checksum, ORCID,
-taxonomy, run accession or release URL is fabricated. Implementation issues #7
-and #8 must create actual fixtures after adoption and calculate exact checksums
-with the reviewed toolkit. Read [the decisions](fht-field-decisions.md)
+taxonomy, run accession or release URL is fabricated. PR #21 (#7) implemented
+the design in [`fht_linkml.yml`](../fht_linkml.yml) and the generated
+[`fht.json`](../fht.json); the tables below describe that merged development
+contract, and `fht.json` governs where they differ. Synthetic schema-valid
+examples with computed checksums are in [`examples/`](../examples/); byte-exact
+conformance fixtures remain owned by #8. Read [the decisions](fht-field-decisions.md)
 and [revised spec 005](005-rna-transcriptome-header/spec.md) together.
 
 ## Minimal field set and the decision each enables
@@ -12,7 +15,7 @@ and [revised spec 005](005-rna-transcriptome-header/spec.md) together.
 | Required field | Type/cardinality proposal | Decision enabled | Value source in a minimal use case |
 | --- | --- | --- | --- |
 | `schema` | One string, shared selection rules | Select the intended validation contract | Actual supported release URL, assigned through the release process |
-| `schemaVersion` | One MAJOR.MINOR string | Interpret the per-type contract | Adopted type registry; no version assigned by this document |
+| `schemaVersion` | One MAJOR.MINOR string; the development contract accepts only `"1.0"` | Interpret the per-type contract | Adopted type registry; `"1.0"` is proposed, not released (#10) |
 | `transcriptome` | One string | Identify which resource the file describes | Producer-supplied resource label |
 | `taxon` | One shared Taxon object | Select the biological scope | Producer-supplied taxonomic identity; do not infer from sequence names |
 | `version` | One string | Distinguish resource revisions | Producer's actual resource version |
@@ -21,9 +24,10 @@ and [revised spec 005](005-rna-transcriptome-header/spec.md) together.
 | `checksum` | One shared SHA-512/256 scalar | Detect file-byte changes | Tool-computed exact-file checksum using adopted exclusion rules |
 | `assemblyType` | One proposed enum string | Choose how to interpret construction/source claims | Known workflow history using D2's definitions |
 
-Requiredness applies to the slot; this proposal does not independently tighten
-optional nested Taxon/Author members. The actual generated schema must state
-array and nested constraints explicitly. Missing a required value cannot be
+Requiredness applies to the slot; the contract does not independently tighten
+optional nested Taxon/Author members. The generated schema states array and
+nested constraints explicitly: optional arrays need at least one item when
+present, and empty strings or `null` are not unknown-value sentinels. Missing a required value cannot be
 repaired with `null`, `unknown`, a guessed person or a dummy checksum.
 
 ## Three minimal record designs
@@ -47,15 +51,18 @@ prove TSA deposit eligibility or successful checksum/parent verification.
 
 | Field/group | Proposed type/cardinality | Example of information to supply when actually known |
 | --- | --- | --- |
-| `moleculeType` | Optional single string from D1's restricted biological vocabulary | Producer-supported uniform class; omit for unresolved or heterogeneous content |
+| `transcriptomeSynonym` | Optional non-empty array of non-blank strings (legacy-compatible) | Other names actually used for the transcriptome |
+| `moleculeType` | Optional single string: `mRNA`, `rRNA`, `tRNA` or `transcribed RNA` (D1) | Producer-supported uniform class; omit for unresolved or heterogeneous content |
+| `assemblyAuthor` | Optional non-empty ordered array of shared Author objects (legacy-compatible) | People or organizations that assembled or extracted the set, distinct from `metadataAuthor` and from a deposit submitter |
 | `assemblySoftware` | Optional ordered array of shared Software objects | Software name, real version, URI and ordered option strings; extraction is a process too |
-| `sequencingRuns` | Optional array of run-accession strings | Actual SRR/ERR/DRR runs; no SRS sample identifier substituted for a run |
+| `sequencingRuns` | Optional non-empty array of strings matching `^(SRR\|ERR\|DRR)[0-9]+$` | Actual SRR/ERR/DRR runs; no SRS sample identifier substituted for a run |
+| `instrument` | Optional non-empty array of non-blank free-text names (legacy-compatible) | Instrument names actually supplied; prefer `sequencingRuns` when run accessions exist, and do not infer an instrument from a run or software name |
 | `libraryStrategy` | Optional single strategy string | Actual ENA strategy, when one applies to the whole set |
-| `strandedness` | Optional single proposed normalized enum | Actual library read/read-1 orientation using D3's convention |
-| `sample` | Optional draft object; exact tissue/stage/condition/strain shape deferred to #7 | Actual biological context; never a fabricated pooled identity or complete BioSample record |
-| `vitalStats` | Optional object with independently optional numerical properties | totalTranscripts (integer count), N50 (integer nucleotide length), averageTranscriptLength (finite number of nucleotide symbols) |
-| `completeness` | Optional shared count object, subject to D3's lineage compatibility note | Actual BUSCO run, software/dataset version, transcriptome mode and counts summing to total |
-| `derivedFrom` | Optional shared relationship array, FHT restrictions reviewed in #7 | Actual family parent identities and only relationships the workflow justifies |
+| `strandedness` | Optional single enum: `unstranded`, `forward` or `reverse` | Actual library read/read-1 orientation using D3's convention |
+| `sample` | Optional non-empty array of Sample objects, each with at least one of `tissue`, `tissueIdentifier` (CURIE), `developmentalStage`, `condition`, `strain` | Actual biological context; pooled material as repeated entries, never a fabricated pooled identity or complete BioSample record |
+| `vitalStats` | Optional object with independently optional numerical properties | totalTranscripts (integer >= 0), N50 (integer >= 1, nucleotide length), averageTranscriptLength (number >= 0 of nucleotide symbols) |
+| `completeness` | Optional shared count object; `lineageDataset` must match `_odb` plus digits, so dotted versions such as `odb12.2` are rejected (shared #170) | Actual BUSCO run, software/dataset version, transcriptome mode and counts summing to total; a dotted lineage stays in `documentation`, not renamed |
+| `derivedFrom` | Optional non-empty ordered array of shared DerivedFrom objects; only `FHT` + `filteredFrom` or `FHR` + `transcribedFrom`, each with the parent checksum (`accessionID` is additional, not a substitute) | Actual family parent identities and only relationships the workflow justifies |
 | `identifier` / `accessionID` | Shared optional self-identifiers | Transcriptome's own accession, not its project/sample accession |
 | `relatedLink` / `documentation` | Shared optional URL array / string | Source records, experiment metadata, protocol and derivation explanation |
 | `reuseConditions`, `scholarlyArticle`, `funding`, `voucherSpecimen` | Shared optional fields | Supplied reuse terms, article DOI, funding and specimen context |
