@@ -35,11 +35,11 @@ escaping rules.
 ```text
 ;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json
 ;~schemaVersion: "1.0"
-;~transcriptome: Example species reference transcriptome
+;~transcriptome: Bombus impatiens reference transcriptome
 ;~assemblyType: de novo
 ;~taxon:
-;~  name: Example species
-;~  uri: https://identifiers.org/taxonomy:0000
+;~  name: Bombus impatiens
+;~  uri: https://identifiers.org/taxonomy:132113
 ;~version: "1.0"
 ;~metadataAuthor:
 ;~- name: Example author
@@ -81,10 +81,14 @@ python scripts/check_provenance.py
 
 The tests validate the generated contract, required and optional fields, enum and
 numeric constraints, reviewed parent pairs, legacy-compatible fields and exact
-generation from the model. They do not validate real FASTA bytes; byte-backed
-positive/rejection fixtures are owned by #8. The historical files under
-`examples/` predate this contract and are review inputs, not valid FHT 1.0
-fixtures.
+generation from the model. `tests/test_examples.py` validates the synthetic
+examples in `examples/` (one per construction type, plus JSON and YAML forms of
+the de novo header) against `fht.json` and recomputes each FASTA file's
+SHA-512/256 checksum under the shared FORMAT.md rules. Their names, statistics
+and sequence bytes are invented; taxon and ontology identifiers are real. They
+are not the byte-exact positive/rejection conformance vectors, which are owned
+by #8. The historical pre-contract examples are preserved verbatim under
+`legacy/examples/` as review inputs, not valid FHT 1.0 fixtures.
 
 ## Related FHR citations
 

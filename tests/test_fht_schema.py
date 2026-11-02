@@ -23,8 +23,8 @@ def minimal():
         "transcriptome": "Example transcriptome",
         "assemblyType": "de novo",
         "taxon": {
-            "name": "Example species",
-            "uri": "https://identifiers.org/taxonomy:9606",
+            "name": "Arabidopsis thaliana",
+            "uri": "https://identifiers.org/taxonomy:3702",
         },
         "version": "1.0",
         "metadataAuthor": [{"name": "Example author"}],

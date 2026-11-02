@@ -3,8 +3,8 @@
 The model imports the pinned shared core and shared objects under ``schemas/``.
 ``fht.json`` is generated, never hand-edited. The generator also applies the
 FHT-specific parent rule that LinkML cannot express: a derivedFrom item must be
-a reviewed FHT/FHR relationship and must identify the parent by checksum or
-accession.
+a reviewed FHT/FHR relationship. The shared DerivedFrom object already requires
+the parent checksum; an accessionID is additional, never a substitute.
 """
 
 import argparse
