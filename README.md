@@ -57,6 +57,13 @@ completeness, reviewed parent links and shared provenance/identity fields. Omit
 unknown optional values; do not use `null`, empty strings or invented
 placeholders.
 
+Extension fields: as in FHR 2.1, FHP 1.1 and FHGFF3 1.1 (FAIR-bioHeaders-Specification
+`docs/FORMAT.md` rule R15), the draft accepts top-level keys that match
+`^x-[A-Za-z0-9][A-Za-z0-9_.-]*$`, for example `x-<project>-<field>`, with any value the
+standard does not define. Every other unknown key is still rejected, nested objects stay
+closed, and an extension field never replaces a standard field. JSON-LD and HTML forms
+leave extension fields out.
+
 ### Construction types
 
 | Value | Use case |

@@ -188,7 +188,7 @@ metadata; do not guess values or silently promote a legacy record.
 | `license` | Reviewed separately into `reuseConditions`; do not copy blindly when the value is a name, a URL or a third-party notice |
 | `masking` | Removed: a genome-assembly field with no FHT meaning. Do not add it back to pass older records |
 | `checksum` | Legacy `md5:` values are not valid FHT checksums. Recompute SHA-512/256 from the exact file with the reviewed toolkit; never convert an MD5 string |
-| Unknown legacy keys | Not accepted by the closed schema. Decide explicitly whether to retain them in documentation; do not silently drop supplied metadata |
+| Unknown legacy keys | Not accepted by the schema, which is closed except for top-level extension fields (`x-` keys, FAIR-bioHeaders-Specification `docs/FORMAT.md` R15). Decide explicitly whether to retain a value in documentation, move it to a standard field, or keep it under an extension key such as `x-<project>-<field>`; do not silently drop supplied metadata, and do not put a standard field's value only in an extension key |
 
 The legacy examples are preserved verbatim in `legacy/examples/` as historical
 review inputs, not valid FHT 1.0 fixtures. `examples/` holds synthetic examples

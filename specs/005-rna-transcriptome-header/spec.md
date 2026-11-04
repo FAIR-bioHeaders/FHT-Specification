@@ -102,6 +102,13 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
   metadata is preserved without guessing expression/completeness values. The
   legacy draft schema is kept verbatim in `legacy/fht-v0.1.json` and its
   examples in `legacy/examples/`. Legacy JSON syntax was repaired in PR #2.
+- **FR-010:** Accept top-level extension fields as FAIR-bioHeaders-Specification
+  `docs/FORMAT.md` R15 defines them (FAIR-bioHeaders-Specification#197): a key
+  matching `^x-[A-Za-z0-9][A-Za-z0-9_.-]*$` may hold any value the standard does
+  not define; every other unknown key stays invalid, nested objects stay closed,
+  no key contains a line feed, and JSON-LD and HTML forms carry none. FHT has no
+  released minor, so the draft `"1.0"` includes the rule; there is no older-minor
+  restriction as in FHR 2.1 and FHP/FHGFF3 1.1.
 
 ## Implementation and success criteria
 
