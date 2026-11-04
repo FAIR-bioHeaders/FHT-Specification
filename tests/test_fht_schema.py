@@ -91,7 +91,32 @@ class FhtSchemaTests(unittest.TestCase):
             self.assert_invalid(value, "'" + name + "' is a required property")
 
     def test_unknown_key_is_rejected(self):
-        self.assert_invalid(self.record(masking="soft-masked"), "Additional properties")
+        # With extension fields (R15) jsonschema names the key and the x- pattern.
+        self.assert_invalid(
+            self.record(masking="soft-masked"), "'masking' does not match any of the regexes"
+        )
+
+    def test_extension_fields(self):
+        """FAIR-bioHeaders-Specification docs/FORMAT.md R15: top-level x- keys only."""
+        self.assertEqual(
+            list(self.schema["patternProperties"]), ["^x-[A-Za-z0-9][A-Za-z0-9_.-]*$"]
+        )
+        for key in ("x-a", "x-1", "x-example-studyNote", "x-a.b-c_d", "x-transcriptome"):
+            for value in ("text", 2, 0.5, True, None, [1, "a"], {"@id": "x", "n": [None]}):
+                with self.subTest(key=key, value=value):
+                    self.assert_valid(self.record(**{key: value}))
+        for key in ("X-a", "x-", "x-_a", "x- a", "x-a b", "x-\u00e4", "x-\uff41", "x-a\r",
+                    "x-a\u2028", "xa", "x_a", "ext-a"):
+            with self.subTest(key=key):
+                self.assert_invalid(self.record(**{key: 1}), "does not match any of the regexes")
+        # Python's "$" matches before a final line feed; the key is still invalid.
+        self.assert_invalid(self.record(**{"x-a\n": 1}), "should not be valid under")
+        nested = self.record()
+        nested["taxon"] = dict(nested["taxon"], **{"x-a": 1})
+        self.assert_invalid(nested, "Additional properties")
+        author = self.record()
+        author["metadataAuthor"] = [{"name": "Example author", "x-a": 1}]
+        self.assert_invalid(author, "Additional properties")
 
     def test_schema_url_and_version(self):
         self.assert_valid(self.record(schema="https://w3id.org/fair-bioheaders/fht/v0.4.0"))

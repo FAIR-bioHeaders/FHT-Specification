@@ -87,6 +87,35 @@ def apply_sample_rules(generated):
     return generated
 
 
+# Extension fields (FAIR-bioHeaders-Specification docs/FORMAT.md R15, issue
+# FAIR-bioHeaders-Specification#197): a top-level key matching this pattern may
+# hold any value the standard does not define. LinkML cannot express
+# patternProperties or propertyNames, so they are added after generation. Nested
+# objects stay closed. FHT has no released minor before the draft 1.0, so there
+# is no older-minor conditional as in FHR 2.1 and FHP/FHGFF3 1.1.
+EXTENSION_PATTERN = "^x-[A-Za-z0-9][A-Za-z0-9_.-]*$"
+EXTENSION_FIELD = {
+    "description": (
+        "Extension field (FAIR-bioHeaders-Specification docs/FORMAT.md R15): any "
+        "value; it means nothing to the standard"
+    )
+}
+# Python's "$" also matches before a final line feed, ECMA-262's does not; no key
+# may contain one, so both dialects accept the same keys.
+NO_LINE_FEED = {"not": {"pattern": "\n"}}
+
+
+def apply_extension_rules(generated):
+    """Allow top-level extension fields on the FHT root (and its $defs copy)."""
+    roots = [generated]
+    if isinstance(generated.get("$defs", {}).get("FHT"), dict):
+        roots.append(generated["$defs"]["FHT"])
+    for node in roots:
+        node["patternProperties"] = {EXTENSION_PATTERN: dict(EXTENSION_FIELD)}
+        node["propertyNames"] = dict(NO_LINE_FEED)
+    return generated
+
+
 def apply_fht_parent_rules(generated):
     """Restrict derivedFrom to reviewed FHT/FHR parent relationships."""
     parent = generated.get("$defs", {}).get("DerivedFrom")
@@ -122,7 +151,8 @@ def generate():
     for key in ("metamodel_version", "version"):
         generated.pop(key, None)
     generated = apply_sample_rules(generated)
-    return apply_fht_parent_rules(generated)
+    generated = apply_fht_parent_rules(generated)
+    return apply_extension_rules(generated)
 
 
 def main():

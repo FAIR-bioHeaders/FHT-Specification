@@ -386,7 +386,17 @@
         "checksum"
       ],
       "title": "FHT",
-      "type": "object"
+      "type": "object",
+      "patternProperties": {
+        "^x-[A-Za-z0-9][A-Za-z0-9_.-]*$": {
+          "description": "Extension field (FAIR-bioHeaders-Specification docs/FORMAT.md R15): any value; it means nothing to the standard"
+        }
+      },
+      "propertyNames": {
+        "not": {
+          "pattern": "\n"
+        }
+      }
     },
     "HeaderType": {
       "description": "FAIR-bioHeaders header types",
@@ -791,5 +801,15 @@
     "checksum"
   ],
   "title": "FHT",
-  "type": "object"
+  "type": "object",
+  "patternProperties": {
+    "^x-[A-Za-z0-9][A-Za-z0-9_.-]*$": {
+      "description": "Extension field (FAIR-bioHeaders-Specification docs/FORMAT.md R15): any value; it means nothing to the standard"
+    }
+  },
+  "propertyNames": {
+    "not": {
+      "pattern": "\n"
+    }
+  }
 }
