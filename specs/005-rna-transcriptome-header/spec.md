@@ -118,7 +118,7 @@ provenance check and migration record. Coordinating this revision into the
 shared publication copy is tracked in FAIR-bioHeaders-Specification#107. #8 owns
 minimal/rich positive and rejected byte-backed RNA/cDNA conformance fixtures and
 exact checksums (the synthetic examples in `examples/` are not those fixtures);
-#9 owns installed toolkit support and round trips. FHT currently has no
+issue #9 owns installed toolkit support and round trips. FHT currently has no
 released family contract or toolkit support.
 
 Release and public-pilot outcomes remain under #10: reviewed schema/examples and
