@@ -97,6 +97,11 @@ are not the byte-exact positive/rejection conformance vectors, which are owned
 by #8. The historical pre-contract examples are preserved verbatim under
 `legacy/examples/` as review inputs, not valid FHT 1.0 fixtures.
 
+Continuous-integration lanes and their local commands — documentation
+Markdownlint plus local link/whitespace/conflict checks, legacy-draft schema
+health with its defect registry and classified examples, and the scheduled
+external-link check — are documented in [`docs/CI.md`](docs/CI.md).
+
 ## Related FHR citations
 
 These DOI records identify FHR resources; they must not be represented as
