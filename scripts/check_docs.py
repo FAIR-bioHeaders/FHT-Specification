@@ -80,10 +80,16 @@ def strip_fences(lines):
     for number, text in enumerate(lines, start=1):
         match = FENCE_RE.match(text)
         if fence is None and match:
-            fence = match.group(1)[:3]
+            fence = match.group(1)
             yield number, text, True
             continue
-        if fence is not None and match and match.group(1)[:3] == fence:
+        if (
+            fence is not None
+            and match
+            and match.group(1)[0] == fence[0]
+            and len(match.group(1)) >= len(fence)
+            and not text[match.end():].strip(" \t")
+        ):
             fence = None
             yield number, text, True
             continue

@@ -16,10 +16,12 @@ Local usage (pinned environment; see docs/CI.md):
 """
 
 import importlib.util
+import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = ROOT / "scripts"
 
 
 def load(name):
@@ -30,6 +32,80 @@ def load(name):
 
 
 class CiCheckTests(unittest.TestCase):
+    def test_fenced_code_closing_honors_delimiter(self):
+        check_docs = load("check_docs")
+        lines = [
+            "````python",
+            "```",
+            "~~~~",
+            "```` trailing info",
+            "[example](missing.md)",
+            "`````",
+            "[outside](missing.md)",
+        ]
+
+        self.assertEqual(
+            [in_code for _, _, in_code in check_docs.strip_fences(lines)],
+            [True, True, True, True, True, True, False],
+        )
+
+    def test_url_exclusions_distinguish_exact_matches_from_prefixes(self):
+        sys.path.insert(0, str(SCRIPTS))
+        try:
+            check_external_links = load("check_external_links")
+        finally:
+            sys.path.remove(str(SCRIPTS))
+        exact = {"url": "https://example.test/issues/14"}
+        prefix = {"prefix": "https://example.test/issues/"}
+
+        self.assertIs(
+            check_external_links.excluded(
+                "https://example.test/issues/14", [exact]
+            ),
+            exact,
+        )
+        self.assertIsNone(
+            check_external_links.excluded(
+                "https://example.test/issues/140", [exact]
+            )
+        )
+        self.assertIs(
+            check_external_links.excluded(
+                "https://example.test/issues/140", [prefix]
+            ),
+            prefix,
+        )
+
+    def test_historical_manifest_must_cover_disk_inventory(self):
+        check_legacy_examples = load("check_legacy_examples")
+        manifest = {"examples": [{"file": "legacy/examples/kept.json"}]}
+
+        self.assertEqual(
+            check_legacy_examples.inventory_findings(
+                manifest, ["legacy/examples/kept.json"]
+            ),
+            {"unclassified": [], "missing": [], "duplicate": []},
+        )
+        self.assertEqual(
+            check_legacy_examples.inventory_findings(
+                manifest,
+                ["legacy/examples/kept.json", "legacy/examples/new.json"],
+            )["unclassified"],
+            ["legacy/examples/new.json"],
+        )
+        self.assertEqual(
+            check_legacy_examples.inventory_findings(
+                {
+                    "examples": [
+                        {"file": "legacy/examples/kept.json"},
+                        {"file": "legacy/examples/kept.json"},
+                    ]
+                },
+                ["legacy/examples/kept.json"],
+            )["duplicate"],
+            ["legacy/examples/kept.json"],
+        )
+
     def test_owned_documentation_checks_pass(self):
         with self.subTest("local links, whitespace and conflict markers"):
             self.assertEqual(load("check_docs").main([]), 0)

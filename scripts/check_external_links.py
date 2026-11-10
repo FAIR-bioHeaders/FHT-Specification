@@ -44,8 +44,10 @@ def load_exclusions():
 
 def excluded(url, exclusions):
     for entry in exclusions:
-        needle = entry.get("url") or entry.get("prefix")
-        if needle and url.startswith(needle):
+        if entry.get("url") == url:
+            return entry
+        prefix = entry.get("prefix")
+        if prefix and url.startswith(prefix):
             return entry
     return None
 

@@ -79,6 +79,20 @@ def match_errors(label, errors, expectations):
     return findings
 
 
+def inventory_findings(manifest, disk_files):
+    """Report unclassified, missing, and duplicate historical example entries."""
+    listed = [entry["file"] for entry in manifest["examples"]]
+    listed_set = set(listed)
+    disk_set = set(disk_files)
+    return {
+        "unclassified": sorted(disk_set - listed_set),
+        "missing": sorted(listed_set - disk_set),
+        "duplicate": sorted(
+            name for name in listed_set if listed.count(name) > 1
+        ),
+    }
+
+
 def parse_header_block(path):
     """Extract and safely parse the ;~ header block of a legacy FASTA file."""
     text = path.read_text(encoding="utf-8")
@@ -134,6 +148,18 @@ def main():
                findings[0] if findings else f"{len(errors)} measured error(s) match")
 
     print("Historical examples (legacy/examples/, classified with tracked reasons):")
+    disk_files = [
+        path.relative_to(ROOT).as_posix()
+        for path in (ROOT / "legacy" / "examples").rglob("*")
+        if path.is_file()
+    ]
+    inventory = inventory_findings(manifest, disk_files)
+    report(
+        not any(inventory.values()),
+        "historical examples and classification manifest cover the same files",
+        f"unclassified={inventory['unclassified']} missing={inventory['missing']} "
+        f"duplicate={inventory['duplicate']}",
+    )
     for entry in manifest["examples"]:
         relative = entry["file"]
         path = ROOT / relative
