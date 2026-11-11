@@ -1,0 +1,6 @@
+# Conformance vectors and their manifest are byte-exact: never convert line
+# endings (CR and CRLF vectors must survive every checkout unchanged).
+conformance/** -text
+conformance/**/*.gz binary
+# Examples carry checksums over their exact bytes.
+examples/** -text
