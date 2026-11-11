@@ -89,18 +89,24 @@ python scripts/check_provenance.py
 The tests validate the generated contract, required and optional fields, enum and
 numeric constraints, reviewed parent pairs, legacy-compatible fields and exact
 generation from the model. `tests/test_examples.py` validates the synthetic
-examples in `examples/` (one per construction type, plus JSON and YAML forms of
-the de novo header) against `fht.json` and recomputes each FASTA file's
-SHA-512/256 checksum under the shared FORMAT.md rules. Their names, statistics
-and sequence bytes are invented; taxon and ontology identifiers are real. They
-are not the byte-exact positive/rejection conformance vectors, which are owned
-by #8. The historical pre-contract examples are preserved verbatim under
+examples in `examples/` (minimal and rich records for every construction type,
+in JSON, YAML and embedded-FASTA form) against `fht.json` and recomputes each
+FASTA file's SHA-512/256 checksum under the shared FORMAT.md rules. Their names,
+statistics and sequence bytes are invented; taxon and ontology identifiers are
+real. The byte-exact positive/rejection conformance vectors are in
+`conformance/` (issue #8): RNA/cDNA, line-ending, comment, nested-checksum,
+gzip/BGZF, parent-link and schema-selection cases with independently
+cross-checked checksums — see [`conformance/README.md`](conformance/README.md)
+for what they do and do not yet prove (no toolkit round trips; that is #9).
+The historical pre-contract examples are preserved verbatim under
 `legacy/examples/` as review inputs, not valid FHT 1.0 fixtures.
 
 Continuous-integration lanes and their local commands — documentation
-Markdownlint plus local link/whitespace/conflict checks, legacy-draft schema
-health with its defect registry and classified examples, and the scheduled
-external-link check — are documented in [`docs/CI.md`](docs/CI.md).
+Markdownlint plus local link/whitespace/conflict checks, the fixture lane
+(regeneration determinism and the independent vector/examples reader),
+legacy-draft schema health with its defect registry and classified examples,
+and the scheduled external-link check — are documented in
+[`docs/CI.md`](docs/CI.md).
 
 ## Related FHR citations
 
