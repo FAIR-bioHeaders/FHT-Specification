@@ -44,6 +44,10 @@ jobs:
         run: |
           python scripts/make_fht_fixtures.py --conformance "$RUNNER_TEMP/conformance" \
             --examples "$RUNNER_TEMP/examples"
+          diff -r --exclude=README.md conformance "$RUNNER_TEMP/conformance"
+          for generated in "$RUNNER_TEMP/examples/"*; do
+            cmp "$generated" "examples/${generated##*/}"
+          done
       - name: Summary and gate
         if: always()
         run: |
