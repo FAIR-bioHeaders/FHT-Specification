@@ -1,0 +1,64 @@
+name: FHT fixtures
+
+# PR/push lane for the issue #8 byte-backed fixtures: regeneration
+# determinism, the independent checksum/header reader, fht.json contract
+# validation, schema-selection and parent-link vectors, and the examples
+# recomputation. Everything runs through scripts/check_fht_fixtures.py,
+# whose lanes conformance/README.md documents; no installed toolkit is
+# invoked (fair-bioheaders has no FHT support yet — issue #9) and this lane
+# makes no claim about shared-suite publication (issue #55).
+#
+# All steps run on every push/PR; the summary step always reports and gates
+# the job so the check is required-check friendly with a single status
+# (docs/CI.md pattern).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  fixtures:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - name: Install pinned validation dependencies
+        run: python -m pip install "jsonschema[format]==4.26.0" "PyYAML==6.0.3"
+      - name: Independent fixture verification (determinism, R1-R15, T1-T3, V1/V4, examples)
+        id: fixtures
+        continue-on-error: true
+        run: python scripts/check_fht_fixtures.py
+      - name: Generator dry check (rerun must reproduce committed bytes)
+        id: generator
+        continue-on-error: true
+        run: |
+          python scripts/make_fht_fixtures.py --conformance "$RUNNER_TEMP/conformance" \
+            --examples "$RUNNER_TEMP/examples"
+          diff -r --exclude=README.md conformance "$RUNNER_TEMP/conformance"
+          for generated in "$RUNNER_TEMP/examples/"*; do
+            cmp "$generated" "examples/${generated##*/}"
+          done
+      - name: Summary and gate
+        if: always()
+        run: |
+          {
+            echo '## FHT fixtures'
+            echo "- scripts/check_fht_fixtures.py (independent reader, manifest, examples): ${{ steps.fixtures.outcome }}"
+            echo "- scripts/make_fht_fixtures.py rerun into a scratch directory: ${{ steps.generator.outcome }}"
+            echo '- No installed toolkit runs here: fair-bioheaders has no FHT support yet (#9); shared publication awaits #55.'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ steps.fixtures.outcome }}" != 'success' ] || \
+             [ "${{ steps.generator.outcome }}" != 'success' ]; then
+            echo 'A fixture check failed above.' >&2
+            exit 1
+          fi

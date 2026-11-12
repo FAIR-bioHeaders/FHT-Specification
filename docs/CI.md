@@ -1,46 +1,55 @@
 # Continuous integration and local checks
 
 Status: CI lanes for issue #14 (PR checks for the draft schema, examples and
-documentation). Every check below also runs locally with the commands given
-here. None of these lanes claims that the legacy draft implements the current
-family contract, and CI setup does not amend any schema.
+documentation) plus issue #8 (the byte-backed fixture lane). Every check
+below also runs locally with the commands given here. None of these lanes
+claims that the legacy draft implements the current family contract, that a
+fixture was produced or consumed by an installed toolkit, or that CI setup
+amends any schema.
 
 ## Lanes
 
 | Workflow | Trigger | Covers |
 | --- | --- | --- |
-| [`validate-specification.yml`](../.github/workflows/validate-specification.yml) | push/PR | The **current FHT 1.0 development contract**: unit tests over the generated `fht.json` (positive/rejection fixtures in `tests/test_fht_schema.py`, synthetic examples in `examples/`), LinkML regeneration drift and the pinned shared-import provenance. Pre-existing; unchanged by #14. |
+| [`validate-specification.yml`](../.github/workflows/validate-specification.yml) | push/PR | The **current FHT 1.0 development contract**: unit tests over the generated `fht.json` (positive/rejection fixtures in `tests/test_fht_schema.py`, synthetic examples in `examples/`, byte-backed conformance vectors via `tests/test_fixtures.py`), LinkML regeneration drift and the pinned shared-import provenance. Pre-existing; extended by #8. |
+| [`fht-fixtures.yml`](../.github/workflows/fht-fixtures.yml) | push/PR | The issue **#8** byte-backed fixtures via `scripts/check_fht_fixtures.py`: regeneration determinism (in-process rerun compared byte-for-byte with `conformance/` and the owned `examples/` files), an independently written R1-R5 reader recomputing every vector checksum, strict R6-R8/R10/R12/R13 header checks, `fht.json` contract validation with `FormatChecker`, V1/V4 schema selection, T3 parent-link outcomes and the examples recomputation. No installed toolkit is invoked (there is no FHT reader yet — #9). |
 | [`docs-checks.yml`](../.github/workflows/docs-checks.yml) | push/PR | Owned documentation signals: Markdownlint with the reviewed local config `.markdownlint-cli2.jsonc` (pinned `markdownlint-cli2@0.24.0`, rule set 0.42.0), plus `scripts/check_docs.py` for local relative links/anchors, whitespace (trailing spaces, CR bytes, final newline) and git conflict markers. Fails the job only on real findings; no network access. |
 | [`legacy-draft-checks.yml`](../.github/workflows/legacy-draft-checks.yml) | push/PR | Schema health of the preserved legacy draft `legacy/fht-v0.1.json` (`scripts/check_legacy_schema.py`) and the classified example/fixture suite (`scripts/check_legacy_examples.py`). |
 | [`external-links.yml`](../.github/workflows/external-links.yml) | schedule (Mondays) + `workflow_dispatch` | Every http(s) URL cited by repository Markdown, one retry each. Never a PR signal: transient remote failures must not gate unrelated work. |
 
-Both PR lanes run every step (`continue-on-error` steps plus an
+Every PR lane runs all of its steps (`continue-on-error` steps plus an
 `if: always()` summary-and-gate step), so one run reports all findings and
 each workflow exposes exactly one required-check-friendly status. All
 workflows run with `permissions: contents: read`, `persist-credentials:
 false`, pinned action commits (checkout v7, setup-python v7, setup-node v7)
 and a job `timeout-minutes`.
 
-## Later stage — adopted-contract conformance (NOT implemented here)
+## Later stage — adopted-contract conformance
 
-Shared-core generation/drift against the publication copy, version-registry
-coordination and byte-exact RNA/cDNA/header conformance with the installed
-toolkit are a clearly-labeled later stage gated on issue **#8** (byte-backed
-positive/rejected conformance fixtures and exact checksums) and issue **#9**
-(installed toolkit support and round trips). See
-[`../specs/005-rna-transcriptome-header/spec.md`](../specs/005-rna-transcriptome-header/spec.md)
-and [`FHT-MIGRATION.md`](FHT-MIGRATION.md). Until those land, the synthetic
-`examples/` remain labeled synthetic and no checksum or SeqCol value is
-computed or asserted beyond what `tests/test_examples.py` already verifies
-against the file's own bytes.
+Issue **#8** has landed the byte-backed side: `conformance/` carries the
+RNA/cDNA positive and rejection vectors, the parent-link fixtures and the
+schema-selection fixtures with independently cross-checked checksums, and
+`scripts/check_fht_fixtures.py` runs every expectation against the rule
+text (see [`../conformance/README.md`](../conformance/README.md) for scope
+and honest limits). Still a clearly-labeled later stage, gated on issue
+**#9** (installed toolkit support: `fair-bioheaders` gains an FHT reader
+and the round trips — strip/combine, conversions and stdout/stdin behavior
+— are then re-run against these same vectors with a named toolkit version)
+and on the shared publication chain (this repo **#55**,
+FAIR-bioHeaders-Specification#107). Shared-core generation/drift against
+the publication copy and version-registry coordination are part of that
+same gate. Until #9 lands, the synthetic `examples/` remain labeled
+synthetic, the vectors' expected outcomes are derived from the rule text
+rather than any implementation, and no checksum or SeqCol value here
+describes real biological material.
 
 ## Pinned tools (PR lanes)
 
 | Tool | Pin | Where |
 | --- | --- | --- |
 | Python | 3.13 (CI image) | all workflows |
-| jsonschema | `4.26.0` (`jsonschema[format]`) | legacy-draft lane; also inside the `>=4.21,<5` range of `requirements-validation.txt` |
-| PyYAML | `6.0.3` | legacy-draft lane |
+| jsonschema | `4.26.0` (`jsonschema[format]`) | legacy-draft and fixture lanes; also inside the `>=4.21,<5` range of `requirements-validation.txt` |
+| PyYAML | `6.0.3` | legacy-draft and fixture lanes |
 | markdownlint-cli2 | `0.24.0` (markdownlint 0.42.1 rule set) | docs lane via `npx -y`, Node 22 |
 | actions/checkout | `3d3c42e5…` v7 | all workflows |
 | actions/setup-python | `5fda3b95…` v7 | all workflows |
@@ -65,6 +74,13 @@ npx -y markdownlint-cli2@0.24.0
 # Legacy draft lane (pinned jsonschema/PyYAML)
 python scripts/check_legacy_schema.py
 python scripts/check_legacy_examples.py
+
+# Fixture lane (pinned jsonschema/PyYAML; regenerates nothing in the tree)
+python scripts/check_fht_fixtures.py
+
+# Regenerate the #8 fixtures and owned examples after editing the generator;
+# the fixture lane then proves the committed bytes match a fresh run
+python scripts/make_fht_fixtures.py
 
 # Current contract lane (pre-existing; needs requirements-linkml.txt)
 python -m unittest discover -s tests -v   # includes tests/test_ci_checks.py
