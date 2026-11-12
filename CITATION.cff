@@ -11,8 +11,8 @@
 # Specification") belong to the shared publication lineage; FHT work must not
 # rename them, and they do not identify this development repository. Any future
 # FHT release record is a maintainer action coordinated through
-# FAIR-bioHeaders-Specification#107 (FHT lane F of FAIR-bioHeaders-
-# Specification#157; curator consultation is the gate).
+# FAIR-bioHeaders-Specification#107 (FHT lane F of
+# FAIR-bioHeaders-Specification#211; publication requires maintainer approval).
 #
 # Source provenance of the draft contract: fht.json (title "FHT", JSON Schema
 # 2020-12, served from the main branch only) was generated from the FHT 1.0
