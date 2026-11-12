@@ -64,8 +64,8 @@ abstract: >-
   per-type JSON Schema contract and covered by a checksum of the file's exact
   bytes. This repository is the FHT development surface: the FHT 1.0 LinkML
   model, the generated draft fht.json contract (JSON Schema 2020-12, pinned to
-  the shared core snapshot in schemas/provenance.json), the draft examples and
-  the conformance fixtures are developed and served here. FHT is not yet part
+  the shared core snapshot in schemas/provenance.json) and synthetic examples
+  are developed and served here. FHT is not yet part
   of any FAIR-bioHeaders-Specification release; publication and release DOIs
   remain future maintainer actions.
 keywords:
