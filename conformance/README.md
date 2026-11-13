@@ -7,7 +7,8 @@ They apply the shared specification's header and checksum rules
 ([docs/FORMAT.md](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/FORMAT.md)
 R1-R15 on FASTA `;~` headers) and the family schema-selection rules
 ([docs/SCHEMA-VERSIONS.md](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/SCHEMA-VERSIONS.md)
-V1/V4) to transcriptome files, in RNA (U) and cDNA (T) form. The layout and
+V1/V5, as limited by the V7 draft-lane note) to transcriptome files, in RNA
+(U) and cDNA (T) form. The layout and
 the manifest fields mirror the shared suite's `fhp-fasta` vectors so the
 shared `conformance/manifest.json` can absorb these vectors unchanged when
 FHT is published.
@@ -39,7 +40,7 @@ files in an editor; run the generator instead.
 
 ## Rule registry
 
-R1-R15 and V1/V4 carry the summaries of the shared documents (see
+R1-R15 and V1/V5 carry the summaries of the shared documents (see
 `rules` in `manifest.json`; the documents are authoritative). The FHT
 `T` ids are **provisional** — named here because the shared publication
 copy of the FHT format document does not exist yet. Their rule text,
@@ -135,12 +136,12 @@ cited at its recomputed value by the checked-pass vectors.
 | Writer recommendations | escaped `\x3E`/`\x40` (R11), `javascript:` relatedLink kept valid with `warnings: ["R14"]` |
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
 | Contract (T1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
-| Selection (T2, V1, V4) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (T2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V4, `result: unsupported-version`) |
+| Selection (T2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (T2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; the V7 note keeps drafts out of release forms until publication turns them V4) |
 | Parent links (T3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1 |
 
 Counts: 25 valid, 40 invalid, 1 parent fixture. Rule coverage self-check:
 every registered rule except the recommendation/warning/outcome-only rules
-(R11, R14, V4 — each with a recorded `notApplicable` note in the manifest)
+(R11, R14, V5 — each with a recorded `notApplicable` note in the manifest)
 has both a valid and an invalid vector.
 
 ## What these vectors do **not** yet prove
@@ -155,11 +156,26 @@ has both a valid and an invalid vector.
   normalization-rejection vectors); the executable round-trip half waits
   for #9.
 - **No shared publication.** These vectors are not in the shared
-  `conformance/manifest.json` and cite no FHT release URL, because none
-  exists; expected outcomes for the V4 vectors are derived from the
-  SCHEMA-VERSIONS.md rule text against the verified fact that no FHT
-  release exists (registry has no FHT entry; the w3id URL answers 404).
-  **No implementation under test produced any expectation in this
+  `conformance/manifest.json` and cite no resolvable FHT release URL,
+  because none exists (the registry has no FHT entry; the w3id URL answers
+  404, re-verified 2026-11-13). Expected outcomes for the V5 vectors are
+  derived from the SCHEMA-VERSIONS.md rule text, including the V7 note
+  (FAIR-bioHeaders-Specification#221 ruling, Option A, 2026-11-13, merged
+  in `a4278c4622e8a90258fab8fa6c32532613f9bf26`): a release-shaped URL for
+  a type no release registers is "any other value" under V5, read as FHR
+  with the near-miss warning (FAIR-bioHeaders-Tools#125); V4 applies only
+  once FHT enters `schemas/versions.json`. The FHR-invalid outcome was
+  measured, not assumed: the current FHR schema — `fhr.json` at that shared
+  commit, byte-identical to release tag `v0.5.0` (sha256
+  `694ab5afaf8c3743eacf9e2aacb5551f7cbe37073b6f4afc3ae4a65b47f9d4df`) —
+  rejects both records with the same five errors (`'1.0' is not one of
+  ['2.0', '2.1']`; required `genome`, `assemblyAuthor` and `masking`
+  absent; `transcriptome`, `assemblyType`, `moleculeType` match no FHR
+  property or the `x-` pattern), reproduced on 2026-11-13 with jsonschema
+  4.26.0 and confirmed by the released reader `bioheaders verify` from
+  fair-bioheaders 0.10.0, which reports the V5 warning and the schemaVersion
+  rejection for each file. **No implementation under test produced any
+  expectation in this
   directory** — there is no FHT implementation. The generator's own
   reference reader and the runner's independently written reader agreeing
   on every byte is the cross-check this stage can honestly offer.

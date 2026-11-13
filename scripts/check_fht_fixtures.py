@@ -25,9 +25,12 @@ Lanes:
    (finite numbers) are checked by strict parsing before any comparison.
 4. Contract rules. Metadata validates against the generated fht.json
    (Draft 2020-12 dialect with an explicit FormatChecker). Schema selection
-   implements docs/SCHEMA-VERSIONS.md V1/V4 for the FHT reader's actual set:
-   the raw-main development contract, and no FHT release exists, so every
-   FHT release URL is unsupported-version. T3 parent links are verified by
+   implements docs/SCHEMA-VERSIONS.md V1/V5 as limited by the V7 note (the
+   #221 ruling of 2026-11-13) for the FHT reader's actual set: only the
+   raw-main URL selects a contract, and while no release registers FHT every
+   release-form FHT URL is "any other value" under V5 — read as FHR, never
+   the draft and not unsupported-version (V4 begins when FHT enters
+   schemas/versions.json). T3 parent links are verified by
    recomputing the parent file's checksum with this same reader and
    comparing as exact strings (checked-pass / checked-fail / unchecked).
 5. Manifest and inventory. The manifest covers every file on disk and every
@@ -282,16 +285,20 @@ W3ID_TAG = re.compile(re.escape(generator.W3ID) + r"fht/v\d+\.\d+\.\d+/?$")
 
 
 def schema_selection(record):
-    """docs/SCHEMA-VERSIONS.md V1/V4 applied to FHT. The reader's schema set
-    is the raw-main development contract; no FHT release exists, so every
-    release-form URL resolves to unsupported-version. Returns one of
-    'current', 'unsupported-version', 'other'."""
+    """docs/SCHEMA-VERSIONS.md V1/V5 (as limited by V7) applied to FHT. The
+    reader's schema set is the raw-main development contract; no release
+    registers FHT, so a release-form FHT URL selects nothing FHT — under V5
+    it is "any other value", read as FHR with the near-miss warning, and V4
+    unsupported-version never applies before publication. Returns one of
+    'current', 'other-fhr' (V5: a value routed to the current FHR schema),
+    'near-miss-fhr' (a release-form FHT URL: also V5, plus the reader's
+    near-miss warning per FAIR-bioHeaders-Tools#125)."""
     value = record.get("schema") if isinstance(record, dict) else None
     if value == RAW_MAIN:
         return "current"
     if RAW_TAG.match(value or "") or W3ID_TAG.match(value or ""):
-        return "unsupported-version"
-    return "other"
+        return "near-miss-fhr"
+    return "other-fhr"
 
 
 def schema_errors(record):
@@ -410,7 +417,7 @@ def read_vector(entry):
 
 def lane_vectors(vectors):
     counts = {"valid": 0, "invalid": 0, "rejected-by-shape": 0,
-              "rejected-by-schema": 0, "rejected-by-selection": 0,
+              "rejected-by-schema": 0, "rejected-by-fhr": 0,
               "rejected-by-link": 0}
     for entry in vectors:
         label = entry["id"]
@@ -502,9 +509,10 @@ def reject_reason(entry, data):
     """Where this reader rejects an invalid vector, per its declared rule.
 
     Returns 'shape' (header/checksum-text rules), 'schema' (fht.json),
-    'selection' (V4 unsupported-version), 'link' (T3) — or None when the
-    vector is accepted, which is a manifest/fixture bug for anything but the
-    T3 case handled in check_expected_invalid."""
+    'fhr' (V5: routed to the current FHR schema, where the record's bytes
+    are rejected — never the draft and not V4, per the V7 note), 'link' (T3)
+    — or None when the vector is accepted, which is a manifest/fixture bug
+    for anything but the T3 case handled in check_expected_invalid."""
     rule = entry["rule"]
     try:
         record = parse_metadata(data)
@@ -526,10 +534,17 @@ def reject_reason(entry, data):
     if rule == "R10":
         return "shape"
     selection = schema_selection(record)
-    if entry.get("result") == "unsupported-version":
-        if selection != "unsupported-version":
+    if entry.get("result") == "invalid-as-fhr":
+        # V5 routing under the V7 note: the release-form URL selects nothing
+        # FHT — the record is read against the reader's current FHR schema
+        # and rejected there by its own bytes (conformance/README.md pins
+        # the exact fhr.json and the rejections measured from it). This
+        # reader proves the routing side: the value must be the FHT near-
+        # miss, and the FHT contract itself must not reject the record, so
+        # only the FHR reading can.
+        if selection != "near-miss-fhr":
             return None
-        return "selection" if not schema_errors(record) else None
+        return "fhr" if not schema_errors(record) else None
     if rule in {"T1", "T2", "V1", "R15"}:
         return "schema" if schema_errors(record) else None
     if rule == "T3":
@@ -595,7 +610,7 @@ def main(argv=None):
     print(f"\nchecked {counts['valid']} valid and {counts['invalid']} invalid "
           f"vectors; rejections: {counts.get('rejected-by-shape', 0)} shape, "
           f"{counts.get('rejected-by-schema', 0)} schema, "
-          f"{counts.get('rejected-by-selection', 0)} selection, "
+          f"{counts.get('rejected-by-fhr', 0)} fhr-routed (V5), "
           f"{counts.get('rejected-by-link', 0)} parent-link")
     if FAILURES:
         print(f"\n{len(FAILURES)} failure(s)")

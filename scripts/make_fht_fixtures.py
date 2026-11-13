@@ -51,9 +51,12 @@ DEFAULT_CONFORMANCE = ROOT / "conformance"
 DEFAULT_EXAMPLES = ROOT / "examples"
 MANIFEST_VERSION = 1
 
-# Until an FHT release exists (issue #10), raw main is the only resolvable
-# FHT schema citation, which is what makes every FHT release URL an
-# unsupported-version (V4) case.
+# Until an FHT release exists (issue #10), raw main is the only schema
+# citation that selects an FHT contract. Per the V7 note in shared
+# docs/SCHEMA-VERSIONS.md (FAIR-bioHeaders-Specification#221 ruling, Option A,
+# 2026-11-13), a release-form FHT URL is then "any other value" under V5 —
+# read as FHR, near-miss warning included (FAIR-bioHeaders-Tools#125); V4
+# unsupported-version begins only when FHT enters schemas/versions.json.
 RAW_MAIN = ("https://raw.githubusercontent.com/"
             "FAIR-bioHeaders/FHT-Specification/main/fht.json")
 RAW_FHT = "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/"
@@ -133,10 +136,11 @@ MINIMAL_BODY = [
 
 # ------------------------------------------------------------------ rules ---
 # R1-R15 are the shared docs/FORMAT.md rules (summaries mirror the shared
-# conformance manifest; the rule text there is authoritative). V1/V4 come
-# from shared docs/SCHEMA-VERSIONS.md. T1-T3 are provisional FHT rule ids for
-# this development contract; conformance/README.md states their text until
-# the shared publication copy of the FHT format document names them.
+# conformance manifest; the rule text there is authoritative). V1 and V5 (as
+# limited by the V7 note) come from shared docs/SCHEMA-VERSIONS.md. T1-T3 are
+# provisional FHT rule ids for this development contract; conformance/
+# README.md states their text until the shared publication copy of the FHT
+# format document names them.
 RULES = {
     "R1": "Checksum rule 1: hash the exact file bytes without normalization; "
           "for gzip/BGZF input, the decompressed bytes. A line ends at LF, CRLF or "
@@ -177,9 +181,14 @@ RULES = {
            "every other unknown key and an x- key in a nested object stay invalid.",
     "V1": "Schema selection: the raw-main FHT schema URL selects the reader's current "
           "FHT schema (here the 1.0 development contract).",
-    "V4": "Schema selection: a cited release the reader does not have, or that "
-          "published no FHT schema, is unsupported-version; the file is not checked "
-          "against another schema.",
+    "V5": "Schema selection: any schema value outside the recognized released-"
+          "schema URLs is FHR, checked against the reader's current FHR schema; "
+          "a near-miss URL additionally draws the reader's warning "
+          "(FAIR-bioHeaders-Tools#125). While no release registers FHT, its "
+          "release-form URLs (an fht w3id URL, an FHT-Specification raw tag) "
+          "are such values — the V7 draft lane is the owning development "
+          "repository's raw-main URL only — and V4 unsupported-version begins "
+          "only when FHT enters schemas/versions.json.",
     "T1": "FHT (provisional; text in conformance/README.md): the parsed header "
           "metadata must validate against fht.json — required fields, enums, "
           "patterns, nested cardinality and the closed top level (plus R15 "
@@ -199,8 +208,12 @@ NOT_APPLICABLE = {
            "and validators warn; the shared suite likewise has no invalid R11 vector.",
     "R14": "R14 makes validators warn, not reject: an unexpected link scheme is "
            "schema-valid. Its valid vector carries \"warnings\": [\"R14\"].",
-    "V4": "V4 describes an outcome for citations the reader cannot resolve; with no "
-          "FHT release, no valid vector cites a release URL, so V4 has no valid side.",
+    "V5": "V5 outcomes depend on the record's bytes; no record that is valid "
+          "against the FHT contract can be FHR-valid (FHT states schemaVersion "
+          "'1.0', which the current FHR schema rejects, and the required field "
+          "sets are disjoint), so V5 has no valid side here. V4 is not "
+          "registered as a rule of this suite at all: with no FHT row in "
+          "schemas/versions.json there is no citation it can resolve to.",
 }
 
 # ------------------------------------------------------------- emission ----
@@ -949,7 +962,7 @@ def build_vectors():
                        "T1", "relationship annotates with an FHR parent: the FHR "
                        "pair must use transcribedFrom (FR-007).")
 
-    # ---- invalid: schema selection (T2, V1, V4) -----------------------------------
+    # ---- invalid: schema selection (T2, V1, V5) -----------------------------------
     fht_invalid_record("fht-fasta-cites-fhr-schema", record_of(schema=FHR_RAW_MAIN),
                        "T2", "Citing the FHR raw-main schema URL: the FHT "
                        "contract's schema pattern rejects it, and a reader that "
@@ -977,20 +990,36 @@ def build_vectors():
             "contract requires the string '1.0' (docs/SCHEMA-VERSIONS.md quotes "
             "it for exactly this reason).", "matches")
     fht_invalid_record("fht-fasta-schema-w3id-release-without-fht",
-                       record_of(schema=W3ID + "fht/v0.5.0"), "V4",
-                       "fair-bioheaders v0.5.0 published no FHT schema (the w3id "
-                       "URL is a 404 and the release registry has no FHT entry); "
-                       "the result is unsupported-version — not a check against "
-                       "another schema and not a silent fallback to raw main.")
-    INVALID[-1]["result"] = "unsupported-version"
-    INVALID[-1]["metadata"] = None  # the record itself is fht.json-valid
+                       record_of(schema=W3ID + "fht/v0.5.0"), "V5",
+                       "No release registers FHT, so this release-form w3id URL "
+                       "matches no V1-V3 form (matching is exact) and stays 'any "
+                       "other value' under V5 — read as FHR against the reader's "
+                       "current FHR schema, near-miss warning included "
+                       "(FAIR-bioHeaders-Tools#125), never as the draft: the V7 "
+                       "lane is the raw-main URL only (ruling of 2026-11-13, "
+                       "FAIR-bioHeaders-Specification#221). From the record's "
+                       "bytes the FHR reading rejects it: schemaVersion '1.0' is "
+                       "outside FHR's accepted set; required genome, "
+                       "assemblyAuthor and masking are absent; transcriptome, "
+                       "assemblyType and moleculeType breach FHR's closed top "
+                       "level (schema bytes pinned in conformance/README.md). "
+                       "V4 unsupported-version begins only when FHT enters "
+                       "schemas/versions.json.")
+    INVALID[-1]["result"] = "invalid-as-fhr"
     fht_invalid_record("fht-fasta-schema-raw-tag-unknown",
-                       record_of(schema=RAW_FHT + "v9.9.9/fht.json"), "V4",
-                       "A raw tag URL for a release that does not exist: "
-                       "unsupported-version (V4), even though the URL matches the "
-                       "FHT schema pattern.")
-    INVALID[-1]["result"] = "unsupported-version"
-    INVALID[-1]["metadata"] = None
+                       record_of(schema=RAW_FHT + "v9.9.9/fht.json"), "V5",
+                       "A raw tag URL of the FHT development repository names "
+                       "no registered release; the V7 lane admits only the raw-"
+                       "main URL, so this value is likewise 'any other value' "
+                       "under V5 — read as FHR with the near-miss warning "
+                       "(Tools#125), not V4 unsupported-version (FAIR-bioHeaders-"
+                       "Specification#221 ruling, 2026-11-13). It carries the "
+                       "same record bytes as fht-fasta-schema-w3id-release-"
+                       "without-fht and meets the same FHR-invalid outcome; the "
+                       "URL matching the FHT schema pattern no longer buys a "
+                       "selection result (conformance/README.md pins the checked "
+                       "FHR schema bytes).")
+    INVALID[-1]["result"] = "invalid-as-fhr"
 
     # ---- invalid: parent link mismatch (T3) ----------------------------------------
     wrong = swap_first_different(genome_checksum)
@@ -1235,7 +1264,7 @@ def manifest():
                          "Specification/blob/main/docs/FORMAT.md (rules R1-R15)",
         "schemaVersionsSpecification": "https://github.com/FAIR-bioHeaders/"
                                        "FAIR-bioHeaders-Specification/blob/main/"
-                                       "docs/SCHEMA-VERSIONS.md (rules V1, V4)",
+                                       "docs/SCHEMA-VERSIONS.md (rules V1, V5, V7)",
         "fhtContract": "fht.json — the generated FHT 1.0 development schema "
                        "(specs/005-rna-transcriptome-header/spec.md)",
         "fhtRuleText": "conformance/README.md (T1-T3 are provisional ids)",
