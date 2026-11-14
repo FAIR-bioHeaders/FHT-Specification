@@ -201,8 +201,8 @@ RULES = {
           "an FHT w3id URL). Another type's schema or an arbitrary URL fails "
           "fht.json; it never silently selects the FHT schema.",
     "C3": "FHT development contract (text in conformance/README.md): a derivedFrom parent "
-          "checksum must equal the checksum recomputed over the supplied parent file's "
-          "bytes, per link; a mismatch is an invalid link (checked-fail), and a parent "
+          "checksum must equal the checksum recomputed over the supplied parent "
+          "file's bytes; a mismatch is an invalid link (checked-fail), and a parent "
           "that was not supplied makes the link unchecked, never verified.",
 }
 # Rules that cannot have an invalid (or valid) vector by their nature.
