@@ -112,6 +112,15 @@ contract link, not an immutable version. Keep supported old-name URL aliases and
 published example/vector bytes intact. Exact file checksum coverage follows
 `docs/FORMAT.md`; SeqCol identifies sequence collections and is not a file checksum.
 
+The selection rules in `docs/SCHEMA-VERSIONS.md` are currently V1 to V7. V7
+(FAIR-bioHeaders-Specification#226, merged 2026-11-13) adds an opt-in reader lane
+for unreleased draft contracts: a draft is cited as the raw-main URL of the
+development repository that owns the type, is recognised only where the reader
+explicitly chose that lane, is revision-pinned by commit and SHA-256 digest,
+warns on every record read through it, and never takes a release form. Default
+behavior is unchanged and V1 to V6 keep their text and their outcomes; reading a
+draft through the lane is recognition, not adoption.
+
 ## Using FAIR-bioHeaders in another project
 
 For assistants and people adding FAIR-bioHeaders headers to data elsewhere (summary in
@@ -122,8 +131,8 @@ For assistants and people adding FAIR-bioHeaders headers to data elsewhere (summ
   `bioheaders verify` checks it; `bioheaders strip` removes it. Never write or edit a
   checksum by hand. The Claude Code plugin in FAIR-bioHeaders-Tools
   (`plugins/fair-bioheaders`) packages these steps as a skill.
-- Cite a versioned schema in `schema` (`https://w3id.org/fair-bioheaders/fhr/v0.5.0`,
-  `.../fhp/v0.5.0`, `.../fhgff3/v0.5.0`) with its `schemaVersion` from
+- Cite a versioned schema in `schema` (`https://w3id.org/fair-bioheaders/fhr/v0.6.0`,
+  `.../fhp/v0.6.0`, `.../fhgff3/v0.6.0`) with its `schemaVersion` from
   `schemas/versions.json`. Required fields are in `fhr.json`, `fhp.json` and
   `fhgff3.json`; never invent values for them.
 - Strict FASTA readers (samtools faidx and the rest of htslib, Picard, Biopython's default
