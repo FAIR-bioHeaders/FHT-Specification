@@ -31,15 +31,19 @@ process), not something this development tree can establish.
 
 FHT imports the shared core and shared objects from the FAIR-bioHeaders
 Specification repository at commit
-`980029e5886a1a56a2d2545bfe59c7107539d38d`, the same baseline recorded in
-`specs/fht-field-decisions.md`. The copies in `schemas/` are verbatim:
+`0ae18b00ee4bd71ab2dc28bae706b0f9d195076b`, the `v0.6.0` release. The design
+decisions recorded in `specs/fht-field-decisions.md` were made against
+`980029e5886a1a56a2d2545bfe59c7107539d38d` (v0.4.0/v0.4.1); between the two,
+shared #170 widened the `lineageDataset` pattern, released in v0.6.0, and the
+core file is unchanged. The copies in `schemas/` are verbatim:
 
 | File | Source path | Role |
 | --- | --- | --- |
 | `schemas/core-v0.4.yaml` | `schemas/core.yaml` | Required/optional core slots, `Taxon`, `Author`, `DerivedFrom`, `HeaderType`, `DerivationRelationship` |
 | `schemas/shared.yaml` | `schemas/shared.yaml` | `Software` and BUSCO `Completeness` objects |
 
-The files are byte-identical at v0.4.0, v0.4.1 and the pinned commit. Their
+`schemas/core.yaml` is byte-identical at v0.4.0, v0.4.1, v0.5.0, v0.6.0 and
+the pinned commit; `schemas/shared.yaml` is the v0.6.0 file. Their
 SHA-256 digests are recorded in [`schemas/provenance.json`](../schemas/provenance.json)
 and checked by `scripts/check_provenance.py`. Replace them from a reviewed
 release; do not edit them here.
@@ -158,11 +162,12 @@ ortholog groups, not FASTA records or genes; `total` is the number of BUSCO
 groups searched. Only `vitalStats.totalTranscripts` counts FASTA records. BUSCO
 is not a quality cutoff.
 
-The shared lineage pattern currently accepts `_odb` plus digits. Dotted dataset
-versions such as `odb12.2` are **not renamed** to pass it; that shared grammar
-is tracked in FAIR-bioHeaders-Specification#170. Until it changes, a dotted
-lineage cannot be represented in the typed object — keep the measured value in
-`documentation` rather than falsifying the lineage.
+The shared lineage pattern accepts `_odb` plus digits and, since
+FAIR-bioHeaders-Specification#170 at v0.6.0, one or more dot-separated numeric
+version components such as `odb12.2`. A measured lineage is **not renamed or
+coerced** to fit the pattern; malformed forms (`odb12.`, `odb.12`, `odb12..2`,
+`odb12.2b`) stay rejected. If a measured value cannot be represented in the
+typed object, keep it in `documentation` rather than falsifying the lineage.
 
 ## Legacy migration (fht.json v0.1 → FHT 1.0)
 

@@ -1,8 +1,8 @@
 {
   "description": "Pinned shared LinkML imports for the FHT development contract. The files are copied verbatim from FAIR-bioHeaders-Specification and must be replaced from a reviewed release, not edited by hand.",
   "source_repository": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification",
-  "source_commit": "980029e5886a1a56a2d2545bfe59c7107539d38d",
-  "source_release": "v0.4.0/v0.4.1 (schemas/core.yaml and schemas/shared.yaml are identical at both tags and at the pinned commit)",
+  "source_commit": "0ae18b00ee4bd71ab2dc28bae706b0f9d195076b",
+  "source_release": "v0.6.0 (tag commit 0ae18b0). schemas/core.yaml is byte-identical at v0.4.0, v0.5.0, v0.6.0 and the pinned commit, so the stored core-v0.4.yaml copy is unchanged; schemas/shared.yaml is the v0.6.0 model with the #170 widened lineageDataset pattern",
   "files": {
     "schemas/core-v0.4.yaml": {
       "source_path": "schemas/core.yaml",
@@ -10,7 +10,7 @@
     },
     "schemas/shared.yaml": {
       "source_path": "schemas/shared.yaml",
-      "sha256": "0e7e08d52c739cf245ed76093f22b6f37d6d6e4c4db76b1007619d60ef6a1043"
+      "sha256": "19afd1d83a6728f5ca9084878adca80a00d61399e2f5854854053eed8cf1d209"
     }
   }
 }

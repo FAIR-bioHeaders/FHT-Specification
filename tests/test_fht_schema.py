@@ -360,23 +360,41 @@ class FhtSchemaTests(unittest.TestCase):
             "less than the minimum",
         )
 
-    def test_dotted_busco_lineage_is_preserved_not_coerced(self):
-        # Shared #170 owns the dotted-version grammar. Until it changes, a dotted
-        # lineage is rejected rather than renamed; keep the measured value in
-        # documentation instead of "fixing" it.
-        self.assert_invalid(
-            self.record(
-                completeness={
-                    "lineageDataset": "insecta_odb12.2",
-                    "completeSingle": 1,
-                    "completeDuplicated": 0,
-                    "fragmented": 0,
-                    "missing": 0,
-                    "total": 1,
-                }
-            ),
-            "does not match",
-        )
+    def test_dotted_busco_lineage_follows_the_shared_grammar(self):
+        # Shared #170 decided dotted versions at v0.6.0: the pinned shared
+        # pattern now accepts one or more dot-separated numeric components.
+        # Malformed dot forms stay rejected, and a measured lineage is never
+        # renamed or coerced to fit the pattern.
+        for dataset in ("insecta_odb12.2", "insecta_odb12.2.1"):
+            with self.subTest(lineageDataset=dataset):
+                self.assert_valid(
+                    self.record(
+                        completeness={
+                            "lineageDataset": dataset,
+                            "completeSingle": 1,
+                            "completeDuplicated": 0,
+                            "fragmented": 0,
+                            "missing": 0,
+                            "total": 1,
+                        }
+                    )
+                )
+        for dataset in ("insecta_odb12.", "insecta_odb.12", "insecta_odb12..2",
+                        "insecta_odb12.2b", "Insecta_odb12.2"):
+            with self.subTest(lineageDataset=dataset):
+                self.assert_invalid(
+                    self.record(
+                        completeness={
+                            "lineageDataset": dataset,
+                            "completeSingle": 1,
+                            "completeDuplicated": 0,
+                            "fragmented": 0,
+                            "missing": 0,
+                            "total": 1,
+                        }
+                    ),
+                    "does not match",
+                )
 
     def test_date_created_is_an_iso_date(self):
         self.assert_invalid(self.record(dateCreated="2026-10-24T12:00:00"), "is not a 'date'")
