@@ -27,7 +27,7 @@ echo '== 2. decompress (expect 2247394312 bytes) =='
 echo 9100ebee1c0169a656660cc679d044f1b210ea13f8296e37ef3ef8c42fea35ba\  "$F"_genomic.fna | shasum -a 256 -c -
 
 echo '== 3. combine with the released toolkit (checksum is computed, never written by hand) =='
-BH=${PYTHON_VENV:-.venv-pilot}/bin/bioheaders
+BH=$PYTHON_VENV/bin/bioheaders
 "$BH" --version
 "$BH" combine "$BASE"/pilot/metadata.fhr.yaml "$F"_genomic.fna -o "$F".fhr.fasta
 
