@@ -43,7 +43,7 @@ assemblyAuthor:
   - name: Scott M Geib
     uri: https://orcid.org/0000-0002-9511-5139
     nameType: Personal
-dateCreated: '2026-11-14'
+dateCreated: '2023-05-16'
 documentation: >-
   FAIR-bioHeaders FHR pilot for the two-lined spittlebug reference genome
   (Prosapia bicincta, isolate DM-2020), assembled with HiFiASM v. 0.16.0-r369
