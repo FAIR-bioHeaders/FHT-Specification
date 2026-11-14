@@ -32,9 +32,6 @@ FAIR-bioHeaders-Specification#107, the #55 chain's "lane F").
   `selfChecksum` and `parentLink` are **finalized** for release (maintainer
   decision 2026-11-14, issue #37; semantics below), while the top-level
   `status` label remains provisional pending shared absorption.
-  three fields are **provisional** pending shared absorption:
-  `selfChecksum` (`matches` / `broken` / `unreachable`, per invalid vector),
-  `parentLink` (C3 scenario per vector) and `status` (top-level).
 - `*.gz`: gzip or BGZF copies; validate their decompressed bytes.
 
 Every file is byte-exact. The repository `.gitattributes` turns off
