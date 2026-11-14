@@ -114,7 +114,9 @@ exercise C3 (6):
   neither verified nor a rejection reason.
 - `checked-pass` / `checked-fail` require a named parent file inside this
   directory; `statedChecksum` is compared to its recomputed checksum as an
-  exact string.
+  exact string. The runner enforces this containment by resolution: a
+  parentLink path that escapes `conformance/` (via `../` segments or an
+  absolute location) is rejected without being read.
 - The verdict is **per entry**: one record may carry both outcomes and the
   checked-fail entry drives rejection
   (`fht-fasta-parent-mixed-verdicts`).
