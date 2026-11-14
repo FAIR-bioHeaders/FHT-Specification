@@ -6,7 +6,7 @@ per-vector report CI shows); this test imports and runs its ``main()`` so
 .github/workflows/validate-specification.yml — also covers the #8 fixture
 lanes: regeneration determinism, the independent R1-R5 checksum reader, the
 strict header-text rules, fht.json contract validation, V1/V5 schema
-selection (with the V7 draft-lane note), T3 parent-link outcomes and the
+selection (with the V7 draft-lane note), C3 parent-link outcomes and the
 examples recomputation.
 
 See conformance/README.md for what these vectors do and do not prove (no

@@ -23,14 +23,14 @@ FAIR-bioHeaders-Specification#107, the #55 chain's "lane F").
 - `valid/`: files a conforming implementation must accept.
 - `invalid/`: files it must reject.
 - `parents/`: one synthetic FHR-headed parent genome (a byte target for the
-  T3 link vectors; it is not itself an FHR conformance vector).
+  C3 link vectors; it is not itself an FHR conformance vector).
 - `manifest.json`: the expected outcome for every file. Field names and
   semantics follow the shared manifest (`id`, `file`, `format`, `compressed`,
   `expected`, `rules`, `description`, `checksum`, `metadata`, `rule`,
   `reason`, `result`, `retired`), the proposed format id is `fht-fasta`, and
   three fields are **provisional** pending shared absorption:
   `selfChecksum` (`matches` / `broken` / `unreachable`, per invalid vector),
-  `parentLink` (T3 scenario per vector) and `status` (top-level).
+  `parentLink` (C3 scenario per vector) and `status` (top-level).
 - `*.gz`: gzip or BGZF copies; validate their decompressed bytes.
 
 Every file is byte-exact. The repository `.gitattributes` turns off
@@ -41,12 +41,16 @@ files in an editor; run the generator instead.
 ## Rule registry
 
 R1-R15 and V1/V5 carry the summaries of the shared documents (see
-`rules` in `manifest.json`; the documents are authoritative). The FHT
-`T` ids are **provisional** — named here because the shared publication
-copy of the FHT format document does not exist yet. Their rule text,
-derived from the merged contract, is:
+`rules` in `manifest.json`; the documents are authoritative). FHT's own
+rules are **C1-C3** — the letter scheme of the shared suite (one uppercase
+letter plus number), with `C` for the development **contract** rules; `C` is
+unassigned in every federation conformance namespace (the shared manifest
+registers R, V, M, G, J and P). They replaced the provisional `T1-T3`
+before external citation (issue #36; the old labels were additionally
+ambiguous with the RNA-U/cDNA-T notation this suite uses throughout). Their
+rule text, derived from the merged contract, is:
 
-- **[T1] Contract validation.** The metadata parsed from a `;~` header must
+- **[C1] Contract validation.** The metadata parsed from a `;~` header must
   validate against `fht.json` (draft 2020-12, asserted `format`s): the nine
   required fields (`schema`, `schemaVersion` `"1.0"`, `transcriptome`,
   `assemblyType`, `taxon`, `version`, `metadataAuthor`, `dateCreated`,
@@ -56,13 +60,13 @@ derived from the merged contract, is:
   taxon URI, DOI); nested cardinality (`sample` items need one value,
   optional arrays non-empty when present); the closed top level plus the
   `x-` extension pattern; and only the two permitted parent pairs (FR-007).
-- **[T2] Schema-URL closure.** A record's `schema` value must match the
+- **[C2] Schema-URL closure.** A record's `schema` value must match the
   FHT URL pattern: this repository's raw `main` URL, one of its release-tag
   URLs, or a `https://w3id.org/fair-bioheaders/fht/vX.Y.Z` URL. Unlike
   released FHR (selection rule V5 leaves its `schema` open), an arbitrary
   URL or another type's schema URL fails the contract; it never silently
   selects the FHT schema.
-- **[T3] Parent-link verification.** A `derivedFrom` item's `checksum` is
+- **[C3] Parent-link verification.** A `derivedFrom` item's `checksum` is
   the parent file's FHR-family checksum under R1-R5. A reader that has the
   parent file must recompute it and compare as exact strings: equal is
   **checked-pass**, different is **checked-fail** and must be reported as
@@ -135,9 +139,9 @@ cited at its recomputed value by the checked-pass vectors.
 | Header text (R6-R8, R10, R12/R13) | ordinary comments/blank lines incl. `;~#` and a post-record `;` comment, raw UTF-8 value; rejections: U+2028 (R6), BOM (R7), duplicate key and anchor/alias (R8), `;~` after record and concatenation (R10), `011` (R12), `.inf` (R13) |
 | Writer recommendations | escaped `\x3E`/`\x40` (R11), `javascript:` relatedLink kept valid with `warnings: ["R14"]` |
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
-| Contract (T1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
-| Selection (T2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (T2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
-| Parent links (T3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1 |
+| Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
+| Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
+| Parent links (C3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1 |
 
 Counts: 25 valid, 40 invalid, 1 parent fixture. Rule coverage self-check:
 every registered rule except the recommendation/warning/outcome-only rules
@@ -191,8 +195,9 @@ When FHT is published through the #55 chain
    manifest entries into the shared `conformance/` tree; the format id
    `fht-fasta` slots beside `fhp-fasta`.
 2. Retire the provisional fields: fold `selfChecksum` and `parentLink`
-   into whatever the shared manifest schema formalizes at that point, and
-   give T1-T3 their published rule ids in the shared FHT format document.
+   into whatever the shared manifest schema formalizes at that point;
+   C1-C3 already follow the shared rule-label scheme (#36) and carry over
+   as the rule ids of the shared FHT format document.
 3. Re-point the `schema` URL: vectors currently cite this repository's
    raw-main URL (the only contract that exists). At release, the same
    bytes move to a new `fht-fasta-schema-*` vector set citing the w3id

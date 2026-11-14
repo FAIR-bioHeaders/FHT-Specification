@@ -4,7 +4,7 @@
   "specification": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/FORMAT.md (rules R1-R15)",
   "schemaVersionsSpecification": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/SCHEMA-VERSIONS.md (rules V1, V5, V7)",
   "fhtContract": "fht.json \u2014 the generated FHT 1.0 development schema (specs/005-rna-transcriptome-header/spec.md)",
-  "fhtRuleText": "conformance/README.md (T1-T3 are provisional ids)",
+  "fhtRuleText": "conformance/README.md (C1-C3; renamed from the provisional T1-T3 in FHT-Specification#36)",
   "checksumDefinition": "base64(SHA-512/256) over the (decompressed) file bytes except the root-level checksum line and its terminator (docs/FORMAT.md R1-R5); written by scripts/make_fht_fixtures.py and cross-checked by scripts/check_fht_fixtures.py",
   "generator": "scripts/make_fht_fixtures.py",
   "rules": {
@@ -59,14 +59,14 @@
       "summary": "Schema selection: any schema value outside the recognized released-schema URLs is FHR, checked against the reader's current FHR schema; a near-miss URL additionally draws the reader's warning (FAIR-bioHeaders-Tools#125). While no release registers FHT, its release-form URLs (an fht w3id URL, an FHT-Specification raw tag) are such values \u2014 the V7 draft lane is the owning development repository's raw-main URL only \u2014 and V4 unsupported-version begins only when FHT enters schemas/versions.json.",
       "notApplicable": "V5 outcomes depend on the record's bytes; no record that is valid against the FHT contract can be FHR-valid (FHT states schemaVersion '1.0', which the current FHR schema rejects, and the required field sets are disjoint), so V5 has no valid side here. V4 is not registered as a rule of this suite at all: with no FHT row in schemas/versions.json there is no citation it can resolve to."
     },
-    "T1": {
-      "summary": "FHT (provisional; text in conformance/README.md): the parsed header metadata must validate against fht.json \u2014 required fields, enums, patterns, nested cardinality and the closed top level (plus R15 extension keys)."
+    "C1": {
+      "summary": "FHT development contract (text in conformance/README.md): the parsed header metadata must validate against fht.json \u2014 required fields, enums, patterns, nested cardinality and the closed top level (plus R15 extension keys)."
     },
-    "T2": {
-      "summary": "FHT (provisional; text in conformance/README.md): a record's schema value must be a URL the FHT contract accepts (raw main, an FHT release tag or an FHT w3id URL). Another type's schema or an arbitrary URL fails fht.json; it never silently selects the FHT schema."
+    "C2": {
+      "summary": "FHT development contract (text in conformance/README.md): a record's schema value must be a URL the FHT contract accepts (raw main, an FHT release tag or an FHT w3id URL). Another type's schema or an arbitrary URL fails fht.json; it never silently selects the FHT schema."
     },
-    "T3": {
-      "summary": "FHT (provisional; text in conformance/README.md): a derivedFrom parent checksum must equal the checksum recomputed over the supplied parent file's bytes; a mismatch is an invalid link (checked-fail), and a parent that was not supplied makes the link unchecked, never verified."
+    "C3": {
+      "summary": "FHT development contract (text in conformance/README.md): a derivedFrom parent checksum must equal the checksum recomputed over the supplied parent file's bytes; a mismatch is an invalid link (checked-fail), and a parent that was not supplied makes the link unchecked, never verified."
     }
   },
   "vectors": [
@@ -77,7 +77,7 @@
       "compressed": false,
       "expected": "valid",
       "rules": [
-        "T1",
+        "C1",
         "R1",
         "R2",
         "R3",
@@ -174,7 +174,7 @@
       "compressed": false,
       "expected": "valid",
       "rules": [
-        "T1",
+        "C1",
         "R1"
       ],
       "description": "cDNA representation (T alphabet) of the same synthetic set: coverage is alphabet-independent (FR-006) and the supplied T bytes are preserved, not converted to U.",
@@ -192,7 +192,7 @@
       "compressed": false,
       "expected": "valid",
       "rules": [
-        "T1"
+        "C1"
       ],
       "description": "Exactly the nine required fields (FR-001); no optional field is defaulted or written null.",
       "checksum": "pjrV6TbP1evu4BPuWQS4nKUvwtr4FAN4EuuqtaJW4mA=",
@@ -316,7 +316,7 @@
       "rules": [
         "R2",
         "R3",
-        "T1"
+        "C1"
       ],
       "description": "A root checksum line plus the indented nested parent checksum under derivedFrom: only the root line is excluded; the nested checksum is covered metadata (R2).",
       "checksum": "/u0FOiLGjCmd4g+iqDhrTAHzUoEw/idh3/ImGL0QtmQ=",
@@ -334,7 +334,7 @@
       "expected": "valid",
       "rules": [
         "R11",
-        "T1"
+        "C1"
       ],
       "description": "A header value holding '>' and '@' written as \\x3E and \\x40 in a double-quoted scalar; it reads back with the real characters.",
       "checksum": "IQGWTyyfrAMyxbAoBvdbkMyGY8nN8jCjKJb/ijh4BeY=",
@@ -353,7 +353,7 @@
       "expected": "valid",
       "rules": [
         "R6",
-        "T1"
+        "C1"
       ],
       "description": "Raw non-ASCII UTF-8 (U+00E9) in a header value is allowed; only U+0085, U+2028 and U+2029 are excluded from header lines.",
       "checksum": "+zrshU+usPmCfzXH/vvVJk1LzC9R4GEzsL6SQbqEhLs=",
@@ -372,7 +372,7 @@
       "expected": "valid",
       "rules": [
         "R15",
-        "T1"
+        "C1"
       ],
       "description": "Top-level x- extension fields of every JSON type (FR-010, R15): string, integer, number, boolean, list (with null) and object.",
       "checksum": "mWc298KrEnEn9ZbjvjuQQGnmJUnJicffHmBrusQVJq0=",
@@ -390,7 +390,7 @@
       "expected": "valid",
       "rules": [
         "R14",
-        "T1"
+        "C1"
       ],
       "description": "A relatedLink URI with a non-link scheme stays schema-valid; validators warn (R14).",
       "checksum": "IGvy+HmJDIh7tJ9WUXx+4WCnjbLnqL7MTS2TSRnQWKo=",
@@ -450,7 +450,7 @@
       "expected": "valid",
       "rules": [
         "V1",
-        "T2"
+        "C2"
       ],
       "description": "The raw-main FHT schema URL with schemaVersion '1.0' selects the reader's current FHT contract \u2014 today the 1.0 development schema. The bytes are those of fht-fasta-lf under a stable V1 vector id.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
@@ -469,8 +469,8 @@
       "compressed": false,
       "expected": "valid",
       "rules": [
-        "T1",
-        "T3"
+        "C1",
+        "C3"
       ],
       "description": "A transcribedFrom FHR parent: the supplied parents/parent-genome.fhr.fasta recomputes to exactly the cited checksum (checked-pass). The accessionID is additional, not a substitute.",
       "checksum": "4rH9yZLqholGSGWwFjZMsU2FbqhBHu1/cBI/Ag+9c/A=",
@@ -494,8 +494,8 @@
       "compressed": false,
       "expected": "valid",
       "rules": [
-        "T1",
-        "T3"
+        "C1",
+        "C3"
       ],
       "description": "A filteredFrom FHT parent whose file is the fht-fasta-minimal vector, cited by its recomputed checksum (checked-pass).",
       "checksum": "lJBFzlPaMmaSXWlP1SoLWuPwEIQheAKjfU6ERd1sgFY=",
@@ -519,8 +519,8 @@
       "compressed": false,
       "expected": "valid",
       "rules": [
-        "T1",
-        "T3"
+        "C1",
+        "C3"
       ],
       "description": "A well-formed parent checksum whose parent file was not supplied: the record is valid and the link is unchecked \u2014 a reader must not report it verified and must not reject the record for the absent parent.",
       "checksum": "/u0FOiLGjCmd4g+iqDhrTAHzUoEw/idh3/ImGL0QtmQ=",
@@ -544,10 +544,10 @@
       "compressed": false,
       "expected": "valid",
       "rules": [
-        "T1",
+        "C1",
         "R13",
         "R15",
-        "T3"
+        "C3"
       ],
       "description": "Every optional FHT field; vitalStats are genuinely computed from the vector's own sequence bytes; both permitted parent relationships cite the supplied parent fixtures' recomputed checksums (checked-pass); one extension field.",
       "checksum": "j35ZPDrXrJ0nn8RFYKzczaqhbk43IWKRzbdyn3FLAIM=",
@@ -847,7 +847,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "The required assemblyType field is absent.",
       "selfChecksum": "matches",
       "metadata": {
@@ -876,7 +876,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "assemblyType hybrid is not an FHT value (de novo, genome-guided, annotation-derived).",
       "selfChecksum": "matches",
       "metadata": {
@@ -906,7 +906,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "moleculeType cDNA is not an FHT value: cDNA is a preparation context, not a biological molecule class (D1, FR-002).",
       "selfChecksum": "matches",
       "metadata": {
@@ -936,7 +936,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "An optional array written empty instead of omitted (sample requires at least one item when present, FR-003).",
       "selfChecksum": "matches",
       "metadata": {
@@ -967,7 +967,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "The FHR-only key genome: the FHT top level is closed.",
       "selfChecksum": "matches",
       "metadata": {
@@ -998,7 +998,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "The legacy FHT key masking was removed by the FHT 1.0 contract (FR-009); it is an unknown key.",
       "selfChecksum": "matches",
       "metadata": {
@@ -1029,7 +1029,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "An SRS sample accession in sequencingRuns; only SRR/ERR/DRR run accessions are allowed (FR-003).",
       "selfChecksum": "matches",
       "metadata": {
@@ -1062,7 +1062,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "A derivedFrom entry without the parent checksum: an accessionID alone is never a substitute (FR-007).",
       "selfChecksum": "matches",
       "metadata": {
@@ -1102,7 +1102,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "An FHP parent with translatedFrom: FHT permits only FHR + transcribedFrom and FHT + filteredFrom (FR-007).",
       "selfChecksum": "matches",
       "metadata": {
@@ -1139,7 +1139,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T1",
+      "rule": "C1",
       "reason": "relationship annotates with an FHR parent: the FHR pair must use transcribedFrom (FR-007).",
       "selfChecksum": "matches",
       "metadata": {
@@ -1176,7 +1176,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T2",
+      "rule": "C2",
       "reason": "Citing the FHR raw-main schema URL: the FHT contract's schema pattern rejects it, and a reader that selected FHR from the URL instead would still reject FHT-only keys \u2014 the record never silently validates.",
       "selfChecksum": "matches",
       "metadata": {
@@ -1206,7 +1206,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T2",
+      "rule": "C2",
       "reason": "A schema value outside the closed FHT URL pattern: unlike released FHR, whose schema field is unconstrained (V5), the FHT development contract accepts only its own raw-main, tag and w3id URLs.",
       "selfChecksum": "matches",
       "metadata": {
@@ -1338,7 +1338,7 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "T3",
+      "rule": "C3",
       "reason": "The child's bytes, metadata and self-checksum are all valid, but the cited parent checksum does not equal the checksum recomputed over the supplied parents/parent-genome.fhr.fasta (checked-fail): a verifier must report an invalid link, not treat it as unchecked and not pass it silently.",
       "selfChecksum": "matches",
       "parentLink": [

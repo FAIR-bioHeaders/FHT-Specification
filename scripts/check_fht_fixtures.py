@@ -30,7 +30,7 @@ Lanes:
    raw-main URL selects a contract, and while no release registers FHT every
    release-form FHT URL is "any other value" under V5 — read as FHR, never
    the draft and not unsupported-version (V4 begins when FHT enters
-   schemas/versions.json). T3 parent links are verified by
+   schemas/versions.json). C3 parent links are verified by
    recomputing the parent file's checksum with this same reader and
    comparing as exact strings (checked-pass / checked-fail / unchecked).
 5. Manifest and inventory. The manifest covers every file on disk and every
@@ -317,7 +317,7 @@ def read_record(data):
 
 
 def check_parent_links(data, record, links, label):
-    """T3: verify each parentLink entry against the supplied bytes."""
+    """C3: verify each parentLink entry against the supplied bytes."""
     derived = record.get("derivedFrom") or []
     for link in links:
         expected = link["result"]
@@ -500,7 +500,7 @@ def check_expected_invalid(entry, data, label, counts):
         try:
             record = parse_metadata(data)
         except ValueError as error:
-            fail(f"{label}: T3 vectors need readable metadata: {error}")
+            fail(f"{label}: C3 vectors need readable metadata: {error}")
             return
         check_parent_links(data, record, entry["parentLink"], label)
 
@@ -510,9 +510,9 @@ def reject_reason(entry, data):
 
     Returns 'shape' (header/checksum-text rules), 'schema' (fht.json),
     'fhr' (V5: routed to the current FHR schema, where the record's bytes
-    are rejected — never the draft and not V4, per the V7 note), 'link' (T3)
+    are rejected — never the draft and not V4, per the V7 note), 'link' (C3)
     — or None when the vector is accepted, which is a manifest/fixture bug
-    for anything but the T3 case handled in check_expected_invalid."""
+    for anything but the C3 case handled in check_expected_invalid."""
     rule = entry["rule"]
     try:
         record = parse_metadata(data)
@@ -545,9 +545,9 @@ def reject_reason(entry, data):
         if selection != "near-miss-fhr":
             return None
         return "fhr" if not schema_errors(record) else None
-    if rule in {"T1", "T2", "V1", "R15"}:
+    if rule in {"C1", "C2", "V1", "R15"}:
         return "schema" if schema_errors(record) else None
-    if rule == "T3":
+    if rule == "C3":
         links = entry.get("parentLink") or []
         for link in links:
             if link["result"] != "checked-fail":
