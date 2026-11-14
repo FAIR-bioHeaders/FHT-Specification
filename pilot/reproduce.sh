@@ -9,7 +9,8 @@
 #   .venv-pilot/bin/pip install fair-bioheaders==0.11.0
 set -eu
 
-BASE=$(dirname "$0")/..
+BASE=$(CDPATH= cd "$(dirname "$0")/.." && pwd)
+PYTHON_VENV=$(CDPATH= cd "${PYTHON_VENV:-"$BASE/.venv-pilot"}" && pwd)
 WORK=${PILOT_WORK_DIR:-/tmp/fhr-pilot-GCA_036971475.1}
 mkdir -p "$WORK"
 cd "$WORK"
