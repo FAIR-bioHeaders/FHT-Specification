@@ -31,7 +31,8 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
 
 - **FR-001:** Import the reviewed shared core and shared objects, pinned
   verbatim in `schemas/core-v0.4.yaml` and `schemas/shared.yaml` from shared
-  commit `980029e5886a1a56a2d2545bfe59c7107539d38d` (v0.4.0/v0.4.1), with
+  commit `0ae18b00ee4bd71ab2dc28bae706b0f9d195076b` (`v0.6.0`; the core bytes
+  are unchanged from v0.4.x through v0.6.0), with
   SHA-256 digests in `schemas/provenance.json` checked by
   `scripts/check_provenance.py`. Add the required non-blank string subject
   `transcriptome` without altering other types. Core constraints remain shared
@@ -72,9 +73,10 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
   (integer >= 0, FASTA records including isoforms), `N50` (integer >= 1) and
   `averageTranscriptLength` (number >= 0). Reuse the shared BUSCO `Completeness`
   object where representable. Its `lineageDataset` must match the pinned
-  pattern `^[a-z0-9_]+_odb[0-9]+$`, so dotted dataset versions such as
-  `odb12.2` are rejected; do not rename them to pass, but keep the measured
-  value in `documentation` until FAIR-bioHeaders-Specification#170 decides.
+  pattern `^[a-z0-9_]+_odb[0-9]+(\.[0-9]+)*$` — shared #170 widened it at
+  v0.6.0 to accept dotted dataset versions such as `odb12.2`. Do not rename
+  or coerce a measured lineage to fit the pattern; malformed dot forms stay
+  rejected and a value that cannot be represented belongs in `documentation`.
   No BUSCO, N50, tissue, condition, run or detailed-provenance minimum is imposed.
 - **FR-006:** Keep header parsing and checksum coverage alphabet-independent.
   Preserve supplied T/U and all sequence bytes; deposit-specific transformations

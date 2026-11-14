@@ -2,8 +2,10 @@ id: https://w3id.org/fhr/fht
 name: FHTLinkML
 description: >-
   FHT (FAIR Header Transcriptome) metadata for transcriptome FASTA files.
-  The FHT class imports the pinned v0.4 FAIR-bioHeaders core and shared
-  objects, then adds the transcriptome subject and the reviewed FHT-specific
+  The FHT class imports the pinned FAIR-bioHeaders core and shared objects
+  from FAIR-bioHeaders-Specification v0.6.0 (the core bytes are unchanged from
+  v0.4.x; shared.yaml carries the #170 widened lineageDataset pattern), then
+  adds the transcriptome subject and the reviewed FHT-specific
   slots. Provenance values are producer assertions, not checks. This is the
   initial development contract proposed by #6 and implemented for review by
   #7; it is not a published or toolkit-supported release.
@@ -90,11 +92,12 @@ slots:
   completeness:
     description: >-
       Optional BUSCO completeness counts from the actual run. lineageDataset
-      must match the pinned shared pattern (a name ending in _odb plus digits,
-      such as hymenoptera_odb10), so dotted dataset versions such as
-      hymenoptera_odb12.2 are rejected. Do not rename a dotted lineage to pass
-      the pattern; omit completeness and keep the measured lineage and counts
-      in documentation until shared #170 decides dotted lineage support.
+      must match the pinned shared pattern (a name ending in _odb plus one or
+      more dot-separated numeric version components, such as hymenoptera_odb10
+      or hymenoptera_odb12.2), as widened by shared #170 for v0.6.0. Do not
+      rename or coerce a measured lineage to fit the pattern; if a measured
+      value cannot be represented, omit completeness and keep the lineage and
+      counts in documentation.
     range: Completeness
     inlined: true
   derivedFrom:
