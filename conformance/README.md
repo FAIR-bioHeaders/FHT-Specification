@@ -32,9 +32,6 @@ FAIR-bioHeaders-Specification#107, the #55 chain's "lane F").
   `selfChecksum` and `parentLink` are **finalized** for release (maintainer
   decision 2026-11-14, issue #37; semantics below), while the top-level
   `status` label remains provisional pending shared absorption.
-  three fields are **provisional** pending shared absorption:
-  `selfChecksum` (`matches` / `broken` / `unreachable`, per invalid vector),
-  `parentLink` (C3 scenario per vector) and `status` (top-level).
 - `*.gz`: gzip or BGZF copies; validate their decompressed bytes.
 
 Every file is byte-exact. The repository `.gitattributes` turns off
@@ -114,7 +111,9 @@ exercise C3 (6):
   neither verified nor a rejection reason.
 - `checked-pass` / `checked-fail` require a named parent file inside this
   directory; `statedChecksum` is compared to its recomputed checksum as an
-  exact string.
+  exact string. The runner enforces this containment by resolution: a
+  parentLink path that escapes `conformance/` (via `../` segments or an
+  absolute location) is rejected without being read.
 - The verdict is **per entry**: one record may carry both outcomes and the
   checked-fail entry drives rejection
   (`fht-fasta-parent-mixed-verdicts`).
@@ -251,10 +250,6 @@ When FHT is published through the #55 chain
    vocabulary but must not change the verdict model. C1-C3 already follow
    the shared rule-label scheme (#36) and carry over as the rule ids of the
    shared FHT format document.
-2. Retire the provisional fields: fold `selfChecksum` and `parentLink`
-   into whatever the shared manifest schema formalizes at that point;
-   C1-C3 already follow the shared rule-label scheme (#36) and carry over
-   as the rule ids of the shared FHT format document.
 3. Re-point the `schema` URL: vectors currently cite this repository's
    raw-main URL (the only contract that exists). At release, the same
    bytes move to a new `fht-fasta-schema-*` vector set citing the w3id

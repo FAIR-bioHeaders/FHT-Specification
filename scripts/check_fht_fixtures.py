@@ -33,6 +33,8 @@ Lanes:
    schemas/versions.json). C3 parent links are verified by
    recomputing the parent file's checksum with this same reader and
    comparing as exact strings (checked-pass / checked-fail / unchecked).
+   Checked parent paths are confined to the distributed conformance/
+   tree: absolute paths and ../ traversals are rejected.
 5. Manifest and inventory. The manifest covers every file on disk and every
    referenced file exists; ids are unique; cited rules exist; metadata pins
    match the parsed values.
@@ -316,6 +318,21 @@ def read_record(data):
     return record, stated, computed
 
 
+def checked_parent_path(file_value):
+    """Resolve a checked parentLink file, confined to the distributed suite.
+
+    A checked-pass/checked-fail verdict must name a file inside the
+    distributed conformance/ tree (conformance/README.md: "a named parent
+    file inside this directory"). Absolute paths and ../ traversals are
+    rejected so the byte-exact suite can never depend on a file that is
+    not shipped with it. Returns the resolved Path, or None when the
+    value does not resolve to a location inside CONFORMANCE."""
+    candidate = (CONFORMANCE / str(file_value)).resolve()
+    if candidate == CONFORMANCE or not candidate.is_relative_to(CONFORMANCE):
+        return None
+    return candidate
+
+
 def check_parent_links(data, record, links, label):
     """C3: verify each parentLink entry against the supplied bytes."""
     derived = record.get("derivedFrom") or []
@@ -330,7 +347,12 @@ def check_parent_links(data, record, links, label):
             if link.get("file") is not None:
                 fail(f"{label}: unchecked link must name no file")
             continue
-        parent_path = CONFORMANCE / link["file"]
+        parent_path = checked_parent_path(link["file"])
+        if parent_path is None:
+            fail(f"{label}: {expected} parentLink file {link['file']!r} must "
+                 f"resolve inside conformance/; absolute and ../ paths are "
+                 f"rejected")
+            continue
         if not parent_path.exists():
             fail(f"{label}: parent file {link['file']} missing")
             continue
@@ -420,6 +442,15 @@ def lane_manifest(manifest):
                 fail(f"{entry['id']}: unchecked parentLink must name no file")
             if verdict != "unchecked" and not link.get("file"):
                 fail(f"{entry['id']}: {verdict} parentLink must name a file")
+            if verdict != "unchecked" and link.get("file"):
+                parent = checked_parent_path(link["file"])
+                if parent is None:
+                    fail(f"{entry['id']}: {verdict} parentLink file "
+                         f"{link['file']!r} must resolve inside conformance/; "
+                         f"absolute and ../ paths are rejected")
+                elif not parent.is_file():
+                    fail(f"{entry['id']}: {verdict} parentLink file "
+                         f"{link['file']!r} does not exist inside conformance/")
             if not link.get("statedChecksum"):
                 fail(f"{entry['id']}: parentLink entries always carry "
                      f"statedChecksum")
@@ -574,7 +605,11 @@ def reject_reason(entry, data):
         for link in links:
             if link["result"] != "checked-fail":
                 continue
-            parent = CONFORMANCE / link["file"]
+            parent = checked_parent_path(link["file"])
+            if parent is None:
+                # A checked parent outside the distributed tree cannot
+                # establish the link: rejected on confinement alone.
+                return "link"
             if parent.exists() and verify_stated(parent.read_bytes()) != link["statedChecksum"]:
                 return "link"
         return None
