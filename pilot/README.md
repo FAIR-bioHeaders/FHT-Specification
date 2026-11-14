@@ -25,7 +25,7 @@ release form from it (shared rule V7).
 
 ## Genome-only constraint (measured, not assumed)
 
-```
+```sh
 D=https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/036/971/475/GCA_036971475.1_USDA_Prosapia_bicincta_1.0
 f=GCA_036971475.1_USDA_Prosapia_bicincta_1.0
 for s in _genomic.fna.gz _protein.faa.gz _genomic.gff.gz _cds_from_genomic.fna.gz; do
@@ -74,7 +74,7 @@ with it.)
 Tool: `fair-bioheaders` **0.11.0 from PyPI** (site-packages install, not a
 working tree) under Python 3.15.0:
 
-```
+```text
 $ bioheaders --version        # 0.11.0
 $ pip show fair-bioheaders    # Version: 0.11.0
 
