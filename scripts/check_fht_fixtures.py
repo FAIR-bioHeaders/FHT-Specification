@@ -401,6 +401,28 @@ def lane_manifest(manifest):
         unknown = cited - rules
         if unknown:
             fail(f"{entry['id']}: cites undeclared rules {sorted(unknown)}")
+        # Finalized field semantics (FHT-Specification#37): selfChecksum is
+        # recorded on every vector; valid vectors carry the positive class
+        # ("matches"), and parentLink entries follow the fixed grammar below.
+        classification = entry.get("selfChecksum")
+        if classification not in ("matches", "broken", "unreachable"):
+            fail(f"{entry['id']}: selfChecksum must be matches/broken/"
+                 f"unreachable on every vector, got {classification!r}")
+        if entry["expected"] == "valid" and classification != "matches":
+            fail(f"{entry['id']}: a valid vector must declare selfChecksum "
+                 f"matches")
+        for link in entry.get("parentLink") or []:
+            verdict = link.get("result")
+            if verdict not in ("checked-pass", "checked-fail", "unchecked"):
+                fail(f"{entry['id']}: parentLink result {verdict!r} is not "
+                     f"checked-pass/checked-fail/unchecked")
+            if verdict == "unchecked" and link.get("file") is not None:
+                fail(f"{entry['id']}: unchecked parentLink must name no file")
+            if verdict != "unchecked" and not link.get("file"):
+                fail(f"{entry['id']}: {verdict} parentLink must name a file")
+            if not link.get("statedChecksum"):
+                fail(f"{entry['id']}: parentLink entries always carry "
+                     f"statedChecksum")
     valid = [e for e in manifest["vectors"] if e["expected"] == "valid"]
     invalid = [e for e in manifest["vectors"] if e["expected"] == "invalid"]
     note(f"manifest: {len(valid)} valid, {len(invalid)} invalid vectors, "
@@ -615,9 +637,9 @@ def main(argv=None):
     if FAILURES:
         print(f"\n{len(FAILURES)} failure(s)")
         return 1
-    note("no installed toolkit was invoked: fair-bioheaders has no FHT support "
-         "(#9); shared-suite publication of these vectors awaits FHT release "
-         "(#55 / lane F).")
+    note("no installed toolkit was invoked by this runner: fair-bioheaders has "
+         "no default FHT support (only the opt-in draft lane, #9); shared-suite "
+         "publication of these vectors awaits FHT release (#55 / lane F).")
     print("OK: all fixture lanes pass")
     return 0
 

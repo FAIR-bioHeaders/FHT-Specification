@@ -201,8 +201,8 @@ RULES = {
           "an FHT w3id URL). Another type's schema or an arbitrary URL fails "
           "fht.json; it never silently selects the FHT schema.",
     "C3": "FHT development contract (text in conformance/README.md): a derivedFrom parent "
-          "checksum must equal the checksum recomputed over the supplied parent "
-          "file's bytes; a mismatch is an invalid link (checked-fail), and a parent "
+          "checksum must equal the checksum recomputed over the supplied parent file's "
+          "bytes, per link; a mismatch is an invalid link (checked-fail), and a parent "
           "that was not supplied makes the link unchecked, never verified.",
 }
 # Rules that cannot have an invalid (or valid) vector by their nature.
@@ -1039,6 +1039,30 @@ def build_vectors():
             parent_links=[{"file": PARENT_LINKS["genome"]["file"],
                            "statedChecksum": wrong, "result": "checked-fail"}])
 
+    # Finalized parentLink semantics (FHT-Specification#37): the verdict is
+    # per entry, not per file. One checked-pass link must not mask a
+    # checked-fail link in the same record.
+    wrong_minimal = swap_first_different(minimal_checksum)
+    assert wrong_minimal != minimal_checksum and wrong_minimal != genome_checksum
+    mixed = record_of(
+        derivedFrom=[{"headerType": "FHR", "checksum": genome_checksum,
+                      "relationship": "transcribedFrom"},
+                     {"headerType": "FHT", "checksum": wrong_minimal,
+                      "relationship": "filteredFrom"}])
+    data_x, _ = assemble(lines_of(mixed))
+    invalid("fht-fasta-parent-mixed-verdicts", data_x, "C3",
+            "Two parent links, two verdicts: the FHR transcribedFrom checksum "
+            "recomputes from parents/parent-genome.fhr.fasta (checked-pass) while "
+            "the FHT filteredFrom checksum does not equal the value recomputed "
+            "over the supplied valid/fht-fasta-minimal.fht.fasta (checked-fail). "
+            "parentLink results are per-entry: a passing link in the same file "
+            "does not mask the failing one, and a verifier must report the "
+            "mismatched link as invalid (finalized #37 semantics).", "matches",
+            parent_links=[dict(PARENT_LINKS["genome"], result="checked-pass"),
+                          {"file": PARENT_LINKS["minimal"]["file"],
+                           "statedChecksum": wrong_minimal,
+                           "result": "checked-fail"}])
+
 
 def fht_lines_valid(name, lines, rules, description, expected=EXPECTED_METADATA,
                     parent_links=None, **options):
@@ -1228,9 +1252,13 @@ def manifest():
         if entry.get("compression"):
             item["compression"] = entry["compression"]
         if entry["status"] == "valid":
+            # selfChecksum is finalized (FHT-Specification#37) and recorded on
+            # every vector: the positive class on valid vectors, the three
+            # classes on the invalid ones.
             item.update(expected="valid", rules=entry["rules"],
                         description=entry["description"],
-                        checksum=entry["checksum"], metadata=entry["expected"])
+                        checksum=entry["checksum"], selfChecksum="matches",
+                        metadata=entry["expected"])
             if entry.get("warnings"):
                 item["warnings"] = entry["warnings"]
         else:

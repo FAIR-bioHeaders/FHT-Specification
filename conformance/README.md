@@ -28,9 +28,10 @@ FAIR-bioHeaders-Specification#107, the #55 chain's "lane F").
   semantics follow the shared manifest (`id`, `file`, `format`, `compressed`,
   `expected`, `rules`, `description`, `checksum`, `metadata`, `rule`,
   `reason`, `result`, `retired`), the proposed format id is `fht-fasta`, and
-  three fields are **provisional** pending shared absorption:
-  `selfChecksum` (`matches` / `broken` / `unreachable`, per invalid vector),
-  `parentLink` (C3 scenario per vector) and `status` (top-level).
+  two manifest fields here have no shared-manifest precedent:
+  `selfChecksum` and `parentLink` are **finalized** for release (maintainer
+  decision 2026-11-14, issue #37; semantics below), while the top-level
+  `status` label remains provisional pending shared absorption.
 - `*.gz`: gzip or BGZF copies; validate their decompressed bytes.
 
 Every file is byte-exact. The repository `.gitattributes` turns off
@@ -82,7 +83,44 @@ cite checksums that recompute from files in this directory (checked-pass);
 `AAAA…AAA=` with no parent file (unchecked, still valid);
 `fht-fasta-parent-mismatched` is byte-valid, schema-valid and
 checksum-consistent but cites a perturbed parent checksum (invalid link,
-checked-fail).
+checked-fail); `fht-fasta-parent-mixed-verdicts` pairs a checked-pass and a
+checked-fail link in one record, proving the verdict is per entry.
+
+### Finalized field semantics (issue #37)
+
+`selfChecksum` names, per vector, the state of the file's own root checksum
+line under the R1-R5 recomputation, and is recorded on **every** vector
+(66/66):
+
+- `matches` — the stated value equals the recomputed value over the covered
+  bytes. The positive class: all 25 valid vectors carry it, and so do the
+  invalid vectors whose single defect lies elsewhere (the anti-accident rule:
+  an implementation must not pass a vector by failing the comparison by
+  accident).
+- `broken` — the root checksum line parses but recomputes differently
+  (negative fixture, 6 vectors).
+- `unreachable` — the root checksum line cannot be located or compared at all
+  (negative fixture, 9 vectors; the R2/R5 line-shape families).
+
+`parentLink` is an array of per-link entries
+`{file, statedChecksum, result}` recorded exactly on the vectors that
+exercise C3 (6):
+
+- `result` is one of `checked-pass` / `checked-fail` / `unchecked`.
+- `unchecked` ⇔ `file: null`: the parent bytes were not supplied; the link is
+  neither verified nor a rejection reason.
+- `checked-pass` / `checked-fail` require a named parent file inside this
+  directory; `statedChecksum` is compared to its recomputed checksum as an
+  exact string.
+- The verdict is **per entry**: one record may carry both outcomes and the
+  checked-fail entry drives rejection
+  (`fht-fasta-parent-mixed-verdicts`).
+
+These two fields are finalized for release with the positive and negative
+fixtures above; shared absorption may rename them onto whatever the shared
+manifest schema uses but must not change this verdict model (issue #9
+adopts these failure classes as its toolkit acceptance list). The top-level
+`status` label is the only field still provisional pending absorption.
 
 ## Provenance — every byte is generated
 
@@ -141,19 +179,28 @@ cited at its recomputed value by the checked-pass vectors.
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
 | Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
 | Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
-| Parent links (C3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1 |
+| Parent links (C3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1, mixed verdicts ×1 (checked-pass + checked-fail in one record; #37) |
 
-Counts: 25 valid, 40 invalid, 1 parent fixture. Rule coverage self-check:
+Counts: 25 valid, 41 invalid, 1 parent fixture; every vector carries a
+finalized `selfChecksum` (26 matches-invalid + 25 matches-valid = 51, 6
+broken, 9 unreachable) and the six C3 link vectors carry `parentLink`
+entries. Rule coverage self-check:
 every registered rule except the recommendation/warning/outcome-only rules
 (R11, R14, V5 — each with a recorded `notApplicable` note in the manifest)
 has both a valid and an invalid vector.
 
 ## What these vectors do **not** yet prove
 
-- **No installed-toolkit behavior.** fair-bioheaders 0.9.0 has no FHT
-  reader/writer, so there are no `bioheaders`/`fhr-*` round trips,
-  strip/combine or conversion claims. Those belong to issue #9 after FHT
-  ships in a toolkit release. "Strip/combine preserve sequence IDs,
+- **No installed-toolkit behavior in the default path.** A default
+  `fair-bioheaders` install still has no FHT feature: the released reader
+  routes these records as FHR (rule V5), so there are no default-on
+  `bioheaders`/`fhr-*` round trips, strip/combine or conversion claims.
+  The opt-in V7 draft lane (fair-bioheaders 0.11.0,
+  `BIOHEADERS_EXPERIMENTAL_FHT=1`) consumes this suite through the gated
+  `tests/fht_conformance_test.py` in FAIR-bioHeaders-Tools, but a gated
+  preview consumer is not shipped support: full support, including the
+  default path, belongs to issue #9 after FHT ships in a toolkit release.
+  "Strip/combine preserve sequence IDs,
   wrapping, U/T, metadata ordering/types and exact bytes under the
   established checksum coverage policy" is *represented here only* as
   byte-preservation fixtures (the alphabet variants and the
@@ -194,15 +241,27 @@ When FHT is published through the #55 chain
 1. Copy the `valid/fht-fasta-*` and `invalid/fht-fasta-*` files and their
    manifest entries into the shared `conformance/` tree; the format id
    `fht-fasta` slots beside `fhp-fasta`.
-2. Retire the provisional fields: fold `selfChecksum` and `parentLink`
-   into whatever the shared manifest schema formalizes at that point;
-   C1-C3 already follow the shared rule-label scheme (#36) and carry over
-   as the rule ids of the shared FHT format document.
+2. Adopt the finalized fields: `selfChecksum` and `parentLink` were
+   finalized at the draft stage with positive and negative fixtures (#37,
+   maintainer decision 2026-11-14; semantics in "Finalized field semantics"
+   above); shared absorption may rename them onto the shared manifest
+   vocabulary but must not change the verdict model. C1-C3 already follow
+   the shared rule-label scheme (#36) and carry over as the rule ids of the
+   shared FHT format document.
 3. Re-point the `schema` URL: vectors currently cite this repository's
    raw-main URL (the only contract that exists). At release, the same
    bytes move to a new `fht-fasta-schema-*` vector set citing the w3id
    URL, exactly as FHP moved to `…/fhp/v0.4.0`; the raw-main vectors stay
    valid under V1 and keep their ids (ids are never reused or rewritten).
+   The two V5-shaped rejection vectors then **diverge, and that asymmetry
+   is the expected outcome** (recorded on closed #30; the V7 ruling,
+   FAIR-bioHeaders-Specification#221 Option A): once FHT enters
+   `schemas/versions.json`, a `https://w3id.org/fair-bioheaders/fht/vX.Y.Z`
+   citation for an unregistered version becomes a genuine **V4**
+   unsupported-version case, while a raw tag URL of *this development
+   repository* (`…/FHT-Specification/v9.9.9/fht.json`) stays **V5**,
+   because V2 anchors versioned release URLs to the shared publication
+   repository and a dev-repo tag URL matches no V2 form at any point.
    Any outcome change retires the old id per the shared retirement rule.
 4. Add the toolkit invocation to `scripts/check_conformance.py`
    (`--require-format fht-fasta`) once the released reader supports FHT.
