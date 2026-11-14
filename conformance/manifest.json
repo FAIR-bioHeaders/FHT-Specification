@@ -66,7 +66,7 @@
       "summary": "FHT development contract (text in conformance/README.md): a record's schema value must be a URL the FHT contract accepts (raw main, an FHT release tag or an FHT w3id URL). Another type's schema or an arbitrary URL fails fht.json; it never silently selects the FHT schema."
     },
     "C3": {
-      "summary": "FHT development contract (text in conformance/README.md): a derivedFrom parent checksum must equal the checksum recomputed over the supplied parent file's bytes; a mismatch is an invalid link (checked-fail), and a parent that was not supplied makes the link unchecked, never verified."
+      "summary": "FHT development contract (text in conformance/README.md): a derivedFrom parent checksum must equal the checksum recomputed over the supplied parent file's bytes, per link; a mismatch is an invalid link (checked-fail), and a parent that was not supplied makes the link unchecked, never verified."
     }
   },
   "vectors": [
