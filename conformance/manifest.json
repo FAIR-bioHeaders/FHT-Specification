@@ -2,7 +2,7 @@
   "manifestVersion": 1,
   "status": "Development vectors for the FHT 1.0 contract (FHT-Specification#8). No FHT schema is released and no installed toolkit reads FHT yet: every expected outcome is derived from the rule text, never from an implementation under test.",
   "specification": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/FORMAT.md (rules R1-R15)",
-  "schemaVersionsSpecification": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/SCHEMA-VERSIONS.md (rules V1, V4)",
+  "schemaVersionsSpecification": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/SCHEMA-VERSIONS.md (rules V1, V5, V7)",
   "fhtContract": "fht.json \u2014 the generated FHT 1.0 development schema (specs/005-rna-transcriptome-header/spec.md)",
   "fhtRuleText": "conformance/README.md (T1-T3 are provisional ids)",
   "checksumDefinition": "base64(SHA-512/256) over the (decompressed) file bytes except the root-level checksum line and its terminator (docs/FORMAT.md R1-R5); written by scripts/make_fht_fixtures.py and cross-checked by scripts/check_fht_fixtures.py",
@@ -55,9 +55,9 @@
     "V1": {
       "summary": "Schema selection: the raw-main FHT schema URL selects the reader's current FHT schema (here the 1.0 development contract)."
     },
-    "V4": {
-      "summary": "Schema selection: a cited release the reader does not have, or that published no FHT schema, is unsupported-version; the file is not checked against another schema.",
-      "notApplicable": "V4 describes an outcome for citations the reader cannot resolve; with no FHT release, no valid vector cites a release URL, so V4 has no valid side."
+    "V5": {
+      "summary": "Schema selection: any schema value outside the recognized released-schema URLs is FHR, checked against the reader's current FHR schema; a near-miss URL additionally draws the reader's warning (FAIR-bioHeaders-Tools#125). While no release registers FHT, its release-form URLs (an fht w3id URL, an FHT-Specification raw tag) are such values \u2014 the V7 draft lane is the owning development repository's raw-main URL only \u2014 and V4 unsupported-version begins only when FHT enters schemas/versions.json.",
+      "notApplicable": "V5 outcomes depend on the record's bytes; no record that is valid against the FHT contract can be FHR-valid (FHT states schemaVersion '1.0', which the current FHR schema rejects, and the required field sets are disjoint), so V5 has no valid side here. V4 is not registered as a rule of this suite at all: with no FHT row in schemas/versions.json there is no citation it can resolve to."
     },
     "T1": {
       "summary": "FHT (provisional; text in conformance/README.md): the parsed header metadata must validate against fht.json \u2014 required fields, enums, patterns, nested cardinality and the closed top level (plus R15 extension keys)."
@@ -1276,10 +1276,30 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "V4",
-      "reason": "fair-bioheaders v0.5.0 published no FHT schema (the w3id URL is a 404 and the release registry has no FHT entry); the result is unsupported-version \u2014 not a check against another schema and not a silent fallback to raw main.",
+      "rule": "V5",
+      "reason": "No release registers FHT, so this release-form w3id URL matches no V1-V3 form (matching is exact) and stays 'any other value' under V5 \u2014 read as FHR against the reader's current FHR schema, near-miss warning included (FAIR-bioHeaders-Tools#125), never as the draft: the V7 lane is the raw-main URL only (ruling of 2026-11-13, FAIR-bioHeaders-Specification#221). From the record's bytes the FHR reading rejects it: schemaVersion '1.0' is outside FHR's accepted set; required genome, assemblyAuthor and masking are absent; transcriptome, assemblyType and moleculeType breach FHR's closed top level (schema bytes pinned in conformance/README.md). V4 unsupported-version begins only when FHT enters schemas/versions.json.",
       "selfChecksum": "matches",
-      "result": "unsupported-version"
+      "metadata": {
+        "schema": "https://w3id.org/fair-bioheaders/fht/v0.5.0",
+        "schemaVersion": "1.0",
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "assemblyType": "de novo",
+        "moleculeType": "mRNA",
+        "taxon": {
+          "name": "Homo sapiens",
+          "uri": "https://identifiers.org/taxonomy:9606"
+        },
+        "version": "1.0.0",
+        "metadataAuthor": [
+          {
+            "name": "Synthetic metadata author (placeholder)"
+          }
+        ],
+        "dateCreated": "2026-11-10",
+        "documentation": "Synthetic FHT conformance vector; not a real transcriptome.",
+        "checksum": "uTKhr++P4z9N9VqVZqW31rWPz1d70Ug20IoNvechss8="
+      },
+      "result": "invalid-as-fhr"
     },
     {
       "id": "fht-fasta-schema-raw-tag-unknown",
@@ -1287,10 +1307,30 @@
       "format": "fht-fasta",
       "compressed": false,
       "expected": "invalid",
-      "rule": "V4",
-      "reason": "A raw tag URL for a release that does not exist: unsupported-version (V4), even though the URL matches the FHT schema pattern.",
+      "rule": "V5",
+      "reason": "A raw tag URL of the FHT development repository names no registered release; the V7 lane admits only the raw-main URL, so this value is likewise 'any other value' under V5 \u2014 read as FHR with the near-miss warning (Tools#125), not V4 unsupported-version (FAIR-bioHeaders-Specification#221 ruling, 2026-11-13). It carries the same record bytes as fht-fasta-schema-w3id-release-without-fht and meets the same FHR-invalid outcome; the URL matching the FHT schema pattern no longer buys a selection result (conformance/README.md pins the checked FHR schema bytes).",
       "selfChecksum": "matches",
-      "result": "unsupported-version"
+      "metadata": {
+        "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/v9.9.9/fht.json",
+        "schemaVersion": "1.0",
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "assemblyType": "de novo",
+        "moleculeType": "mRNA",
+        "taxon": {
+          "name": "Homo sapiens",
+          "uri": "https://identifiers.org/taxonomy:9606"
+        },
+        "version": "1.0.0",
+        "metadataAuthor": [
+          {
+            "name": "Synthetic metadata author (placeholder)"
+          }
+        ],
+        "dateCreated": "2026-11-10",
+        "documentation": "Synthetic FHT conformance vector; not a real transcriptome.",
+        "checksum": "1bqVEGvt+PjLbQDCOC7a6127yxhi3yl2k65brQoerLc="
+      },
+      "result": "invalid-as-fhr"
     },
     {
       "id": "fht-fasta-parent-mismatched",
