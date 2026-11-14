@@ -136,7 +136,7 @@ cited at its recomputed value by the checked-pass vectors.
 | Writer recommendations | escaped `\x3E`/`\x40` (R11), `javascript:` relatedLink kept valid with `warnings: ["R14"]` |
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
 | Contract (T1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
-| Selection (T2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (T2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; the V7 note keeps drafts out of release forms until publication turns them V4) |
+| Selection (T2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (T2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
 | Parent links (T3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1 |
 
 Counts: 25 valid, 40 invalid, 1 parent fixture. Rule coverage self-check:
