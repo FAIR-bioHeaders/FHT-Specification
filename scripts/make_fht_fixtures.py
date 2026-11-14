@@ -62,7 +62,7 @@ RAW_MAIN = ("https://raw.githubusercontent.com/"
 RAW_FHT = "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/"
 W3ID = "https://w3id.org/fair-bioheaders/"
 # The FHR raw-main schema URL (as the shared suite's vectors use it); an FHT
-# record citing it must fail selection/pattern rules (T2).
+# record citing it must fail selection/pattern rules (C2).
 FHR_RAW_MAIN = ("https://raw.githubusercontent.com/"
                 "FAIR-bioHeaders/FHR-Specification/main/fhr.json")
 
@@ -137,8 +137,11 @@ MINIMAL_BODY = [
 # ------------------------------------------------------------------ rules ---
 # R1-R15 are the shared docs/FORMAT.md rules (summaries mirror the shared
 # conformance manifest; the rule text there is authoritative). V1 and V5 (as
-# limited by the V7 note) come from shared docs/SCHEMA-VERSIONS.md. T1-T3 are
-# provisional FHT rule ids for this development contract; conformance/
+# limited by the V7 note) come from shared docs/SCHEMA-VERSIONS.md. C1-C3 are
+# this development contract's own rule ids, named after the shared suite's
+# label scheme (one uppercase letter plus number, C for "contract"; the letter
+# is unassigned elsewhere in the federation) — see FHT-Specification#36 for
+# the rename from the provisional T1-T3. conformance/
 # README.md states their text until the shared publication copy of the FHT
 # format document names them.
 RULES = {
@@ -189,15 +192,15 @@ RULES = {
           "are such values — the V7 draft lane is the owning development "
           "repository's raw-main URL only — and V4 unsupported-version begins "
           "only when FHT enters schemas/versions.json.",
-    "T1": "FHT (provisional; text in conformance/README.md): the parsed header "
+    "C1": "FHT development contract (text in conformance/README.md): the parsed header "
           "metadata must validate against fht.json — required fields, enums, "
           "patterns, nested cardinality and the closed top level (plus R15 "
           "extension keys).",
-    "T2": "FHT (provisional; text in conformance/README.md): a record's schema value "
+    "C2": "FHT development contract (text in conformance/README.md): a record's schema value "
           "must be a URL the FHT contract accepts (raw main, an FHT release tag or "
           "an FHT w3id URL). Another type's schema or an arbitrary URL fails "
           "fht.json; it never silently selects the FHT schema.",
-    "T3": "FHT (provisional; text in conformance/README.md): a derivedFrom parent "
+    "C3": "FHT development contract (text in conformance/README.md): a derivedFrom parent "
           "checksum must equal the checksum recomputed over the supplied parent "
           "file's bytes; a mismatch is an invalid link (checked-fail), and a parent "
           "that was not supplied makes the link unchecked, never verified.",
@@ -547,7 +550,7 @@ def build_vectors():
     # ---- valid: shared byte rules on RNA and cDNA bodies --------------------
     data, value = fht_lines_valid(
         "fht-fasta-lf", lines_of(FHT_RECORD),
-        ["T1", "R1", "R2", "R3", "R4", "R7", "R8", "R10", "R12"],
+        ["C1", "R1", "R2", "R3", "R4", "R7", "R8", "R10", "R12"],
         "RNA transcript set (U alphabet); LF line endings; the checksum line is "
         "the last header line; plain scalars and mappings follow R8/R12.")
     plain = data
@@ -561,13 +564,13 @@ def build_vectors():
     fht_lines_valid("fht-fasta-no-final-newline", lines_of(FHT_RECORD), ["R1", "R3"],
                     "The last sequence line has no terminator.", final_newline=False)
     fht_lines_valid("fht-fasta-cdna", lines_of(FHT_RECORD, body=CDNA_BODY),
-                    ["T1", "R1"],
+                    ["C1", "R1"],
                     "cDNA representation (T alphabet) of the same synthetic set: "
                     "coverage is alphabet-independent (FR-006) and the supplied T "
                     "bytes are preserved, not converted to U.")
     _, value_min = fht_lines_valid("fht-fasta-minimal",
                                    lines_of(MINIMAL_RECORD, body=MINIMAL_BODY),
-                                   ["T1"],
+                                   ["C1"],
                                    "Exactly the nine required fields (FR-001); no "
                                    "optional field is defaulted or written null.",
                                    expected=MINIMAL_EXPECTED)
@@ -614,7 +617,7 @@ def build_vectors():
                     "stays unquoted.")
     nested = record_of(derivedFrom=[{"headerType": "FHR", "checksum": PLACEHOLDER_PARENT,
                                      "relationship": "transcribedFrom"}])
-    fht_lines_valid("fht-fasta-nested-checksum", lines_of(nested), ["R2", "R3", "T1"],
+    fht_lines_valid("fht-fasta-nested-checksum", lines_of(nested), ["R2", "R3", "C1"],
                     "A root checksum line plus the indented nested parent checksum "
                     "under derivedFrom: only the root line is excluded; the nested "
                     "checksum is covered metadata (R2).")
@@ -623,7 +626,7 @@ def build_vectors():
     assert len(doc) == 1
     lines[doc[0]] = Line(
         b';~documentation: "transcripts \\x3E 1000 nt; contact someone\\x40example.org"')
-    fht_lines_valid("fht-fasta-escaped-record-markers", lines, ["R11", "T1"],
+    fht_lines_valid("fht-fasta-escaped-record-markers", lines, ["R11", "C1"],
                     "A header value holding '>' and '@' written as \\x3E and \\x40 "
                     "in a double-quoted scalar; it reads back with the real "
                     "characters.",
@@ -636,7 +639,7 @@ def build_vectors():
     doc = [i for i, line in enumerate(lines) if line.text.startswith(PREFIX + b"documentation:")]
     lines[doc[0]] = Line((";~documentation: 'Synthetic FHT conformance vector; "
                           "caf\u00e9 (placeholder UTF-8 metadata)'").encode("utf-8"))
-    fht_lines_valid("fht-fasta-utf8-metadata", lines, ["R6", "T1"],
+    fht_lines_valid("fht-fasta-utf8-metadata", lines, ["R6", "C1"],
                     "Raw non-ASCII UTF-8 (U+00E9) in a header value is allowed; "
                     "only U+0085, U+2028 and U+2029 are excluded from header lines.",
                     expected=dict(EXPECTED_METADATA, documentation=utf8_documentation))
@@ -648,11 +651,11 @@ def build_vectors():
         "x-example-list": ["a", 2, None],
         "x-example-object": {"internal": "value", "count": 1},
     })
-    fht_lines_valid("fht-fasta-extension-fields", lines_of(extension), ["R15", "T1"],
+    fht_lines_valid("fht-fasta-extension-fields", lines_of(extension), ["R15", "C1"],
                     "Top-level x- extension fields of every JSON type (FR-010, R15): "
                     "string, integer, number, boolean, list (with null) and object.")
     data_w, value_w = assemble(lines_of(record_of(relatedLink=["javascript:void(0)"])))
-    valid("fht-fasta-link-scheme-warning", data_w, ["R14", "T1"],
+    valid("fht-fasta-link-scheme-warning", data_w, ["R14", "C1"],
           "A relatedLink URI with a non-link scheme stays schema-valid; validators "
           "warn (R14).", checksum=value_w,
           expected=dict(EXPECTED_METADATA, relatedLink=["javascript:void(0)"]),
@@ -665,15 +668,15 @@ def build_vectors():
           "fht-fasta-lf compressed as multi-block BGZF (with EOF block); same "
           "checksum.", checksum=value, compression="bgzf")
 
-    # ---- valid: schema selection (V1, T2) ------------------------------------
-    valid("fht-fasta-schema-raw-main", plain, ["V1", "T2"],
+    # ---- valid: schema selection (V1, C2) ------------------------------------
+    valid("fht-fasta-schema-raw-main", plain, ["V1", "C2"],
           "The raw-main FHT schema URL with schemaVersion '1.0' selects the "
           "reader's current FHT contract — today the 1.0 development schema. The "
           "bytes are those of fht-fasta-lf under a stable V1 vector id.",
           checksum=value,
           expected=dict(EXPECTED_METADATA, schema=RAW_MAIN, schemaVersion="1.0"))
 
-    # ---- valid: parent links (T3) ---------------------------------------------
+    # ---- valid: parent links (C3) ---------------------------------------------
     genome_checksum = PARENT_LINKS["genome"]["statedChecksum"]
     minimal_checksum = PARENT_LINKS["minimal"]["statedChecksum"]
     transcribed = record_of(derivedFrom=[{
@@ -682,7 +685,7 @@ def build_vectors():
         "accessionID": {"name": "Synthetic accession DB (placeholder)",
                         "url": "https://example.org/fhr/synthetic-genome"}}])
     fht_lines_valid("fht-fasta-parent-transcribed-from", lines_of(transcribed),
-                    ["T1", "T3"],
+                    ["C1", "C3"],
                     "A transcribedFrom FHR parent: the supplied "
                     "parents/parent-genome.fhr.fasta recomputes to exactly the "
                     "cited checksum (checked-pass). The accessionID is additional, "
@@ -692,7 +695,7 @@ def build_vectors():
                          derivedFrom=[{"headerType": "FHT",
                                        "checksum": minimal_checksum,
                                        "relationship": "filteredFrom"}])
-    fht_lines_valid("fht-fasta-parent-filtered-from", lines_of(filtered), ["T1", "T3"],
+    fht_lines_valid("fht-fasta-parent-filtered-from", lines_of(filtered), ["C1", "C3"],
                     "A filteredFrom FHT parent whose file is the fht-fasta-minimal "
                     "vector, cited by its recomputed checksum (checked-pass).",
                     expected=dict(EXPECTED_METADATA,
@@ -702,7 +705,7 @@ def build_vectors():
     unavailable = record_of(derivedFrom=[{"headerType": "FHR",
                                           "checksum": PLACEHOLDER_PARENT,
                                           "relationship": "transcribedFrom"}])
-    fht_lines_valid("fht-fasta-parent-unavailable", lines_of(unavailable), ["T1", "T3"],
+    fht_lines_valid("fht-fasta-parent-unavailable", lines_of(unavailable), ["C1", "C3"],
                     "A well-formed parent checksum whose parent file was not "
                     "supplied: the record is valid and the link is unchecked — a "
                     "reader must not report it verified and must not reject the "
@@ -754,7 +757,7 @@ def build_vectors():
                       "relationship": "filteredFrom"}],
         **{"x-example-rich": "extension in the rich record"},
     )
-    fht_lines_valid("fht-fasta-rich", lines_of(rich), ["T1", "R13", "R15", "T3"],
+    fht_lines_valid("fht-fasta-rich", lines_of(rich), ["C1", "R13", "R15", "C3"],
                     "Every optional FHT field; vitalStats are genuinely computed "
                     "from the vector's own sequence bytes; both permitted parent "
                     "relationships cite the supplied parent fixtures' recomputed "
@@ -917,28 +920,28 @@ def build_vectors():
                        "R15", "A top-level key starting with 'X-' does not match "
                        "the extension pattern and is an unknown key.")
 
-    # ---- invalid: FHT contract (T1) ----------------------------------------------
+    # ---- invalid: FHT contract (C1) ----------------------------------------------
     fht_invalid_record("fht-fasta-missing-assembly-type",
-                       record_of(drop=["assemblyType"]), "T1",
+                       record_of(drop=["assemblyType"]), "C1",
                        "The required assemblyType field is absent.")
     fht_invalid_record("fht-fasta-bad-assembly-type", record_of(assemblyType="hybrid"),
-                       "T1", "assemblyType hybrid is not an FHT value (de novo, "
+                       "C1", "assemblyType hybrid is not an FHT value (de novo, "
                        "genome-guided, annotation-derived).")
     fht_invalid_record("fht-fasta-molecule-type-cdna", record_of(moleculeType="cDNA"),
-                       "T1", "moleculeType cDNA is not an FHT value: cDNA is a "
+                       "C1", "moleculeType cDNA is not an FHT value: cDNA is a "
                        "preparation context, not a biological molecule class "
                        "(D1, FR-002).")
-    fht_invalid_record("fht-fasta-empty-sample", record_of(sample=[]), "T1",
+    fht_invalid_record("fht-fasta-empty-sample", record_of(sample=[]), "C1",
                        "An optional array written empty instead of omitted "
                        "(sample requires at least one item when present, FR-003).")
     fht_invalid_record("fht-fasta-fhr-key-genome", record_of(genome="Synthetic genome"),
-                       "T1", "The FHR-only key genome: the FHT top level is closed.")
+                       "C1", "The FHR-only key genome: the FHT top level is closed.")
     fht_invalid_record("fht-fasta-legacy-key-masking",
-                       record_of(masking="not-masked"), "T1",
+                       record_of(masking="not-masked"), "C1",
                        "The legacy FHT key masking was removed by the FHT 1.0 "
                        "contract (FR-009); it is an unknown key.")
     fht_invalid_record("fht-fasta-bad-run-accession",
-                       record_of(sequencingRuns=["SRS1234567"]), "T1",
+                       record_of(sequencingRuns=["SRS1234567"]), "C1",
                        "An SRS sample accession in sequencingRuns; only SRR/ERR/DRR "
                        "run accessions are allowed (FR-003).")
     fht_invalid_record("fht-fasta-derived-from-no-checksum",
@@ -947,30 +950,30 @@ def build_vectors():
                                                "accessionID": {
                                                    "name": "Synthetic accession DB (placeholder)",
                                                    "url": "https://example.org/fhr/x"}}]),
-                       "T1", "A derivedFrom entry without the parent checksum: an "
+                       "C1", "A derivedFrom entry without the parent checksum: an "
                        "accessionID alone is never a substitute (FR-007).")
     fht_invalid_record("fht-fasta-derived-from-fhp-parent",
                        record_of(derivedFrom=[{"headerType": "FHP",
                                                "checksum": PLACEHOLDER_PARENT,
                                                "relationship": "translatedFrom"}]),
-                       "T1", "An FHP parent with translatedFrom: FHT permits only "
+                       "C1", "An FHP parent with translatedFrom: FHT permits only "
                        "FHR + transcribedFrom and FHT + filteredFrom (FR-007).")
     fht_invalid_record("fht-fasta-derived-from-bad-relationship",
                        record_of(derivedFrom=[{"headerType": "FHR",
                                                "checksum": PLACEHOLDER_PARENT,
                                                "relationship": "annotates"}]),
-                       "T1", "relationship annotates with an FHR parent: the FHR "
+                       "C1", "relationship annotates with an FHR parent: the FHR "
                        "pair must use transcribedFrom (FR-007).")
 
-    # ---- invalid: schema selection (T2, V1, V5) -----------------------------------
+    # ---- invalid: schema selection (C2, V1, V5) -----------------------------------
     fht_invalid_record("fht-fasta-cites-fhr-schema", record_of(schema=FHR_RAW_MAIN),
-                       "T2", "Citing the FHR raw-main schema URL: the FHT "
+                       "C2", "Citing the FHR raw-main schema URL: the FHT "
                        "contract's schema pattern rejects it, and a reader that "
                        "selected FHR from the URL instead would still reject "
                        "FHT-only keys — the record never silently validates.")
     fht_invalid_record("fht-fasta-cites-arbitrary-url",
                        record_of(schema="https://example.org/schemas/my-fht-profile.json"),
-                       "T2", "A schema value outside the closed FHT URL pattern: "
+                       "C2", "A schema value outside the closed FHT URL pattern: "
                        "unlike released FHR, whose schema field is unconstrained "
                        "(V5), the FHT development contract accepts only its own "
                        "raw-main, tag and w3id URLs.")
@@ -1021,13 +1024,13 @@ def build_vectors():
                        "FHR schema bytes).")
     INVALID[-1]["result"] = "invalid-as-fhr"
 
-    # ---- invalid: parent link mismatch (T3) ----------------------------------------
+    # ---- invalid: parent link mismatch (C3) ----------------------------------------
     wrong = swap_first_different(genome_checksum)
     assert wrong != genome_checksum and wrong != minimal_checksum
     mismatched = record_of(derivedFrom=[{"headerType": "FHR", "checksum": wrong,
                                          "relationship": "transcribedFrom"}])
     data_m, _ = assemble(lines_of(mismatched))
-    invalid("fht-fasta-parent-mismatched", data_m, "T3",
+    invalid("fht-fasta-parent-mismatched", data_m, "C3",
             "The child's bytes, metadata and self-checksum are all valid, but the "
             "cited parent checksum does not equal the checksum recomputed over the "
             "supplied parents/parent-genome.fhr.fasta (checked-fail): a verifier "
@@ -1267,7 +1270,7 @@ def manifest():
                                        "docs/SCHEMA-VERSIONS.md (rules V1, V5, V7)",
         "fhtContract": "fht.json — the generated FHT 1.0 development schema "
                        "(specs/005-rna-transcriptome-header/spec.md)",
-        "fhtRuleText": "conformance/README.md (T1-T3 are provisional ids)",
+        "fhtRuleText": "conformance/README.md (C1-C3; renamed from the provisional T1-T3 in FHT-Specification#36)",
         "checksumDefinition": "base64(SHA-512/256) over the (decompressed) file "
                               "bytes except the root-level checksum line and its "
                               "terminator (docs/FORMAT.md R1-R5); written by "
