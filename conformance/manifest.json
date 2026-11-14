@@ -89,6 +89,7 @@
       ],
       "description": "RNA transcript set (U alphabet); LF line endings; the checksum line is the last header line; plain scalars and mappings follow R8/R12.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -107,6 +108,7 @@
       ],
       "description": "CRLF line endings; CR bytes are hashed.",
       "checksum": "WlwlWAQ1bnyFmzMN+N6TksuBN1b57eCa2bMLdgjaPFA=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -125,6 +127,7 @@
       ],
       "description": "Lone CR line endings.",
       "checksum": "K1w+PQ5in/26LBhVdAuFuRy5w39tahjzmaq3Z3KWB2A=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -143,6 +146,7 @@
       ],
       "description": "LF, CRLF and CR line endings mixed in one file.",
       "checksum": "fvLeGQdf+5JTMIxhKjMqW9xFpe/msuRkrwseqiNypXQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -161,6 +165,7 @@
       ],
       "description": "The last sequence line has no terminator.",
       "checksum": "bPPyutFj6XGFXVDJmTNgjzJxgsMfDdRwr7a2WKUnXX4=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -179,6 +184,7 @@
       ],
       "description": "cDNA representation (T alphabet) of the same synthetic set: coverage is alphabet-independent (FR-006) and the supplied T bytes are preserved, not converted to U.",
       "checksum": "uRSVTKkO9PeJhPIRyB5p6RpCEW6SMrjTX1fF3pKo8bA=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -196,6 +202,7 @@
       ],
       "description": "Exactly the nine required fields (FR-001); no optional field is defaulted or written null.",
       "checksum": "pjrV6TbP1evu4BPuWQS4nKUvwtr4FAN4EuuqtaJW4mA=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set (minimal)",
         "version": "1.0.0",
@@ -214,6 +221,7 @@
       ],
       "description": "Ordinary ';' comments, blank lines and a ';~#' YAML comment around or inside the header block; a plain ';' comment after a record stays a comment (only ';~' lines after records break R10); all of it is hashed.",
       "checksum": "uBuOjEXZXZ14ycENu2PgkZAAJPVD+x/790R2MZ5f2FU=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -231,6 +239,7 @@
       ],
       "description": "Every header line, including the checksum line, has root indentation 1.",
       "checksum": "F7abLkJ8ju/aTFG6Ikd1SHRihUn5D6EmbrZS+fn2Sc0=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -248,6 +257,7 @@
       ],
       "description": "Spaces before the colon on the checksum line.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -265,6 +275,7 @@
       ],
       "description": "The checksum line is first in the header block: R3 excludes the line wherever it sits, so the value matches fht-fasta-lf.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -283,6 +294,7 @@
       ],
       "description": "Trailing spaces on the checksum line are excluded with it.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -301,6 +313,7 @@
       ],
       "description": "The checksum value is a quoted single-line scalar; the key stays unquoted.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -320,6 +333,7 @@
       ],
       "description": "A root checksum line plus the indented nested parent checksum under derivedFrom: only the root line is excluded; the nested checksum is covered metadata (R2).",
       "checksum": "/u0FOiLGjCmd4g+iqDhrTAHzUoEw/idh3/ImGL0QtmQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -338,6 +352,7 @@
       ],
       "description": "A header value holding '>' and '@' written as \\x3E and \\x40 in a double-quoted scalar; it reads back with the real characters.",
       "checksum": "IQGWTyyfrAMyxbAoBvdbkMyGY8nN8jCjKJb/ijh4BeY=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -357,6 +372,7 @@
       ],
       "description": "Raw non-ASCII UTF-8 (U+00E9) in a header value is allowed; only U+0085, U+2028 and U+2029 are excluded from header lines.",
       "checksum": "+zrshU+usPmCfzXH/vvVJk1LzC9R4GEzsL6SQbqEhLs=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -376,6 +392,7 @@
       ],
       "description": "Top-level x- extension fields of every JSON type (FR-010, R15): string, integer, number, boolean, list (with null) and object.",
       "checksum": "mWc298KrEnEn9ZbjvjuQQGnmJUnJicffHmBrusQVJq0=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -394,6 +411,7 @@
       ],
       "description": "A relatedLink URI with a non-link scheme stays schema-valid; validators warn (R14).",
       "checksum": "IGvy+HmJDIh7tJ9WUXx+4WCnjbLnqL7MTS2TSRnQWKo=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -418,6 +436,7 @@
       ],
       "description": "fht-fasta-lf compressed as one gzip member; the checksum covers the decompressed bytes and is unchanged.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -436,6 +455,7 @@
       ],
       "description": "fht-fasta-lf compressed as multi-block BGZF (with EOF block); same checksum.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -454,6 +474,7 @@
       ],
       "description": "The raw-main FHT schema URL with schemaVersion '1.0' selects the reader's current FHT contract \u2014 today the 1.0 development schema. The bytes are those of fht-fasta-lf under a stable V1 vector id.",
       "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -474,6 +495,7 @@
       ],
       "description": "A transcribedFrom FHR parent: the supplied parents/parent-genome.fhr.fasta recomputes to exactly the cited checksum (checked-pass). The accessionID is additional, not a substitute.",
       "checksum": "4rH9yZLqholGSGWwFjZMsU2FbqhBHu1/cBI/Ag+9c/A=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -499,6 +521,7 @@
       ],
       "description": "A filteredFrom FHT parent whose file is the fht-fasta-minimal vector, cited by its recomputed checksum (checked-pass).",
       "checksum": "lJBFzlPaMmaSXWlP1SoLWuPwEIQheAKjfU6ERd1sgFY=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set (filtered subset)",
         "version": "1.0.0",
@@ -524,6 +547,7 @@
       ],
       "description": "A well-formed parent checksum whose parent file was not supplied: the record is valid and the link is unchecked \u2014 a reader must not report it verified and must not reject the record for the absent parent.",
       "checksum": "/u0FOiLGjCmd4g+iqDhrTAHzUoEw/idh3/ImGL0QtmQ=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -551,6 +575,7 @@
       ],
       "description": "Every optional FHT field; vitalStats are genuinely computed from the vector's own sequence bytes; both permitted parent relationships cite the supplied parent fixtures' recomputed checksums (checked-pass); one extension field.",
       "checksum": "j35ZPDrXrJ0nn8RFYKzczaqhbk43IWKRzbdyn3FLAIM=",
+      "selfChecksum": "matches",
       "metadata": {
         "transcriptome": "Synthetic FHT conformance transcript set",
         "version": "1.0.0",
@@ -1345,6 +1370,28 @@
         {
           "file": "parents/parent-genome.fhr.fasta",
           "statedChecksum": "dpDy56KE7+tzfZfk9eVOAQOPc/Fj78DfNBWOpJC4xac=",
+          "result": "checked-fail"
+        }
+      ]
+    },
+    {
+      "id": "fht-fasta-parent-mixed-verdicts",
+      "file": "invalid/fht-fasta-parent-mixed-verdicts.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "invalid",
+      "rule": "C3",
+      "reason": "Two parent links, two verdicts: the FHR transcribedFrom checksum recomputes from parents/parent-genome.fhr.fasta (checked-pass) while the FHT filteredFrom checksum does not equal the value recomputed over the supplied valid/fht-fasta-minimal.fht.fasta (checked-fail). parentLink results are per-entry: a passing link in the same file does not mask the failing one, and a verifier must report the mismatched link as invalid (finalized #37 semantics).",
+      "selfChecksum": "matches",
+      "parentLink": [
+        {
+          "file": "parents/parent-genome.fhr.fasta",
+          "statedChecksum": "pdDy56KE7+tzfZfk9eVOAQOPc/Fj78DfNBWOpJC4xac=",
+          "result": "checked-pass"
+        },
+        {
+          "file": "valid/fht-fasta-minimal.fht.fasta",
+          "statedChecksum": "jprV6TbP1evu4BPuWQS4nKUvwtr4FAN4EuuqtaJW4mA=",
           "result": "checked-fail"
         }
       ]
