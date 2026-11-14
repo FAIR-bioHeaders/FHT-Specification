@@ -250,10 +250,6 @@ When FHT is published through the #55 chain
    vocabulary but must not change the verdict model. C1-C3 already follow
    the shared rule-label scheme (#36) and carry over as the rule ids of the
    shared FHT format document.
-2. Retire the provisional fields: fold `selfChecksum` and `parentLink`
-   into whatever the shared manifest schema formalizes at that point;
-   C1-C3 already follow the shared rule-label scheme (#36) and carry over
-   as the rule ids of the shared FHT format document.
 3. Re-point the `schema` URL: vectors currently cite this repository's
    raw-main URL (the only contract that exists). At release, the same
    bytes move to a new `fht-fasta-schema-*` vector set citing the w3id
