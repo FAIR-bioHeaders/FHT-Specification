@@ -32,9 +32,6 @@ FAIR-bioHeaders-Specification#107, the #55 chain's "lane F").
   `selfChecksum` and `parentLink` are **finalized** for release (maintainer
   decision 2026-11-14, issue #37; semantics below), while the top-level
   `status` label remains provisional pending shared absorption.
-  three fields are **provisional** pending shared absorption:
-  `selfChecksum` (`matches` / `broken` / `unreachable`, per invalid vector),
-  `parentLink` (C3 scenario per vector) and `status` (top-level).
 - `*.gz`: gzip or BGZF copies; validate their decompressed bytes.
 
 Every file is byte-exact. The repository `.gitattributes` turns off
@@ -182,7 +179,7 @@ cited at its recomputed value by the checked-pass vectors.
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
 | Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
 | Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
-| Parent links (C3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1 |
+| Parent links (C3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1, mixed verdicts ×1 (checked-pass + checked-fail in one record; #37) |
 
 Counts: 25 valid, 41 invalid, 1 parent fixture; every vector carries a
 finalized `selfChecksum` (26 matches-invalid + 25 matches-valid = 51, 6
@@ -251,10 +248,6 @@ When FHT is published through the #55 chain
    vocabulary but must not change the verdict model. C1-C3 already follow
    the shared rule-label scheme (#36) and carry over as the rule ids of the
    shared FHT format document.
-2. Retire the provisional fields: fold `selfChecksum` and `parentLink`
-   into whatever the shared manifest schema formalizes at that point;
-   C1-C3 already follow the shared rule-label scheme (#36) and carry over
-   as the rule ids of the shared FHT format document.
 3. Re-point the `schema` URL: vectors currently cite this repository's
    raw-main URL (the only contract that exists). At release, the same
    bytes move to a new `fht-fasta-schema-*` vector set citing the w3id
