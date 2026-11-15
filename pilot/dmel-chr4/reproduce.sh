@@ -65,7 +65,14 @@ fetch "$D/${F}_assembly_report.txt" "${F}_assembly_report.txt"
 fetch "$D/${F}_feature_count.txt" "${F}_feature_count.txt"
 fetch "$D/md5checksums.txt" md5checksums.txt
 fetch "$D/uncompressed_checksums.txt" uncompressed_checksums.txt
+fetch "$D/annotation_hashes.txt" annotation_hashes.txt
 fetch "$STRUCT/chr4.fna.gz" chr4.fna.gz
+check 'md5checksums.txt sha256' \
+  148f87060005d84a397d74a216cca8454d0f37bd8928be5ac9517169439c9fa1 "$(digest sha256 md5checksums.txt)"
+check 'uncompressed_checksums.txt sha256' \
+  edbc2647a9f35bca7c2695efde8690d65166249423b9d693ea0aefce635d632c "$(digest sha256 uncompressed_checksums.txt)"
+check 'annotation_hashes.txt sha256' \
+  8440fb061a189d21cc26f7d7db70d1daba6b242e17a3292ed480ccf2c1374ccc "$(digest sha256 annotation_hashes.txt)"
 
 check "${F}_genomic.fna.gz sha256" \
   e69e907b5e87ce756236dcef93e82001cfd08f1a0ed5f22e36cbbd3a87ebc57d "$(digest sha256 ${F}_genomic.fna.gz)"
