@@ -191,12 +191,11 @@ BIOHEADERS_EXPERIMENTAL_FHT=1 "$BH" verify-links \
   GCF_000001215.4_chr4_transcripts.fht.fasta GCF_000001215.4_chr4.fhr.fasta 2> /dev/null \
   | grep -q 'derivedFrom\[0\] FHR transcribedFrom: matched' \
   && echo 'ok:   derivedFrom[0] FHR transcribedFrom matched the chr4 subset parent'
-if BIOHEADERS_EXPERIMENTAL_FHT=1 "$BH" verify-links \
-     GCF_000001215.4_chr4_transcripts.fht.fasta "$BASE/conformance/parents/parent-genome.fhr.fasta" \
-     > /dev/null 2>&1; then
-  echo "FAIL: verify-links accepted a wrong parent" >&2
-  exit 1
-fi
+status=0
+BIOHEADERS_EXPERIMENTAL_FHT=1 "$BH" verify-links \
+  GCF_000001215.4_chr4_transcripts.fht.fasta "$BASE/conformance/parents/parent-genome.fhr.fasta" \
+  > /dev/null 2>&1 || status=$?
+check 'wrong-parent verify-links exit status' 3 "$status"
 echo 'ok:   verify-links rejects a non-matching parent (exit 3 path exercised)'
 "$PY" "$HERE/rederive_checksum.py" --self-test \
   GCF_000001215.4_chr4.fhr.fasta GCF_000001215.4_chr4_transcripts.fht.fasta
