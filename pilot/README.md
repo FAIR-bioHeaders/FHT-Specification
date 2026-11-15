@@ -163,3 +163,17 @@ source**, and specifically:
 
 Until Q2 is answered with a concrete source, the FHT half of the pilot cannot
 proceed without inventing data, and this PR does not proceed.
+
+### Q2 — answered by a different donor (dated note, 2026-11-15)
+
+Both halves of the question are resolved by maintainer decision on 2026-11-15:
+the pilot donor for the annotation-bearing half is *Drosophila melanogaster*
+`GCF_000001215.4` ("Release 6 plus ISO1 MT"), a Chromosome-level RefSeq
+annotation with 13,962 protein-coding genes and 30,802 CDS-with-protein
+placements — so the pilot transcriptome is **not** the same organism as this
+*Prosapia bicincta* FHR parent, and it does not use this directory's FHR file as
+its parent either. See [`dmel-chr4/README.md`](dmel-chr4/README.md) for the
+chr4 (`NC_004353.4`) FHR subset, the 334-transcript FHT subset built on it, the
+`transcribedFrom` link with a computed-and-independently-re-derived parent
+checksum, and the limits that still apply (FHT is a draft; rule V7). This
+*Prosapia bicincta* FHR pilot is unchanged and stays genome-only.
