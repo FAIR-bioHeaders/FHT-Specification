@@ -143,8 +143,8 @@ check "transcripts proven as exon joins of the chr4 parent" 334 \
   "$("$PY" -c 'import json;print(json.load(open("out/report.json"))["derivation_proof"]["equals_exon_join_of_parent"])')"
 check "derivation mismatches" 0 \
   "$("$PY" -c 'import json;print(json.load(open("out/report.json"))["derivation_proof"]["mismatching"])')"
-diff "$HERE/chr4_transcripts.tsv" out/chr4_transcripts.tsv > /dev/null \
-  && echo 'ok:   chr4_transcripts.tsv equals the committed table'
+diff "$HERE/chr4_transcripts.tsv" out/chr4_transcripts.tsv > /dev/null
+echo 'ok:   chr4_transcripts.tsv equals the committed table'
 
 echo '== 4. author the FHR header with the released toolkit (default path) =='
 "$BH" combine "$HERE/metadata.fhr.yaml" out/chr4_genomic.fna -o GCF_000001215.4_chr4.fhr.fasta
