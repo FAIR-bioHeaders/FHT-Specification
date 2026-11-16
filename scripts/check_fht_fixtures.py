@@ -1,8 +1,10 @@
 """Verify the FHT #8 fixtures with an independently written rule reader.
 
 Repository-local runner (issue #8). It requires PyYAML and jsonschema — the
-versions pinned by docs/CI.md — and no toolkit: fair-bioheaders 0.9.0 has no
-FHT support, so no installed-toolkit round trip is claimed here (issue #9).
+versions pinned by docs/CI.md — and no toolkit: fair-bioheaders has no default
+FHT support, only the opt-in rule V7 draft lane, so nothing here claims an
+installed-toolkit round trip (issue #9; the named-version run is the separate
+manual lane ``scripts/run_toolkit_lane.py``, recorded in docs/CI.md).
 
 Lanes:
 
@@ -456,6 +458,34 @@ def lane_manifest(manifest):
                      f"statedChecksum")
     valid = [e for e in manifest["vectors"] if e["expected"] == "valid"]
     invalid = [e for e in manifest["vectors"] if e["expected"] == "invalid"]
+    # Issue #8 box 3 accountability. (a) The registry must cover every lettered
+    # rule of the shared docs/FORMAT.md (R1-R15): a rule that cannot have a
+    # FASTA vector is registered with a notApplicable note instead of being
+    # quietly absent, which is what made an "R1-R10" claim unverifiable before
+    # R9 was registered. (b) Every registered rule either has both a valid and
+    # an invalid vector or carries that recorded note, so the committed
+    # manifest — not only a fresh generator run — proves the coverage claim.
+    lettered = {f"R{number}" for number in range(1, 16)}
+    missing = sorted(lettered - rules)
+    if missing:
+        fail(f"manifest: FORMAT.md rules are not registered: {missing} "
+             f"(register them, with a notApplicable note when a FASTA vector "
+             f"is impossible)")
+    sides = {}
+    for entry in manifest["vectors"]:
+        for cited in set(entry.get("rules", [])) | (
+                {entry["rule"]} if "rule" in entry else set()):
+            sides.setdefault(cited, set()).add(entry["expected"])
+    for rule in sorted(rules):
+        noted = bool(manifest["rules"][rule].get("notApplicable"))
+        have = sides.get(rule, set())
+        if have == {"valid", "invalid"}:
+            continue
+        if noted:
+            continue
+        fail(f"manifest: rule {rule} has {sorted(have) or 'no'} vectors and no "
+             f"notApplicable note (every registered rule needs both sides or "
+             f"a recorded reason)")
     note(f"manifest: {len(valid)} valid, {len(invalid)} invalid vectors, "
          f"{len(rules)} rules")
     return manifest["vectors"]
