@@ -409,8 +409,10 @@ unchanged by design:
 
 The counts above are the record for this directory's review date (2026-11-15,
 PR #45). The suite grew later the same day: the issue #8 box-3 work registered
-R9 and added the two stream vectors, so `conformance/` is now **68 vectors
-(26 valid + 42 invalid), 21 rules, 1 parent fixture**. Read
+R9 and added the two stream vectors, and the pilot promotion candidates (#47)
+added four more vectors and two more parent fixtures, so `conformance/` is now
+**72 vectors
+(28 valid + 44 invalid), 21 rules, 3 parent fixtures**. Read
 [`../../conformance/README.md`](../../conformance/README.md) for the current
 census; nothing in the pilot changed.
 

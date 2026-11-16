@@ -411,7 +411,33 @@ def lane_manifest(manifest):
                if path.is_file() and path.name != "README.md"
                and path.name != "manifest.json"}
     referenced = {entry["file"] for entry in manifest["vectors"]}
-    referenced.add("parents/parent-genome.fhr.fasta")
+    # Byte targets are also referenced: a C3 parent fixture is shipped for a
+    # link check, not as a vector of its own, so every parentLink file counts as
+    # covered and every file under parents/ must be named by some vector.
+    parent_files = set()
+    for entry in manifest["vectors"]:
+        for link in entry.get("parentLink") or []:
+            if link.get("file"):
+                parent_files.add(link["file"])
+    referenced |= parent_files
+    on_disk_parents = {name for name in on_disk if name.startswith("parents/")}
+    if on_disk_parents - parent_files:
+        fail(f"manifest: parent fixtures no vector cites: "
+             f"{sorted(on_disk_parents - parent_files)}")
+    candidates = (manifest.get("promotionCandidates") or {}).get("candidates") or []
+    ids = set(ids)
+    unknown = sorted(set(candidates) - ids)
+    if unknown:
+        fail(f"manifest: promotionCandidates names no vector: {unknown}")
+    marked = sorted(entry["id"] for entry in manifest["vectors"]
+                    if entry.get("promotion"))
+    if marked != sorted(candidates):
+        fail(f"manifest: promotion field and promotionCandidates disagree: "
+             f"{marked} vs {sorted(candidates)}")
+    for entry in manifest["vectors"]:
+        if entry.get("promotion") not in (None, "candidate-unreviewed"):
+            fail(f"{entry['id']}: promotion must be absent or "
+                 f"'candidate-unreviewed', got {entry['promotion']!r}")
     if on_disk - referenced:
         fail(f"manifest: files on disk with no manifest entry: "
              f"{sorted(on_disk - referenced)}")

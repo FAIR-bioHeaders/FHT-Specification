@@ -22,16 +22,26 @@ FAIR-bioHeaders-Specification#107, the #55 chain's "lane F").
 
 - `valid/`: files a conforming implementation must accept.
 - `invalid/`: files it must reject.
-- `parents/`: one synthetic FHR-headed parent genome (a byte target for the
-  C3 link vectors; it is not itself an FHR conformance vector).
+- `parents/`: three synthetic FHR-headed genome files, each a byte target for the
+  C3 link vectors (none is itself an FHR conformance vector):
+  `parent-genome.fhr.fasta` holds both scaffolds, `parent-genome-subset.fhr.fasta`
+  holds a proper subset of them, and `parent-genome-masked.fhr.fasta` holds both
+  with one sequence line written in lower case and `masking: soft-masked`. The
+  three exist so the subset and case hazards can be *compared against real bytes*
+  rather than described: each has its own computed digest, and the digests are
+  asserted pairwise different by the generator.
 - `manifest.json`: the expected outcome for every file. Field names and
   semantics follow the shared manifest (`id`, `file`, `format`, `compressed`,
   `expected`, `rules`, `description`, `checksum`, `metadata`, `rule`,
   `reason`, `result`, `retired`), the proposed format id is `fht-fasta`, and
-  two manifest fields here have no shared-manifest precedent:
+  three manifest fields here have no shared-manifest precedent:
   `selfChecksum` and `parentLink` are **finalized** for release (maintainer
   decision 2026-11-14, issue #37; semantics below), while the top-level
-  `status` label remains provisional pending shared absorption.
+  `status` label remains provisional pending shared absorption. `promotion`
+  (per vector) and `promotionCandidates` (top level) are **review
+  bookkeeping**, not release vocabulary: they mark pilot-derived vectors whose
+  expectations no second reader has confirmed yet, and both disappear when the
+  review lands.
 - `*.gz`: gzip or BGZF copies; validate their decompressed bytes.
 
 Every file is byte-exact. The repository `.gitattributes` turns off
@@ -85,15 +95,22 @@ cite checksums that recompute from files in this directory (checked-pass);
 checksum-consistent but cites a perturbed parent checksum (invalid link,
 checked-fail); `fht-fasta-parent-mixed-verdicts` pairs a checked-pass and a
 checked-fail link in one record, proving the verdict is per entry.
+`fht-fasta-parent-real-digest-wrong-file` and
+`fht-fasta-parent-case-folded-digest` are checked-fail with a **genuine** digest
+— the value is the true checksum of a different real file in `parents/`, so
+nothing is malformed and only the exact-string comparison can catch it;
+`fht-fasta-parent-subset-citing-whole` and `fht-fasta-parent-masked-exact` are
+their checked-pass siblings. Those four are promotion candidates from the
+real-data pilot: see "Promotion candidates from the pilot" below.
 
 ### Finalized field semantics (issue #37)
 
 `selfChecksum` names, per vector, the state of the file's own root checksum
 line under the R1-R5 recomputation, and is recorded on **every** vector
-(68/68):
+(72/72):
 
 - `matches` — the stated value equals the recomputed value over the covered
-  bytes. The positive class: all 26 valid vectors carry it, and so do the
+  bytes. The positive class: all 28 valid vectors carry it, and so do the
   invalid vectors whose single defect lies elsewhere (the anti-accident rule:
   an implementation must not pass a vector by failing the comparison by
   accident).
@@ -104,7 +121,7 @@ line under the R1-R5 recomputation, and is recorded on **every** vector
 
 `parentLink` is an array of per-link entries
 `{file, statedChecksum, result}` recorded exactly on the vectors that
-exercise C3 (6):
+exercise C3 (10):
 
 - `result` is one of `checked-pass` / `checked-fail` / `unchecked`.
 - `unchecked` ⇔ `file: null`: the parent bytes were not supplied; the link is
@@ -181,11 +198,11 @@ cited at its recomputed value by the checked-pass vectors.
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
 | Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
 | Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
-| Parent links (C3) | checked-pass ×3 (incl. the two-link rich record), unchecked ×1, checked-fail ×1, mixed verdicts ×1 (checked-pass + checked-fail in one record; #37) |
+| Parent links (C3) | checked-pass ×5 (the two-link rich record, `-parent-transcribed-from`, `-parent-filtered-from`, and the two pilot candidates `-parent-subset-citing-whole` and `-parent-masked-exact`), unchecked ×1, checked-fail ×3 (`-parent-mismatched`, and the pilot candidates `-parent-real-digest-wrong-file` and `-parent-case-folded-digest`, whose stated value is a genuine digest of a *different* shipped file), mixed verdicts ×1 (checked-pass + checked-fail in one record; #37) |
 
-Counts: 26 valid, 42 invalid, 1 parent fixture; every vector carries a
-finalized `selfChecksum` (26 matches-invalid + 26 matches-valid = 52, 7
-broken, 9 unreachable) and the six C3 link vectors carry `parentLink`
+Counts: 28 valid, 44 invalid, 3 parent fixtures; every vector carries a
+finalized `selfChecksum` (28 matches-invalid + 28 matches-valid = 56, 7
+broken, 9 unreachable) and the ten C3 link vectors carry `parentLink`
 entries. Rule coverage self-check:
 every registered rule except the recommendation/warning/outcome-only/lane
 rules (R9, R11, R14, V5, V7 — each with a recorded `notApplicable` note in the
@@ -238,8 +255,8 @@ V7 also decides what a reader does when it did *not* choose the lane — then th
 owning-repository raw-main URL is "any other value" under V5, so each of these
 records is read as FHR and rejected there. Measured 2026-11-15 with
 `fair-bioheaders` 0.11.0 in both configurations (see
-[`../docs/CI.md`](../docs/CI.md)): 0 of 68 vectors accepted with the lane off,
-26 accepted with it on.
+[`../docs/CI.md`](../docs/CI.md)): 0 of 72 vectors accepted with the lane off,
+28 accepted with it on.
 
 That is a second, configuration-dependent outcome for the *same bytes*, and this
 manifest vocabulary cannot hold it: a vector has one `file`, one `expected` and
@@ -258,6 +275,132 @@ as a measurement, not as a vector, until either
 
 Until one of those lands, `fht-fasta-schema-raw-main` asserts the lane-on result
 only, and `notApplicable` on V7 says so in the manifest itself.
+
+## Promotion candidates from the real-data pilot (#45)
+
+The maintainer decision recorded on #8 is to promote selected pilot cases to
+normative vectors. Four vectors here do that, and they are marked as
+**candidates**, not as accepted vectors:
+
+- per vector: `"promotion": "candidate-unreviewed"`;
+- top level: `promotionCandidates`, carrying the source, the candidate ids and
+  the review rule that governs them.
+
+**What was promoted and what was not.** #45 built a real chr4 (`NC_004353.4`)
+FHR parent and a 334-transcript FHT subset on top of it. Its *bytes* stay in
+`pilot/`: they are third-party sequence, they are 1.4 MB each, and the synthetic
+content policy exists so a published vector never depends on a download. What
+transfers is the *shape* of what the pilot had to reason about, restated over
+synthetic fixtures: a subset whose link cites the whole parent; a parent whose
+letters exist in two case encodings with two digests; and a link whose stated
+digest is genuine but belongs to a file the reader was not handed.
+
+**The constraint that governs this section.** A vector's `expected` outcome must
+not be produced by the implementation under test. Each candidate's expectation
+below was written from rule text first — FR-007 in
+[`../specs/005-rna-transcriptome-header/spec.md`](../specs/005-rna-transcriptome-header/spec.md)
+and rules C3/R1 in this file and in
+[`docs/FORMAT.md`](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/main/docs/FORMAT.md)
+— and three executors then read the fixtures independently.
+
+| Candidate | Expected, from the clause quoted | A — released `fair-bioheaders` 0.11.0 (PyPI, V7 lane ON) | B — `scripts/check_fht_fixtures.py` (this repository's independent reader) | C — `FAIR-bioHeaders-Tools-JavaScript` at `d8552f6` (`src/reader.js`, `src/parent-links.js`) |
+| --- | --- | --- | --- | --- |
+| `fht-fasta-parent-subset-citing-whole` | valid + `checked-pass`. C3: "equal is **checked-pass**"; FR-007 fixes the permitted pair and requires the parent's FHR-family checksum, and says nothing about coverage | `verify` exit 0 (`Checksum verified.`); `verify-links` exit 0 printing `matched (` | accepted; link recomputes equal | `valid: true`, verdict `checked-pass`, selection `V7/FHT` |
+| `fht-fasta-parent-real-digest-wrong-file` | invalid + `checked-fail`. C3: "different is **checked-fail** and must be reported as an invalid link (not skipped)" | `verify` exit 0 (the file itself is valid), `verify-links` exit 3 printing `not matched (` | rejected in the parent-link class | `valid: false`, verdict `checked-fail`, the error names both digests |
+| `fht-fasta-parent-masked-exact` | valid + `checked-pass`. R1: "Read the FASTA/GFA as bytes; do not normalize…", so the masked file's own digest is the only correct citation for it | `verify` exit 0; `verify-links` exit 0, `matched (` | accepted; link recomputes equal | `valid: true`, verdict `checked-pass` |
+| `fht-fasta-parent-case-folded-digest` | invalid + `checked-fail`. R1 plus C3's exact-string comparison: the uppercase and masked copies of one set of letters are two files, so citing one against the other fails | `verify` exit 0, `verify-links` exit 3, `not matched (` | rejected in the parent-link class | `valid: false`, verdict `checked-fail` |
+
+Reproducing the cross-check (nothing outside the repository is written; both
+reads are read-only):
+
+```sh
+# A — the released reader, PyPI 0.11.0, in a throwaway venv
+python3 -m venv /tmp/fht0110 && /tmp/fht0110/bin/pip install fair-bioheaders==0.11.0
+BIOHEADERS_EXPERIMENTAL_FHT=1 /tmp/fht0110/bin/bioheaders verify \
+  conformance/valid/fht-fasta-parent-subset-citing-whole.fht.fasta   # exit 0
+BIOHEADERS_EXPERIMENTAL_FHT=1 /tmp/fht0110/bin/bioheaders verify-links \
+  conformance/invalid/fht-fasta-parent-real-digest-wrong-file.fht.fasta \
+  conformance/parents/parent-genome-subset.fhr.fasta                 # exit 3
+
+# B — this repository's own reader
+python scripts/check_fht_fixtures.py
+
+# C — the JavaScript library, read-only export of its origin/main
+git -C ../FAIR-bioHeaders-Tools-JavaScript archive origin/main | tar -x -C /tmp/fhtjs
+ln -s "$PWD/../FAIR-bioHeaders-Tools-JavaScript/node_modules" /tmp/fhtjs/node_modules
+# then call inspectBytes(bytes, {container: 'fasta', drafts: ['FHT'], parents})
+# from /tmp/fhtjs/src/reader.js over the manifest's vectors
+```
+
+A and C were run against these bytes on 2026-11-15 and reported **no
+disagreement with any of the 72 vectors**, not only with the four candidates: A
+through `bioheaders verify` / `verify-links`, C through `inspectBytes(bytes,
+{container: 'fasta', drafts: ['FHT'], parents})` on a read-only `git archive`
+export of that repository's `origin/main`. C's own `capability:draft` runner
+refuses this suite by design, because its recorded `suiteManifestSha256` still
+names the 66-vector revision — a stale pin, reported and not repaired here. C
+reads the contract at `59ad9641…`, this checkout's `fht.json`; A reads its
+bundled `11c69d66…` at `b9ad19a6…`, so A's agreement is with that pinned older
+revision.
+
+### Expectations require independent review — the reviewer must not be the author of the derivation
+
+Agreement between implementations corroborates an expectation; it does not
+substitute for review, and it cannot detect the case where every executor shares
+one misreading of the rule text. **The four vectors above were derived by this
+PR's author and need a second reader — all four, specifically:**
+
+1. `fht-fasta-parent-subset-citing-whole` — is `valid` the only rule-compatible
+   outcome, or does FR-007's "only for real reviewed family-file relationships"
+   make a subset-citing-whole link a record defect rather than a scope statement
+   the contract cannot see? A reviewer should also decide whether the vector
+   should carry a warning field, which would make "file identity only"
+   machine-checkable instead of descriptive.
+2. `fht-fasta-parent-real-digest-wrong-file` — the outcome is C3's, but whether a
+   reader must *name both digests* in its report is not settled by any rule text
+   here; #45's `verify-links` output does, and no clause compels it.
+3. `fht-fasta-parent-masked-exact` and `fht-fasta-parent-case-folded-digest` —
+   both rest on reading R1's "do not normalize" as covering letter case. The rule
+   text supports it by omission (case is not in the normalization list, and the
+   bytes are the bytes), but that inference is the author's, and a curator should
+   confirm it, because the pilot's real parent is exactly this shape (27.8 %
+   lowercase, with NCBI's uppercase component file beside it).
+
+No candidate depends on `dateCreated`, `assemblySoftware` or `reuseConditions`:
+those are open curator questions and each changes bytes, so all three stay absent
+from the candidate records, and the candidates carry the same `dateCreated` as
+the rest of the synthetic set (no derivation reads it).
+
+**Accepting a candidate** is a one-line change: drop its id from
+`PROMOTION_CANDIDATES` in `scripts/make_fht_fixtures.py` and regenerate. The
+vector, its id and its bytes do not move — only the `promotion` marking and the
+top-level list do, so review leaves a trace in history. **Rejecting** one follows
+the shared retirement rule: retire the id, never rewrite its expectation.
+
+### Measured, deliberately not promoted
+
+- **The lane-off / V5 outcome.** #45 ran the same real FHT file twice: with the
+  draft lane closed, the released reader routed it to the current FHR schema and
+  rejected `schemaVersion '1.0'`; with the lane open, it verified. Rule V7's text
+  gives that reading directly ("Without that choice, V5 governs such a value and
+  the outcome is exactly what it was before V7 existed"), and both paths were
+  re-measured on this suite on 2026-11-15: `bioheaders verify` with the lane
+  closed accepts **0 of 72** vectors; with it open it accepts 32 — the 28 valid
+  vectors plus the 4 whose only defect is a `checked-fail` link, which `verify`
+  passes by design and `verify-links` rejects with exit 3. It is **not** a
+  vector, because a vector carries one
+  `file` and one `expected`, and this is one byte string with two outcomes,
+  decided by the reader's configuration. Encoding it needs a manifest field for
+  the reader's lane — shared vocabulary, so that belongs to #55 /
+  FAIR-bioHeaders-Specification#107 and to #9, not to a draft PR inventing it
+  here.
+- **`assess`'s FHT findings** (`not assessed: unsupported-header-type`, and the
+  `derivedFrom[].accessionID` sequence accession `NC_004353.4` flagged against an
+  assembly-accession pattern) are toolkit behavior over released vocabulary and
+  belong to #9; making them FHT vectors would let an FHT expectation depend on a
+  tool's rubric.
+- **Any real-data vector** (the chr4 bytes, the 334-record subset, the GFF exon
+  proof). They stay pilot evidence in `pilot/dmel-chr4/`.
 
 ## What these vectors do **not** yet prove
 
