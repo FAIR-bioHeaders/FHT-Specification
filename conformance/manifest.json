@@ -32,6 +32,10 @@
     "R8": {
       "summary": "Header parsing: no duplicate mapping keys, YAML anchors, aliases or merge keys."
     },
+    "R9": {
+      "summary": "Header parsing: in microdata the first of repeated attributes applies; itemtype and itemprop are space-separated token lists.",
+      "notApplicable": "R9 is a microdata rule (docs/FORMAT.md: repeated attributes, `itemtype`/`itemprop` token lists) and has no FASTA vector; no FHT microdata reader or writer exists, so issue #8 box 2 keeps it out of this suite. Measured 2026-11-15 with fair-bioheaders 0.11.0: `bioheaders convert <fht file> out.html --to html` exits 1 with 'HTML microdata output is not available for FHT metadata: no reviewed FHT binding exists (FHT-Specification#9)'. The typed-HTML lane is issue #11."
+    },
     "R10": {
       "summary": "Header parsing: header lines form the leading block before the first FASTA record; a ';~' line after that point, including one from a concatenated file, is invalid; ordinary ';' comments and blank lines may be mixed in around and inside the block."
     },
@@ -53,11 +57,15 @@
       "summary": "Extension fields: from the FHT 1.0 development contract (FR-010), a top-level key matching ^x-[A-Za-z0-9][A-Za-z0-9_.-]*$ may hold any value; every other unknown key and an x- key in a nested object stay invalid."
     },
     "V1": {
-      "summary": "Schema selection: the raw-main FHT schema URL selects the reader's current FHT schema (here the 1.0 development contract)."
+      "summary": "Schema selection: raw-main selects the reader's **current** schema of that type, with no fallback to an older release. The shared rule text lists the shared publication repository's raw-main URLs; for FHT the citation is the owning development repository's raw-main URL, which V7 places in the opt-in draft lane. What the V1 vectors here turn on is the no-fallback half: a record that states a version other than the contract the citation selects is rejected, not retried against another schema."
     },
     "V5": {
       "summary": "Schema selection: any schema value outside the recognized released-schema URLs is FHR, checked against the reader's current FHR schema; a near-miss URL additionally draws the reader's warning (FAIR-bioHeaders-Tools#125). While no release registers FHT, its release-form URLs (an fht w3id URL, an FHT-Specification raw tag) are such values \u2014 the V7 draft lane is the owning development repository's raw-main URL only \u2014 and V4 unsupported-version begins only when FHT enters schemas/versions.json.",
       "notApplicable": "V5 outcomes depend on the record's bytes; no record that is valid against the FHT contract can be FHR-valid (FHT states schemaVersion '1.0', which the current FHR schema rejects, and the required field sets are disjoint), so V5 has no valid side here. V4 is not registered as a rule of this suite at all: with no FHT row in schemas/versions.json there is no citation it can resolve to."
+    },
+    "V7": {
+      "summary": "Schema selection: a reader **may** recognise a draft contract cited as the raw-main URL of the development repository that owns the type, only where the user explicitly chose that lane, reading the draft at the revision the reader is built with and warning on every such record; without the choice, V5 governs and the outcome is exactly what it was before V7 existed. V7 is the precondition of this whole suite, not a per-vector outcome: no expected result changes because of it, so it has no valid/invalid pair here. Measured 2026-11-15 with fair-bioheaders 0.11.0 (docs/CI.md): with the lane closed all 68 vectors are invalid as FHR; with it open the 26 valid vectors are accepted and the 42 rejections hold.",
+      "notApplicable": "V7 is a reader **configuration**, not a per-vector outcome: it decides whether any record in this suite is read as the draft at all, so it cannot have a valid/invalid pair inside one byte-exact suite. The positive selection vector is `fht-fasta-schema-raw-main`; the lane-closed behavior (every record here becomes invalid as FHR under V5) is measured in docs/CI.md's manual named-toolkit lane, and a configuration-dependent expectation needs its own manifest vocabulary \u2014 see conformance/README.md, 'The rule this suite cannot carry yet'."
     },
     "C1": {
       "summary": "FHT development contract (text in conformance/README.md): the parsed header metadata must validate against fht.json \u2014 required fields, enums, patterns, nested cardinality and the closed top level (plus R15 extension keys)."
@@ -463,6 +471,25 @@
       }
     },
     {
+      "id": "fht-fasta-gzip-multimember",
+      "file": "valid/fht-fasta-gzip-multimember.fht.fasta.gz",
+      "format": "fht-fasta",
+      "compressed": true,
+      "compression": "gzip",
+      "expected": "valid",
+      "rules": [
+        "R1"
+      ],
+      "description": "fht-fasta-lf as two gzip members split inside the checksum line; same checksum (R1 hashes the decompressed bytes, so stream framing is not hashed and the members are one file).",
+      "checksum": "G3P+vlkJHjxIHXmoGaotGyiEdpRmeJkQH/8U/8f/RDQ=",
+      "selfChecksum": "matches",
+      "metadata": {
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "version": "1.0.0",
+        "assemblyType": "de novo"
+      }
+    },
+    {
       "id": "fht-fasta-schema-raw-main",
       "file": "valid/fht-fasta-schema-raw-main.fht.fasta",
       "format": "fht-fasta",
@@ -632,6 +659,17 @@
       "expected": "invalid",
       "rule": "R3",
       "reason": "A nucleotide changed after the checksum was computed (checksum mismatch); the metadata itself is untouched and still valid.",
+      "selfChecksum": "broken"
+    },
+    {
+      "id": "fht-fasta-gzip-sequence-tampered",
+      "file": "invalid/fht-fasta-gzip-sequence-tampered.fht.fasta.gz",
+      "format": "fht-fasta",
+      "compressed": true,
+      "compression": "gzip",
+      "expected": "invalid",
+      "rule": "R3",
+      "reason": "fht-fasta-sequence-tampered compressed as one gzip member: the covered bytes still disagree after decompression, so the mismatch survives framing.",
       "selfChecksum": "broken"
     },
     {
