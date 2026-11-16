@@ -54,7 +54,9 @@ still applies to the entire record, including extensions. Missing optional field
 Untyped fallback uses the selected schema for coercion before full validation.
 Repeated ordinary array properties form an ordered array. Repeated scalar or
 repeated array-container properties yield invalid shapes, never last-value wins.
-The first duplicated HTML attribute applies under R9. Family implied end-tag and
+Literal CRLF/CR is normalized to LF before HTML tokenization; decoded `&#13;`
+references retain carriage returns. A self-closing slash on a non-void HTML
+element does not close that element. The first duplicated HTML attribute applies under R9. Family implied end-tag and
 inert script/template rules are retained; this is not a general HTML5 browser engine.
 
 The table inventories all 29 root fields at the pinned draft. Requiredness,

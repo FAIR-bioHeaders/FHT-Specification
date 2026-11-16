@@ -177,6 +177,27 @@ class FHTMicrodataTests(unittest.TestCase):
         text = text.replace("</li>", "")
         typed_equal(self, self.record, read_page(text, allow_draft=True))
 
+    def test_html_literal_line_endings_normalize_before_character_references(self):
+        record = dict(self.record, documentation="alpha\nbeta")
+        text = write_page(record, allow_draft=True)
+        for ending in ["\r\n", "\r"]:
+            with self.subTest(ending=repr(ending)):
+                typed_equal(
+                    self, record,
+                    read_page(text.replace("alpha\nbeta", "alpha" + ending + "beta"),
+                              allow_draft=True),
+                )
+        original = dict(self.record, documentation="alpha\r\nbeta")
+        text = write_page(original, allow_draft=True)
+        self.assertIn("alpha&#13;\nbeta", text)
+        typed_equal(self, original, read_page(text, allow_draft=True))
+
+    def test_nonvoid_self_closing_slash_does_not_close_property(self):
+        text = write_page(self.record, allow_draft=True)
+        text = text.replace('itemprop="version" data-fhr-type="string">',
+                            'itemprop="version" data-fhr-type="string"/>')
+        typed_equal(self, self.record, read_page(text, allow_draft=True))
+
     def test_repeated_array_items_and_duplicate_containers_differ(self):
         record = dict(self.record, identifier=["example:second", "example:first"])
         text = write_page(record, allow_draft=True)

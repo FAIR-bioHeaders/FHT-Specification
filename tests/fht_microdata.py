@@ -218,7 +218,8 @@ class _TreeBuilder(HTMLParser):
             self.stack.append(node)
 
     def handle_startendtag(self, tag, attrs):
-        self.stack[-1].children.append(_Node(tag, _first_wins(attrs)))
+        # HTML ignores a self-closing slash on non-void elements.
+        self.handle_starttag(tag, attrs)
 
     def handle_endtag(self, tag):
         for index in range(len(self.stack) - 1, 0, -1):
@@ -472,7 +473,9 @@ def read_page(text, schema=None, *, allow_draft=False):
     """Extract and schema-check one draft FHT record; never verify sequence bytes."""
     schema = _draft_schema(allow_draft, schema)
     builder = _TreeBuilder()
-    builder.feed(text)
+    # HTML preprocessing normalizes literal line endings before tokenization;
+    # character references such as &#13; are decoded later and stay intact.
+    builder.feed(text.replace("\r\n", "\n").replace("\r", "\n"))
     builder.close()
     scopes = [node for node in _nodes(builder.root) if node.itemscope]
     family = [
