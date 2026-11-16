@@ -367,10 +367,19 @@ def lane_combine(toolkit, vectors, work):
         if list(before) != list(after):
             fail(f"{label}: combine reordered the metadata keys: "
                  f"{list(before)} -> {list(after)}")
+        def metadata_shape(value):
+            if isinstance(value, dict):
+                return (type(value), [(type(key), key, metadata_shape(item))
+                                     for key, item in value.items()])
+            if isinstance(value, list):
+                return (type(value), [metadata_shape(item) for item in value])
+            return type(value)
+
         mistyped = [key for key in before
-                    if key in after and type(before[key]) is not type(after[key])]
+                    if key in after and
+                    metadata_shape(before[key]) != metadata_shape(after[key])]
         if mistyped:
-            fail(f"{label}: combine changed the value type at "
+            fail(f"{label}: combine changed a nested key order or value type at "
                  f"{sorted(mistyped)[:3]}")
         code, output = toolkit.run("verify", out)
         if code != 0:
