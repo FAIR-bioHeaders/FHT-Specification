@@ -471,6 +471,18 @@ VALID = []
 INVALID = []
 PARENT_LINKS = {}  # keyed by short name; filled while building
 
+# Vectors promoted from the real-data pilot (FHT-Specification#45) whose
+# expected outcomes are derived from the rule text and cross-checked against
+# independent executors, but have not yet been read by a second reader. Listed
+# in the manifest so a consumer or reviewer can see exactly which entries are
+# candidates; emptied by review, never by regeneration.
+PROMOTION_CANDIDATES = [
+    "fht-fasta-parent-subset-citing-whole",
+    "fht-fasta-parent-real-digest-wrong-file",
+    "fht-fasta-parent-masked-exact",
+    "fht-fasta-parent-case-folded-digest",
+]
+
 
 def valid(name, data, rules, description, checksum, expected=EXPECTED_METADATA,
           compression=None, warnings=None, parent_links=None):
@@ -505,33 +517,91 @@ def fht_invalid_record(name, record, rule, reason):
     invalid(name, data, rule, reason, "matches", metadata=dict(record, checksum=value))
 
 
-def build_parent_fixture():
-    """parents/parent-genome.fhr.fasta — a synthetic FHR-headed genome file that
-    gives the parent-link vectors real bytes to verify against. It is a byte
-    target, not an FHR conformance vector: its metadata is placeholder-shaped
-    FHR 2.1 (a released contract) and its checksum is genuinely computed over
-    its own bytes under R1-R5."""
+def build_parent_fixture(name="parent-genome", records=None, masking="not-masked",
+                         label="Synthetic FHR parent genome for FHT link fixtures "
+                                "(placeholder)", link=None):
+    """parents/<name>.fhr.fasta — a synthetic FHR-headed genome file that gives
+    the parent-link vectors real bytes to verify against. It is a byte target,
+    not an FHR conformance vector: its metadata is placeholder-shaped FHR 2.1 (a
+    released contract) and its checksum is genuinely computed over its own bytes
+    under R1-R5.
+
+    ``records`` defaults to the two-scaffold whole-set parent; the subset and
+    soft-masked variants pass their own record list so each parent fixture's
+    digest is the digest of the bytes actually shipped beside it. Nothing is
+    edited in place: a different byte target is a different file, with its own
+    computed checksum, exactly as the pilot found it in the field (#45: the
+    whole-assembly file and a chromosome subset are two files with two
+    digests)."""
+    body = records if records is not None else [
+        b">ctgA synthetic scaffold", b"ACGTACGTACGTACGTACGTACGTACGT",
+        b">ctgB synthetic scaffold", b"GGTTAACCATCGATCGAT"]
     record = {
         "schema": W3ID + "fhr/v0.5.0",
         "schemaVersion": "2.1",
-        "genome": "Synthetic FHR parent genome for FHT link fixtures (placeholder)",
+        "genome": label,
         "taxon": {"name": "Homo sapiens",
                   "uri": "https://identifiers.org/taxonomy:9606"},
         "version": "1.0.0",
         "metadataAuthor": [{"name": "Synthetic metadata author (placeholder)"}],
         "dateCreated": "2026-11-10",
-        "masking": "not-masked",
+        "masking": masking,
         "documentation": "Synthetic parent fixture for FHT-Specification#8; "
                          "not a real assembly.",
     }
-    body = [b">ctgA synthetic scaffold", b"ACGTACGTACGTACGTACGTACGTACGT",
-            b">ctgB synthetic scaffold", b"GGTTAACCATCGATCGAT"]
     data, value = assemble(header_of(record) + [Line(text) for text in body])
     stated, computed = reference_checksum(data)
-    assert stated == computed == value, "parent fixture must be self-consistent"
-    PARENT_LINKS["genome"] = {"file": "parents/parent-genome.fhr.fasta",
-                              "statedChecksum": computed}
-    return data
+    assert stated == computed == value, f"{name} must be self-consistent"
+    PARENT_LINKS[link or "genome"] = {"file": f"parents/{name}.fhr.fasta",
+                                      "statedChecksum": computed}
+    return {f"parents/{name}.fhr.fasta": data}
+
+
+# The whole-set parent's records, reused verbatim by the variants that must
+# differ from it in exactly one stated way (subset membership, letter case).
+PARENT_WHOLE_RECORDS = [
+    b">ctgA synthetic scaffold", b"ACGTACGTACGTACGTACGTACGTACGT",
+    b">ctgB synthetic scaffold", b"GGTTAACCATCGATCGAT"]
+
+
+def build_parent_fixtures():
+    """The three byte targets the C3 vectors verify against.
+
+    - ``parent-genome``: both synthetic scaffolds (the whole set);
+    - ``parent-genome-subset``: the ``ctgA`` record only — the same molecule
+      names, a strict subset of the records, therefore a different file with a
+      different digest (pilot #45's shape: a chromosome subset is not the
+      assembly);
+    - ``parent-genome-masked``: both records with the ``ctgA`` line written in
+      lower case and ``masking: soft-masked`` — the same letters as the whole-set
+      parent in different case, so again a different file with a different
+      digest (pilot #45's measured masking case: NCBI's uppercase component file
+      and the soft-masked ``_genomic.fna`` record differ only in letter case).
+
+    Every digest here is computed from the bytes this function returns; none is
+    copied from a header, and the three are pairwise different (asserted)."""
+    outputs = build_parent_fixture("parent-genome", PARENT_WHOLE_RECORDS,
+                                   link="genome")
+    outputs.update(build_parent_fixture(
+        "parent-genome-subset", PARENT_WHOLE_RECORDS[:2],
+        label="Synthetic FHR parent genome, ctgA only (placeholder)", link="subset"))
+    masked_records = [PARENT_WHOLE_RECORDS[0], PARENT_WHOLE_RECORDS[1].lower(),
+                      PARENT_WHOLE_RECORDS[2], PARENT_WHOLE_RECORDS[3]]
+    outputs.update(build_parent_fixture(
+        "parent-genome-masked", masked_records, masking="soft-masked",
+        label="Synthetic FHR parent genome, soft-masked (placeholder)",
+        link="masked"))
+    digests = {key: PARENT_LINKS[key]["statedChecksum"]
+               for key in ("genome", "subset", "masked")}
+    assert len(set(digests.values())) == 3, f"parent digests must differ: {digests}"
+    # The masked parent holds the whole parent's records with one line
+    # case-folded, and the subset parent holds a prefix of them: assert the
+    # relationship instead of describing it, so a future edit that breaks it
+    # breaks the build.
+    assert [text.lower() for text in masked_records] == \
+           [text.lower() for text in PARENT_WHOLE_RECORDS]
+    assert PARENT_WHOLE_RECORDS[:2] and masked_records[1] != PARENT_WHOLE_RECORDS[1]
+    return outputs
 
 
 def swap_first_different(value):
@@ -1039,6 +1109,121 @@ def build_vectors():
             parent_links=[{"file": PARENT_LINKS["genome"]["file"],
                            "statedChecksum": wrong, "result": "checked-fail"}])
 
+    # ---- promotion candidates from the real-data pilot (#45) -----------------
+    # These four vectors take the SHAPE pilot #45 met in real bytes and express
+    # it synthetically (placeholder names, computed digests, no third-party
+    # sequence). Each expectation is quoted from rule text below; none was read
+    # back out of an implementation. They are listed in the manifest's top-level
+    # `promotionCandidates` key and need an independent reviewer before they are
+    # accepted as normative (conformance/README.md).
+    subset_checksum = PARENT_LINKS["subset"]["statedChecksum"]
+    masked_checksum = PARENT_LINKS["masked"]["statedChecksum"]
+    assert len({genome_checksum, subset_checksum, masked_checksum,
+                minimal_checksum}) == 4, "parent digests must stay distinct"
+
+    # Candidate 1 — the subset-parent link. FR-007 permits `FHR` +
+    # `transcribedFrom` carrying the parent's FHR-family checksum; C3 defines the
+    # verdict as an exact comparison between that value and the supplied parent's
+    # recomputed digest. Neither clause conditions the verdict on how much of the
+    # parent the child covers, so a transcript subset that cites the whole parent
+    # recomputes equal: checked-pass, valid record. Pilot #45 named the hazard in
+    # the other direction: a `derivedFrom` digest pointing at the whole assembly
+    # while shipping one chromosome's transcripts still verifies clean. Promoting
+    # it as a vector states, normatively, that a C3 pass is file identity and
+    # nothing else.
+    subset_child = record_of(transcriptome=TRANSCRIPTOME + " (ctgA subset)",
+                             derivedFrom=[{"headerType": "FHR",
+                                           "checksum": genome_checksum,
+                                           "relationship": "transcribedFrom"}])
+    fht_lines_valid("fht-fasta-parent-subset-citing-whole", lines_of(subset_child),
+                    ["C1", "C3"],
+                    "A transcript subset citing the WHOLE parent "
+                    "(parents/parent-genome.fhr.fasta): the stated checksum "
+                    "recomputes equal, so C3 returns checked-pass and the record "
+                    "stays valid. FR-007 fixes the permitted pair and the required "
+                    "parent checksum, and C3 fixes the comparison; neither mentions "
+                    "coverage, so no rule here can make this a rejection. The "
+                    "vector exists to pin what the pass does NOT say: a reader must "
+                    "not report the subset relationship, or the derivation of any "
+                    "record, as verified (hazard measured in pilot #45).",
+                    expected=dict(EXPECTED_METADATA,
+                                  transcriptome=TRANSCRIPTOME + " (ctgA subset)"),
+                    parent_links=[dict(PARENT_LINKS["genome"],
+                                       result="checked-pass")])
+
+    # Candidate 2 — same cited digest, different file in the reader's hand. C3:
+    # "different is checked-fail and must be reported as an invalid link (not
+    # skipped)". The stated value is genuine — it is the true digest of a real
+    # file in this directory — so this is not a malformed-digest case; it is the
+    # case a perturbed digest cannot reach.
+    wrong_file = record_of(transcriptome=TRANSCRIPTOME + " (subset parent supplied)",
+                           derivedFrom=[{"headerType": "FHR",
+                                         "checksum": genome_checksum,
+                                         "relationship": "transcribedFrom"}])
+    data_wf, _ = assemble(lines_of(wrong_file))
+    invalid("fht-fasta-parent-real-digest-wrong-file", data_wf, "C3",
+            "The link states the genuine digest of "
+            "parents/parent-genome.fhr.fasta, but the parent the reader holds is "
+            "parents/parent-genome-subset.fhr.fasta — a second real file, holding "
+            "a proper subset of those records, with its own computed digest. C3 "
+            "compares exact strings, so the verdict is checked-fail: not "
+            "unchecked, not a shape error, and not something to skip. A reader "
+            "that reports a match has checked that the value is somebody's "
+            "digest, not that it is this parent's.", "matches",
+            parent_links=[{"file": PARENT_LINKS["subset"]["file"],
+                           "statedChecksum": genome_checksum,
+                           "result": "checked-fail"}])
+
+    # Candidate 3 — the soft-masked parent's own digest. R1 hashes exact bytes
+    # with no normalization and C3 compares exact strings, so the masked file's
+    # digest is the only value that can cite it, and citing it recomputes equal.
+    masked_child = record_of(transcriptome=TRANSCRIPTOME + " (soft-masked parent)",
+                             derivedFrom=[{"headerType": "FHR",
+                                           "checksum": masked_checksum,
+                                           "relationship": "transcribedFrom"}])
+    fht_lines_valid("fht-fasta-parent-masked-exact", lines_of(masked_child),
+                    ["C1", "C3"],
+                    "A child citing parents/parent-genome-masked.fhr.fasta — the "
+                    "same records with one sequence line written in lower case and "
+                    "`masking: soft-masked` — at that file's own recomputed digest: "
+                    "checked-pass. Case is part of the hashed bytes (R1), so the "
+                    "masked file has a digest of its own and citing it exactly is "
+                    "correct, not a normalization to be undone.",
+                    expected=dict(EXPECTED_METADATA,
+                                  transcriptome=TRANSCRIPTOME
+                                  + " (soft-masked parent)"),
+                    parent_links=[dict(PARENT_LINKS["masked"],
+                                       result="checked-pass")])
+
+    # Candidate 4 — the measured-masking hazard. The cited digest is real, but it
+    # belongs to the case-folded copy of the same letters while the supplied
+    # parent is the masked file. R1 ("do not normalize line endings, encoding,
+    # comments, sequence wrapping, ordering, or whitespace"; case is not listed
+    # because it is not normalization: the bytes are the bytes) plus C3's exact
+    # comparison make this checked-fail. A reader that folds case before hashing,
+    # or that treats an uppercase component file and the soft-masked record of the
+    # same molecule as one file, turns this rejection into a false pass — the
+    # situation pilot #45 measured (27.8 % lowercase in the shipped record, an
+    # NCBI component file differing only in letter case).
+    case_child = record_of(transcriptome=TRANSCRIPTOME + " (case-folded citation)",
+                           derivedFrom=[{"headerType": "FHR",
+                                         "checksum": genome_checksum,
+                                         "relationship": "transcribedFrom"}])
+    data_cc, _ = assemble(lines_of(case_child))
+    invalid("fht-fasta-parent-case-folded-digest", data_cc, "C3",
+            "The link states the digest of parents/parent-genome.fhr.fasta while "
+            "the supplied parent is parents/parent-genome-masked.fhr.fasta. The two "
+            "files carry the same records and the same letters, differing only in "
+            "the case of one sequence line and in the masking value that describes "
+            "it. R1 hashes exact bytes and C3 compares exact strings, so the "
+            "verdict is checked-fail: case is not a normalization a verifier may "
+            "apply, and the uppercase and masked copies of a molecule are two "
+            "files with two digests (measured on real data in pilot #45).",
+            "matches",
+            parent_links=[{"file": PARENT_LINKS["masked"]["file"],
+                           "statedChecksum": genome_checksum,
+                           "result": "checked-fail"}])
+
     # Finalized parentLink semantics (FHT-Specification#37): the verdict is
     # per entry, not per file. One checked-pass link must not mask a
     # checked-fail link in the same record.
@@ -1270,6 +1455,12 @@ def manifest():
                 item["result"] = entry["result"]
         if entry.get("parent_links"):
             item["parentLink"] = entry["parent_links"]
+        if entry["name"] in PROMOTION_CANDIDATES:
+            # Issue #8 promotion discipline: these outcomes are derived from the
+            # quoted rule text and cross-checked against independent executors,
+            # but no second reader has reviewed the derivation yet. See the
+            # top-level promotionCandidates entry and conformance/README.md.
+            item["promotion"] = "candidate-unreviewed"
         vectors.append(item)
     covered = {}
     for item in vectors:
@@ -1288,9 +1479,11 @@ def manifest():
         "manifestVersion": MANIFEST_VERSION,
         "status": "Development vectors for the FHT 1.0 contract "
                   "(FHT-Specification#8). No FHT schema is released and no "
-                  "installed toolkit reads FHT yet: every expected outcome is "
-                  "derived from the rule text, never from an implementation "
-                  "under test.",
+                  "installed toolkit reads FHT in its default path: every "
+                  "expected outcome is derived from the rule text, never from "
+                  "an implementation under test. Vectors marked "
+                  "promotion=candidate-unreviewed additionally await a second "
+                  "reader (see promotionCandidates).",
         "specification": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-"
                          "Specification/blob/main/docs/FORMAT.md (rules R1-R15)",
         "schemaVersionsSpecification": "https://github.com/FAIR-bioHeaders/"
@@ -1305,6 +1498,24 @@ def manifest():
                               "scripts/make_fht_fixtures.py and cross-checked by "
                               "scripts/check_fht_fixtures.py",
         "generator": "scripts/make_fht_fixtures.py",
+        "promotionCandidates": {
+            "status": "candidate — derived from the rule text quoted in each "
+                      "vector's reason/description, corroborated by independent "
+                      "executors, and NOT yet reviewed by a second reader",
+            "source": "pilot/dmel-chr4 (FHT-Specification#45): the first real-data "
+                      "FHR→FHT chain in this repository. The vectors reproduce the "
+                      "shape that evidence exposed, in synthetic bytes; no pilot "
+                      "byte, accession, coordinate or digest is copied into the "
+                      "suite.",
+            "reviewRule": "An expected outcome must not be produced by the "
+                          "implementation under test. Agreement between executors "
+                          "corroborates an expectation; it does not substitute for "
+                          "review, and the reviewer must not be the author of the "
+                          "derivation. On acceptance, delete this entry's id from "
+                          "`candidates` — the vector, its id and its bytes stay as "
+                          "they are.",
+            "candidates": list(PROMOTION_CANDIDATES),
+        },
         "rules": {rule: {"summary": text, **({"notApplicable": NOT_APPLICABLE[rule]}
                                              if rule in NOT_APPLICABLE else {})}
                   for rule, text in RULES.items()},
@@ -1318,6 +1529,11 @@ def self_check():
     for entry in VALID + INVALID:
         assert entry["name"] not in names, entry["name"]
         names.add(entry["name"])
+    for name in PROMOTION_CANDIDATES:
+        assert name in names, f"promotion candidate {name} is not a built vector"
+    # Every C3 byte target the candidates rely on must be shipped and distinct.
+    assert {"genome", "subset", "masked"} <= set(PARENT_LINKS), \
+        f"parent fixtures missing: {sorted(PARENT_LINKS)}"
     for entry in VALID:
         data = decompress(entry["data"]) if entry.get("compression") else entry["data"]
         stated, computed = reference_checksum(data)
@@ -1345,13 +1561,13 @@ def produce():
     PARENT_LINKS.clear()
     VALID.clear()
     INVALID.clear()
-    parent_data = build_parent_fixture()
+    parent_outputs = build_parent_fixtures()
     build_vectors()
     self_check()
     outputs = {}
     for entry in VALID + INVALID:
         outputs[path_for(entry)] = entry["data"]
-    outputs["parents/parent-genome.fhr.fasta"] = parent_data
+    outputs.update(parent_outputs)
     outputs["manifest.json"] = (json.dumps(manifest(), indent=2, ensure_ascii=True)
                                 + "\n").encode("ascii")
     return outputs
@@ -1384,8 +1600,9 @@ def main(argv=None):
         print("SHA-512/256 is unavailable in this Python build", file=sys.stderr)
         return 1
     outputs, example_outputs = write(args.conformance, args.examples)
+    parents = len([name for name in outputs if name.startswith("parents/")])
     print(f"Wrote {len(VALID)} valid and {len(INVALID)} invalid vectors, "
-          f"1 parent fixture and {len(example_outputs)} example files")
+          f"{parents} parent fixtures and {len(example_outputs)} example files")
     return 0
 
 
