@@ -110,7 +110,9 @@ kept.
 `tRNA` or `transcribed RNA`, or `mixed` when the set is known to contain more
 than one class (for example mRNA with rRNA or long non-coding RNA). It is
 optional. `mixed` is a statement about known content, not a value for unknown:
-a set whose class is unknown omits the field. `total RNA` and `cDNA` are
+a set whose class is unknown omits the field. When the classes are known and
+differ, use `mixed`, not `transcribed RNA`, which is for RNA that cannot be
+assigned more specifically. `total RNA` and `cDNA` are
 preparation contexts and are not accepted as molecule classes, and neither one
 establishes `mixed` by itself. Do not infer `mRNA` from RNA-Seq, `cDNA` from T/U
 bytes, or `transcribed RNA` from `ncRNA`. `mixed` has no single INSDC

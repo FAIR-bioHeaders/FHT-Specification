@@ -215,6 +215,7 @@ classes:
         pattern: '\S'
       metadataAuthor:
         description: Authors responsible for the header assertions
+        minimum_cardinality: 1
       assemblyAuthor:
         description: Attributions for the assembly or extraction, when supplied
       dateCreated:
@@ -331,8 +332,10 @@ enums:
         description: >-
           The set is known to contain sequences of more than one biological
           molecule class (for example mRNA together with rRNA or long
-          non-coding RNA), so no single class applies to the whole file. Not a
-          value for an unknown class, which is omitted. It has no single INSDC
+          non-coding RNA), so no single class applies to the whole file. When
+          the classes are known and differ, use mixed rather than transcribed
+          RNA, which is for RNA that cannot be assigned more specifically. Not
+          a value for an unknown class, which is omitted. It has no single INSDC
           /mol_type equivalent; per-record values are needed for deposit.
   Strandedness:
     description: >-
