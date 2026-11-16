@@ -260,7 +260,8 @@ def lane_links(toolkit, vectors, work):
         elif code != 0:
             fail(f"{label}: {results} links are not a rejection, but "
                  f"verify-links exited {code}: {output.strip()[:160]!r}")
-        if "checked-pass" in results and "matched (" not in output:
+        if ("checked-pass" in results
+                and re.search(r"(?<!not )\bmatched \(", output) is None):
             fail(f"{label}: a checked-pass link must print 'matched ('")
         if "unchecked" in results and "not checked (" not in output:
             fail(f"{label}: an unchecked link must print 'not checked (' — "
