@@ -183,6 +183,50 @@ class FhtSchemaTests(unittest.TestCase):
             with self.subTest(strandedness=value):
                 self.assert_invalid(self.record(strandedness=value), "is not one of")
 
+    def test_library_protocol_records_a_named_protocol_or_kit(self):
+        # Curator review Q3: protocol or kit name, optional URI (the FHR
+        # assemblyProtocol URI rules), one object for the whole set.
+        kit = {"name": "Illumina TruSeq Stranded mRNA"}
+        self.assert_valid(self.record(libraryProtocol=kit))
+        self.assert_valid(
+            self.record(
+                libraryProtocol=dict(kit, uri="https://example.org/protocols/1"),
+                strandedness="reverse",
+            )
+        )
+        self.assert_valid(
+            self.record(libraryProtocol={"name": "In-house dUTP protocol v3"})
+        )
+        self.assert_invalid(self.record(libraryProtocol={}), "'name' is a required property")
+        self.assert_invalid(
+            self.record(libraryProtocol={"uri": "https://example.org/protocols/1"}),
+            "'name' is a required property",
+        )
+        for name in ("", "   "):
+            with self.subTest(name=name):
+                self.assert_invalid(
+                    self.record(libraryProtocol={"name": name}), "does not match"
+                )
+        self.assert_invalid(
+            self.record(libraryProtocol={"name": "Kit", "uri": "not a uri"}),
+            "is not a 'uri'",
+        )
+        self.assert_invalid(
+            self.record(libraryProtocol="Illumina TruSeq Stranded mRNA"),
+            "is not of type 'object'",
+        )
+        self.assert_invalid(
+            self.record(libraryProtocol=[kit]), "is not of type 'object'"
+        )
+        self.assert_invalid(
+            self.record(libraryProtocol=dict(kit, version="2")),
+            "Additional properties",
+        )
+        self.assert_invalid(
+            self.record(libraryProtocol=dict(kit, **{"x-a": 1})),
+            "Additional properties",
+        )
+
     def test_sample_is_an_ordered_non_empty_array(self):
         sample = {"tissue": "ovary", "tissueIdentifier": "UBERON:0000992"}
         self.assert_valid(self.record(sample=[sample]))
@@ -430,6 +474,10 @@ class FhtSchemaTests(unittest.TestCase):
             sample=[{"tissue": "ovary", "tissueIdentifier": "UBERON:0000992"}],
             libraryStrategy="RNA-Seq",
             strandedness="forward",
+            libraryProtocol={
+                "name": "Example stranded kit",
+                "uri": "https://example.org/kit",
+            },
             sequencingRuns=["SRR123456"],
             instrument=["Example sequencer"],
             vitalStats={

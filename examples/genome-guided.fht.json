@@ -49,6 +49,9 @@
   ],
   "libraryStrategy": "RNA-Seq",
   "strandedness": "reverse",
+  "libraryProtocol": {
+    "name": "Illumina Stranded Total RNA Prep, Ligation with Ribo-Zero Plus"
+  },
   "vitalStats": {
     "totalTranscripts": 61530,
     "N50": 2236,
@@ -57,6 +60,6 @@
   "relatedLink": [
     "https://www.maizegdb.org/genome/assembly/Zm-B73-REFERENCE-NAM-5.0"
   ],
-  "documentation": "Reads aligned to Zm-B73-REFERENCE-NAM-5.0; models assembled with StringTie and written out from the genome with gffread. rRNA-depleted total RNA libraries (Illumina Stranded Total RNA Prep, Ligation with Ribo-Zero Plus); the models include protein-coding and long non-coding transcripts, so moleculeType is mixed. Because the final sequences were extracted from the genome, a real record links that genome as an FHR transcribedFrom parent with its checksum; none is given here because no FHR-headed genome file is cited. Synthetic example for the FHT development contract: names, statistics and sequence bytes are invented; taxon and ontology identifiers and kit names are real.",
-  "checksum": "j4LOlES1dDTYTGRfU0TUvKlhgwoGCvVHDtVs6wQSDvc="
+  "documentation": "Reads aligned to Zm-B73-REFERENCE-NAM-5.0; models assembled with StringTie and written out from the genome with gffread. rRNA-depleted total RNA libraries; the models include protein-coding and long non-coding transcripts, so moleculeType is mixed. Because the final sequences were extracted from the genome, a real record links that genome as an FHR transcribedFrom parent with its checksum; none is given here because no FHR-headed genome file is cited. Synthetic example for the FHT development contract: names, statistics and sequence bytes are invented; taxon and ontology identifiers and kit names are real.",
+  "checksum": "oG5luYSdsT2PPd3+O8545ub9UGwJjkVOiSyKtDNSIEc="
 }

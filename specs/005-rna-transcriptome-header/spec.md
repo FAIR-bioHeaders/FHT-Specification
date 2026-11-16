@@ -80,10 +80,12 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
 - **FR-004:** Define optional file-wide library fields separately from molecule
   class. `libraryStrategy` is one supplied strategy string, using the producer's
   ENA term where applicable. Proposed `strandedness` enum: `unstranded`, `forward`,
-  `reverse`, with D3's explicit read/read-1 orientation convention. The library
-  protocol or kit name is recorded in `documentation` and a protocol URL in
-  `relatedLink`. Unknown and heterogeneous library assertions are omitted, not
-  defaulted or inferred, and strandedness is never inferred from a kit name.
+  `reverse`, with D3's explicit read/read-1 orientation convention. Optional
+  `libraryProtocol` is one object with a required non-blank `name` (the protocol
+  or kit) and an optional `uri`, modelled on FHR `assemblyProtocol` but for
+  wet-lab library preparation, never a mapping target for an assembly workflow.
+  Unknown and heterogeneous library assertions are omitted, not defaulted or
+  inferred, and strandedness is never inferred from a kit name.
 - **FR-005:** Statistics are optional producer-reported measurements using D3's
   names, types, units and whole-file population: `vitalStats.totalTranscripts`
   (integer >= 0, FASTA records including isoforms), `N50` (integer >= 1) and
@@ -150,7 +152,8 @@ or successful pilot is invented by these designs. #157 remains the INSDC gate.
 
 This changes proposed requiredness and meaning for moleculeType, proposes a strand
 enum and numerical constraints, and clarifies construction semantics. The
-November 2026 curator-review revision adds `mixed` to `moleculeType` and rejects
-empty values for the required fields. Those are contract decisions requiring
-their own review, not incidental documentation fixes.
+November 2026 curator-review revision adds `mixed` to `moleculeType`, adds the
+optional `libraryProtocol` object and rejects empty values for the required
+fields. Those are contract decisions requiring their own review, not incidental
+documentation fixes.
 Released FHR/FHP/FHGFF3 artifacts and the legacy FHT schema are unchanged.

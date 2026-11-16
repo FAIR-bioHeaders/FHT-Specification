@@ -1358,15 +1358,16 @@ RICH_RECORDS = {
         ],
         "libraryStrategy": "RNA-Seq",
         "strandedness": "reverse",
+        "libraryProtocol": {"name": "Illumina TruSeq Stranded mRNA"},
         "vitalStats": {"totalTranscripts": 84211, "N50": 1874,
                        "averageTranscriptLength": 1032.6},
         "completeness": {"lineageDataset": "hymenoptera_odb10",
                          "buscoVersion": "6.1.0", "mode": "transcriptome",
                          "completeSingle": 5012, "completeDuplicated": 712,
                          "fragmented": 98, "missing": 169, "total": 5991},
-        "documentation": "dUTP stranded poly(A) library (Illumina TruSeq Stranded "
-                         "mRNA): Trinity RF, recorded as strandedness reverse. "
-                         + SYNTHETIC_NOTE,
+        "documentation": "dUTP stranded poly(A) library: Trinity RF, recorded as "
+                         "strandedness reverse, with the kit named in "
+                         "libraryProtocol. " + SYNTHETIC_NOTE,
         "reuseConditions": "CC-BY-4.0",
     },
     "genome-guided": {
@@ -1394,15 +1395,15 @@ RICH_RECORDS = {
         ],
         "libraryStrategy": "RNA-Seq",
         "strandedness": "reverse",
+        "libraryProtocol": {"name": "Illumina Stranded Total RNA Prep, Ligation "
+                                    "with Ribo-Zero Plus"},
         "vitalStats": {"totalTranscripts": 61530, "N50": 2236,
                        "averageTranscriptLength": 1587.4},
         "relatedLink": [
             "https://www.maizegdb.org/genome/assembly/Zm-B73-REFERENCE-NAM-5.0"],
         "documentation": "Reads aligned to Zm-B73-REFERENCE-NAM-5.0; models "
                          "assembled with StringTie and written out from the "
-                         "genome with gffread. rRNA-depleted total RNA libraries "
-                         "(Illumina Stranded Total RNA Prep, Ligation with "
-                         "Ribo-Zero Plus); "
+                         "genome with gffread. rRNA-depleted total RNA libraries; "
                          "the models include protein-coding and long non-coding "
                          "transcripts, so moleculeType is mixed. Because the final "
                          "sequences were extracted from the genome, a real record "

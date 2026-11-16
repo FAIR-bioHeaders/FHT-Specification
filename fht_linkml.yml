@@ -83,9 +83,20 @@ slots:
       forward means the single read or read 1 is sense relative to the
       originating transcript, reverse means antisense. Unknown or mixed
       protocols are omitted, never defaulted to unstranded. Record the protocol
-      or kit name in documentation and a protocol URL in relatedLink; never
-      infer strandedness from a kit name.
+      or kit name separately in libraryProtocol; never infer one from the other.
     range: Strandedness
+  libraryProtocol:
+    description: >-
+      The library preparation protocol or kit used for the whole set, by name,
+      with an optional URI for its documentation. It is wet-lab library
+      preparation, not a computational workflow: modelled on FHR
+      assemblyProtocol in how it cites a protocol, but not a mapping target for
+      it (FHT has no assemblyProtocol; such a URI goes in relatedLink). The
+      name is required so that a kit without a citable page can still be
+      recorded. Omit when unknown or when libraries were prepared with
+      different protocols. It does not imply a strandedness value.
+    range: LibraryProtocol
+    inlined: true
   sequencingRuns:
     description: >-
       Actual SRA/ENA/DDBJ run accessions supporting the set. An SRS sample
@@ -168,6 +179,7 @@ classes:
     - sample
     - libraryStrategy
     - strandedness
+    - libraryProtocol
     - sequencingRuns
     - instrument
     - vitalStats
@@ -244,6 +256,22 @@ classes:
       strain:
         description: Supplied strain, breed or cultivar
         pattern: '\S'
+  LibraryProtocol:
+    description: >-
+      A named library preparation protocol or kit, with an optional URI. The
+      name is free text as the producer or manufacturer gives it; the URI
+      follows the same rules as FHR assemblyProtocol (FORMAT.md R14).
+    class_uri: fhr:LibraryProtocol
+    attributes:
+      name:
+        description: Name of the library preparation protocol or kit
+        slot_uri: sdo:name
+        required: true
+        pattern: '\S'
+      uri:
+        description: URI of the protocol or kit documentation
+        slot_uri: sdo:url
+        range: uri
   VitalStats:
     description: Optional producer-reported statistics for the whole file
     class_uri: fhr:VitalStats

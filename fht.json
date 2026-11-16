@@ -283,6 +283,10 @@
           "minItems": 1,
           "type": "array"
         },
+        "libraryProtocol": {
+          "$ref": "#/$defs/LibraryProtocol",
+          "description": "The library preparation protocol or kit used for the whole set, by name, with an optional URI for its documentation. It is wet-lab library preparation, not a computational workflow: modelled on FHR assemblyProtocol in how it cites a protocol, but not a mapping target for it (FHT has no assemblyProtocol; such a URI goes in relatedLink). The name is required so that a kit without a citable page can still be recorded. Omit when unknown or when libraries were prepared with different protocols. It does not imply a strandedness value."
+        },
         "libraryStrategy": {
           "description": "One supplied library strategy term for the whole set, using the producer's ENA term where applicable. Omit when experiments differ or the value is unknown; this slot is not an ENA-controlled enum.",
           "pattern": "\\S",
@@ -349,7 +353,7 @@
         },
         "strandedness": {
           "$ref": "#/$defs/Strandedness",
-          "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded. Record the protocol or kit name in documentation and a protocol URL in relatedLink; never infer strandedness from a kit name."
+          "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded. Record the protocol or kit name separately in libraryProtocol; never infer one from the other."
         },
         "taxon": {
           "$ref": "#/$defs/Taxon",
@@ -419,6 +423,27 @@
       ],
       "title": "HeaderType",
       "type": "string"
+    },
+    "LibraryProtocol": {
+      "additionalProperties": false,
+      "description": "A named library preparation protocol or kit, with an optional URI. The name is free text as the producer or manufacturer gives it; the URI follows the same rules as FHR assemblyProtocol (FORMAT.md R14).",
+      "properties": {
+        "name": {
+          "description": "Name of the library preparation protocol or kit",
+          "pattern": "\\S",
+          "type": "string"
+        },
+        "uri": {
+          "description": "URI of the protocol or kit documentation",
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "LibraryProtocol",
+      "type": "object"
     },
     "MoleculeType": {
       "description": "Restricted biological molecule classes for the whole described set (D1), plus mixed for a set known to combine classes (maintainer decision on the curator review). These are not preparation methods, and matching a string does not prove per-record INSDC compliance.",
@@ -705,6 +730,10 @@
       "minItems": 1,
       "type": "array"
     },
+    "libraryProtocol": {
+      "$ref": "#/$defs/LibraryProtocol",
+      "description": "The library preparation protocol or kit used for the whole set, by name, with an optional URI for its documentation. It is wet-lab library preparation, not a computational workflow: modelled on FHR assemblyProtocol in how it cites a protocol, but not a mapping target for it (FHT has no assemblyProtocol; such a URI goes in relatedLink). The name is required so that a kit without a citable page can still be recorded. Omit when unknown or when libraries were prepared with different protocols. It does not imply a strandedness value."
+    },
     "libraryStrategy": {
       "description": "One supplied library strategy term for the whole set, using the producer's ENA term where applicable. Omit when experiments differ or the value is unknown; this slot is not an ENA-controlled enum.",
       "pattern": "\\S",
@@ -771,7 +800,7 @@
     },
     "strandedness": {
       "$ref": "#/$defs/Strandedness",
-      "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded. Record the protocol or kit name in documentation and a protocol URL in relatedLink; never infer strandedness from a kit name."
+      "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded. Record the protocol or kit name separately in libraryProtocol; never infer one from the other."
     },
     "taxon": {
       "$ref": "#/$defs/Taxon",

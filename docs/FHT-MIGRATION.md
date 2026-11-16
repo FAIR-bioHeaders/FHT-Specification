@@ -95,7 +95,7 @@ FHR 2.0 still accepts and plans to reject in its next major (shared
 ## Optional fields
 
 `moleculeType`, `assemblySoftware`, `sample`, `libraryStrategy`,
-`strandedness`, `sequencingRuns`, `vitalStats`, `completeness`, `derivedFrom`,
+`strandedness`, `libraryProtocol`, `sequencingRuns`, `vitalStats`, `completeness`, `derivedFrom`,
 `identifier`, `accessionID`, `scholarlyArticle`, `documentation`,
 `relatedLink`, `funding`, `reuseConditions`, `voucherSpecimen`, plus the
 legacy-compatible `transcriptomeSynonym`, `assemblyAuthor` and `instrument`.
@@ -122,10 +122,26 @@ forward means the single read or read 1 is sense relative to the originating
 transcript; reverse means antisense. It is not an ENA enum and does not
 describe genomic plus/minus orientation. Unknown or mixed protocols are omitted.
 
-Record the library protocol or kit name in `documentation` and a protocol URL in
-`relatedLink`, alongside `strandedness`. Do not infer strandedness from a kit
-name, and do not put the library protocol in FHR's assembly-specific
-`assemblyProtocol` (FHT has no such field).
+`libraryProtocol` records the library preparation protocol or kit by name, with
+an optional URI:
+
+```yaml
+libraryProtocol:
+  name: Illumina TruSeq Stranded mRNA
+  uri: https://example.org/protocol   # optional
+```
+
+It is one object for the whole set. It is modelled on FHR's `assemblyProtocol`
+in how it cites a protocol, but it describes wet-lab library preparation, not a
+computational workflow, so an FHR `assemblyProtocol` URI never maps into it (FHT
+has no `assemblyProtocol`; put such a URI in `relatedLink`). FHR's field is a
+URI only; here `name` is required and
+non-blank so that a kit without a citable page can still be recorded, and `uri`
+follows the same rules as `assemblyProtocol` (`format: uri`, FORMAT.md R14).
+Omit it when unknown or when libraries were prepared with different protocols.
+It does not replace `strandedness`: record both when both are known, and do not
+infer either from the other. A protocol URL can still also be listed in
+`relatedLink`; free-text detail beyond the name belongs in `documentation`.
 
 FASTA parsing and checksums are alphabet-independent. T/U conversion is an
 explicit derivative with a new checksum, never a header-parser fix.
@@ -234,7 +250,7 @@ because nothing has been released.
 | --- | --- | --- |
 | Q1 construction types | "de novo, genome-guided and annotation-derived are a good start, we should implement the controlled vocabulary for this now" | None: `assemblyType` was already exactly these three values. Mixed histories stay incomplete until reviewed (above); edge-case tests added |
 | Q2 molecule type | "mixed is acceptable, so it should be five values" | `mixed` added to `moleculeType` |
-| Q3 strand | Keep forward/reverse; "protocol name or kit should have a way to be recorded as well" | `strandedness` unchanged; the protocol or kit name goes in `documentation` and a protocol URL in `relatedLink` |
+| Q3 strand | Keep forward/reverse; "protocol name or kit should have a way to be recorded as well" | `strandedness` unchanged; new optional `libraryProtocol` object |
 | Q4 required fields | "absolutely required, everytime, no exceptions"; current taxon rules kept | The nine stay required; empty strings, empty author lists and nameless authors are rejected. `taxon` is unchanged |
 | Q5 missing fields | Nothing to add | None |
 | Q6 measurements | Statistics and units stay | None |
@@ -245,12 +261,12 @@ because nothing has been released.
 Compatibility within the draft: every existing example, conformance vector and
 the real-data pilot header still validates. A record is newly rejected only if
 it has an empty required string, an empty author list or an author without a
-name. The `de-novo` and `genome-guided` examples now name their library kits
-(and genome-guided records `moleculeType: mixed`) and were regenerated with new
-checksums. The conformance vectors do not use `mixed` yet: the released
-toolkit's draft lane is pinned to the previous `fht.json` and would reject a
-valid vector that carries it, so the value is covered by unit tests until #9
-moves that pin.
+name. The `de-novo` and `genome-guided`
+examples gained `libraryProtocol` (and `moleculeType: mixed` for genome-guided)
+and were regenerated with new checksums. The conformance vectors do not use
+`libraryProtocol` or `mixed` yet: the released toolkit's draft lane is pinned to
+the previous `fht.json` and would reject them, so these values are covered by
+unit tests until #9 moves that pin.
 
 ## Legacy migration (fht.json v0.1 → FHT 1.0)
 

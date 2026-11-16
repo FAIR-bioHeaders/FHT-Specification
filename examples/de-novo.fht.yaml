@@ -27,6 +27,8 @@ sample:
   developmentalStage: adult worker
 libraryStrategy: RNA-Seq
 strandedness: reverse
+libraryProtocol:
+  name: Illumina TruSeq Stranded mRNA
 vitalStats:
   totalTranscripts: 84211
   N50: 1874
@@ -40,6 +42,6 @@ completeness:
   fragmented: 98
   missing: 169
   total: 5991
-documentation: 'dUTP stranded poly(A) library (Illumina TruSeq Stranded mRNA): Trinity RF, recorded as strandedness reverse. Synthetic example for the FHT development contract: names, statistics and sequence bytes are invented; taxon and ontology identifiers and kit names are real.'
+documentation: 'dUTP stranded poly(A) library: Trinity RF, recorded as strandedness reverse, with the kit named in libraryProtocol. Synthetic example for the FHT development contract: names, statistics and sequence bytes are invented; taxon and ontology identifiers and kit names are real.'
 reuseConditions: CC-BY-4.0
-checksum: 'WkTjOiWXW0Uj/OaKnPZstlSPhKqT6nL9Oh2R52GEjTs='
+checksum: 'XgLMC5enGJiCwBbxZutV700p5glkhZH2/EshygC9H6I='

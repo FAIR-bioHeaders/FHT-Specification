@@ -58,7 +58,7 @@ every author has a `name`. These are the non-empty rules FHR plans for its next
 major (shared GAP-1), adopted now because FHT is unreleased. `taxon` keeps its
 current rules: `name` and `uri` are optional members, and no taxonomy identifier
 is required. Optional fields cover biological molecule class,
-software, sample context, library strategy/strandedness, run
+software, sample context, library strategy/strandedness and protocol or kit, run
 accessions, statistics, BUSCO completeness, reviewed parent links and shared
 provenance/identity fields. Omit unknown optional values; do not use `null`,
 empty strings or invented placeholders.

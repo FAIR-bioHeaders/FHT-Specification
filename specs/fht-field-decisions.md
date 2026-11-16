@@ -188,9 +188,10 @@ above stays as written; where it differs, these decisions supersede it.
   for a set known to combine classes. An unknown class is still omitted, and
   `total RNA`, `cDNA` and `ncRNA` stay rejected.
 - **Q3, strand.** "forward and reverse is worth preserving, but protocol name or
-  kit should have a way to be recorded as well." D3's `strandedness` is kept.
-  The protocol or kit name goes in `documentation` and a protocol URL in
-  `relatedLink`.
+  kit should have a way to be recorded as well." D3's `strandedness` is kept. A
+  new optional `libraryProtocol` object (required `name`, optional `uri`)
+  records the wet-lab library protocol or kit, modelled on how FHR's
+  `assemblyProtocol` cites a protocol but not a mapping target for it.
 - **Q4, required fields.** "these are absolutely required, everytime, no
   exceptions." The nine stay required, and the empty forms (empty strings,
   `metadataAuthor: []`, a nameless author) are rejected, as FHR plans for its
