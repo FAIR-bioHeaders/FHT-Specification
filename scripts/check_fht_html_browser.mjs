@@ -34,6 +34,8 @@ try {
         if (type === 'integer' || type === 'number') return JSON.parse(element.textContent);
         if (type === 'boolean') return JSON.parse(element.textContent);
         if (type !== 'string') throw Error('unexpected scalar type');
+        if (getComputedStyle(element).whiteSpace !== 'pre-wrap') throw Error('readable string whitespace collapses');
+        if (element.innerText !== element.textContent) throw Error('readable string differs from metadata');
         return element.textContent;
       };
       const table = element => {

@@ -8,6 +8,7 @@ at bc7110fedb6f05b52b1d2348b5b14a79b91b0637. See docs/FHT-MICRODATA.md.
 No network access, released aliases, checksum verification or browser integration.
 """
 
+import hashlib
 import json
 import math
 import warnings
@@ -362,6 +363,8 @@ def _read_value(element, root, subschema):
                 if child.strip():
                     raise MicrodataError("array container has stray text")
                 continue
+            if child.tag in _INERT_CONTENT:
+                continue
             if "item" not in child.itemprop:
                 raise MicrodataError("array container child is not itemprop=item")
             items.append(
@@ -458,18 +461,25 @@ def _validate(record, schema):
 def _draft_schema(allow_draft, schema):
     if not allow_draft:
         raise MicrodataError("FHT draft reference binding requires allow_draft=True")
-    selected = (
-        schema
-        if schema is not None
-        else json.loads((ROOT / "fht.json").read_text(encoding="utf-8"))
+    raw = (ROOT / "fht.json").read_bytes()
+    local = json.loads(raw)
+    provenance = json.loads(
+        (ROOT / "tests/fixtures/microdata/provenance.json").read_text(encoding="utf-8")
     )
+    if (provenance.get("fhtSchemaSha256") != hashlib.sha256(raw).hexdigest()
+            or provenance.get("owningSourceCommit") !=
+            "fcce5f6173322b337d24c7eea51ff8745d7b32aa"):
+        raise MicrodataError("draft binding provenance does not match owning source")
+    if schema is not None and schema != local:
+        raise MicrodataError("custom schema must match the pinned owning draft")
+    selected = local
     if selected.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         raise MicrodataError("reference requires the declared FHT Draft 2020-12 schema")
     Draft202012Validator.check_schema(selected)
     return selected
 
 
-def read_page(text, schema=None, *, allow_draft=False):
+def read_page(text, schema=None, *, allow_draft=False, warn=None):
     """Extract and schema-check one draft FHT record; never verify sequence bytes."""
     schema = _draft_schema(allow_draft, schema)
     builder = _TreeBuilder()
@@ -501,6 +511,18 @@ def read_page(text, schema=None, *, allow_draft=False):
         raise MicrodataError("extension fields are not permitted in microdata (M5)")
     _validate(record, selected)
     _html_text(record)
+    provenance = json.loads(
+        (ROOT / "tests/fixtures/microdata/provenance.json").read_text(encoding="utf-8")
+    )
+    message = (
+        "V7 FHT draft validation: commit " + provenance["owningSourceCommit"]
+        + "; schema SHA-256 " + provenance["fhtSchemaSha256"]
+        + "; released=false (not validation against a released contract)"
+    )
+    if warn is None:
+        warnings.warn_explicit(message, UserWarning, __file__, 0, registry={})
+    else:
+        warn(message)
     return record
 
 
@@ -578,7 +600,7 @@ def write_page(
         '<meta name="robots" content="noindex"><title>' + escape(title) + "</title>"
         "<style>body{font-family:system-ui;max-width:75em;margin:2em auto;padding:0 1em}"
         "table{border-collapse:collapse;max-width:100%}th,td{border:1px solid;padding:.4em;"
-        "text-align:left;vertical-align:top;overflow-wrap:anywhere}span{white-space:pre-wrap}"
+        "text-align:left;vertical-align:top;overflow-wrap:anywhere}span,li[data-fhr-type=string]{white-space:pre-wrap}"
         "ol{margin:0;padding-left:1.5em}</style></head><body><h1>"
         + escape(title)
         + "</h1>"

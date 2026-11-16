@@ -8,8 +8,10 @@ import json
 import subprocess
 import sys
 import unittest
+import warnings
 from html.parser import HTMLParser
 from pathlib import Path
+from unittest.mock import patch
 
 import yaml
 from fht_microdata import FHT_ITEMTYPE, MicrodataError, read_page, write_page
@@ -257,6 +259,44 @@ class FHTMicrodataTests(unittest.TestCase):
                 dict(self.record, **{"x-local": {"number": float("inf")}}),
                 allow_draft=True, warn=lambda _: None,
             )
+
+    def test_direct_inert_array_children_never_contribute_metadata(self):
+        record = dict(self.record, identifier=["example:real"])
+        text = write_page(record, allow_draft=True)
+        for tag in ["script", "template"]:
+            for attributes in ['', ' itemprop="item" data-fhr-type="string"']:
+                inert = f'<{tag}{attributes}>example:malicious</{tag}>'
+                altered = text.replace('</ol>', inert + '</ol>', 1)
+                typed_equal(self, record, read_page(altered, allow_draft=True))
+
+    def test_every_successful_read_reports_verified_draft_provenance(self):
+        text = write_page(self.record, allow_draft=True)
+        diagnostics = []
+        for _ in range(2):
+            read_page(text, allow_draft=True, warn=diagnostics.append)
+        self.assertEqual(len(diagnostics), 2)
+        with warnings.catch_warnings(record=True) as captured:
+            warnings.simplefilter("default")
+            for _ in range(2):
+                read_page(text, allow_draft=True)
+        self.assertEqual(len(captured), 2)
+        provenance = json.loads((FIXTURES / "provenance.json").read_text())
+        for message in diagnostics:
+            for detail in ["V7 FHT draft", provenance["owningSourceCommit"],
+                           provenance["fhtSchemaSha256"], "released=false"]:
+                self.assertIn(detail, message)
+        original = Path.read_bytes
+        def tampered(file):
+            raw = original(file)
+            return raw + b" " if file == ROOT / "fht.json" else raw
+        with patch.object(Path, "read_bytes", tampered):
+            with self.assertRaisesRegex(MicrodataError, "provenance"):
+                read_page(text, allow_draft=True, warn=diagnostics.append)
+        self.assertEqual(len(diagnostics), 2)
+        schema = json.loads((ROOT / "fht.json").read_text())
+        schema["description"] = "custom unmatched contract"
+        with self.assertRaisesRegex(MicrodataError, "custom schema"):
+            read_page(text, schema=schema, allow_draft=True, warn=diagnostics.append)
 
     def test_required_roots_do_not_imply_required_taxon_members(self):
         schema = json.loads((ROOT / "fht.json").read_text())

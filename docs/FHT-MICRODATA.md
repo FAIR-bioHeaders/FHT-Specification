@@ -145,7 +145,7 @@ text, without introducing a `kit`, `libraryProtocol` or sample-accession slot.
 
 `tests/fht_microdata.py` exposes `write_page(record, schema=None, *,
 allow_draft=False, title=..., warn=None)` and `read_page(text, schema=None, *,
-allow_draft=False)`. Both require explicit `allow_draft=True`. The default schema
+allow_draft=False, warn=None)`. Both require explicit `allow_draft=True`. The default schema
 is the local development contract; an explicitly supplied schema argument is for
 reference tests, not remote schema loading. Extraction selects identity before
 coercion and validates with the declared Draft 2020-12 implementation and full
@@ -216,3 +216,15 @@ which JavaScript's single numeric type cannot distinguish. A local Chromium run
 also covered hostile Unicode/text and CRLF values; it is not a claim about an
 editor, journal system or every browser. No toolkit or website integration is
 performed by this check.
+
+## Draft read diagnostics
+
+Every successful reference read emits a V7 diagnostic naming FHT, the owning
+source commit and verified schema SHA-256, with `released=false`. A callback
+`warn=` may capture each diagnostic; otherwise Python warnings are used. The
+helper verifies local raw schema bytes against binding provenance before
+validation. A supplied schema object must equal that pinned local contract;
+custom overrides cannot inherit its provenance claim. Direct script/template
+children of typed arrays are inert, just as in ordinary property traversal.
+Scalar string list items use pre-wrap so readable command-line options retain
+repeated spaces, tabs and line breaks.
