@@ -276,6 +276,8 @@ The new stream lane sends the committed bytes of every vector to `verify -`
 (including gzip/BGZF bytes), and compares `strip - -` stdout byte-for-byte with
 the independently derived payload for every valid vector. It sends those payloads
 through `combine <metadata> - -o -`, compares the resulting payload bytes, and
+compares independently parsed input and stdout metadata (values, recursive key
+order and exact scalar types, excluding only the regenerated root checksum), and
 verifies the resulting stdout through stdin. Captured stderr is never joined to
 payload stdout. A 60-second per-command timeout and nonzero case-count checks
 prevent hanging or empty runs from reporting success.

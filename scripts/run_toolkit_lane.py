@@ -402,6 +402,27 @@ def lane_combine(toolkit, vectors, work):
           f"verification)")
 
 
+def metadata_signature(data):
+    """Independent parsed values and recursive ordering/types, except root checksum."""
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "check_fht_fixtures", ROOT / "scripts" / "check_fht_fixtures.py")
+    reader = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(reader)
+    metadata = reader.parse_metadata(data)
+    metadata.pop("checksum", None)
+
+    def ordered_typed(value):
+        if isinstance(value, dict):
+            return (type(value), tuple((ordered_typed(key), ordered_typed(item))
+                                      for key, item in value.items()))
+        if isinstance(value, list):
+            return (type(value), tuple(ordered_typed(item) for item in value))
+        return (type(value), value)
+
+    return ordered_typed(metadata)
+
+
 def lane_streams(toolkit, vectors, work):
     """Exercise actual stdin/stdout, outside the file-only manifest vocabulary.
 
@@ -437,6 +458,11 @@ def lane_streams(toolkit, vectors, work):
         if result.returncode != 0 or strip_expectation(result.stdout) != payload:
             fail(f"{entry['id']}: stdin/stdout combine changed payload bytes or failed")
             continue
+        try:
+            if metadata_signature(vector_bytes(entry)) != metadata_signature(result.stdout):
+                fail(f"{entry['id']}: stdin/stdout combine changed metadata values, order or types")
+        except ValueError as error:
+            fail(f"{entry['id']}: combined stdout metadata does not read cleanly: {error}")
         verified = toolkit.run_bytes("verify", "-", "--type", "fasta", data=result.stdout)
         if verified.returncode != 0 or b"Checksum verified." not in verified.stdout + verified.stderr:
             fail(f"{entry['id']}: combined stdout does not verify")

@@ -96,7 +96,10 @@ not decisions made by this packet:
 On macOS with Python 3.13, the installed 0.11.0 lane exited 0: 28 valid / 44
 invalid compared, 10 parent-link vectors, 0/72 default-path accepts, 28 byte-exact
 strips and 28 metadata round trips. Stream checks executed **72 verify, 28 strip,
-28 combine**, with byte-exact payload comparisons and verified combined stdout.
+28 combine**, with byte-exact payload comparisons and verified combined stdout. The stdout
+metadata is independently parsed and compared for values, nested key order and
+exact scalar types, excluding only the regenerated root checksum. A deliberate
+metadata change with unchanged payload and a recomputed checksum is detected.
 The package pin printed `b9ad19a62772092e08935cff44ee77a50981bbaf` /
 `11c69d6647736695beaa72976a1d9b30c0f44f8cfe55f8eb171c9d0bcb6795f8`;
 local draft bytes printed

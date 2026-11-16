@@ -1,4 +1,6 @@
 """Controls for the installed-artifact harness, independent of a toolkit install."""
+import base64
+import hashlib
 import contextlib
 import io
 import importlib.util
@@ -40,6 +42,54 @@ class StreamControls(unittest.TestCase):
                 with contextlib.redirect_stdout(io.StringIO()):
                     lane.lane_streams(BrokenToolkit(), [vector], tmp)
         self.assertTrue(any("strip changed payload" in x for x in lane.FAILURES))
+
+    def test_stream_combine_metadata_corruption_is_detected(self):
+        vector = next(v for v in lane.load_suite() if v["id"] == "fht-fasta-lf")
+        original = lane.vector_bytes(vector)
+        payload = lane.strip_expectation(original)
+        lines = original.splitlines(keepends=True)
+        changed = b"".join(
+            b";~transcriptome: corrupted by the writer\n"
+            if line.startswith(b";~transcriptome:") else line
+            for line in lines)
+        covered = b"".join(line for line in changed.splitlines(keepends=True)
+                            if not line.startswith(b";~checksum:"))
+        checksum = base64.b64encode(hashlib.new("sha512_256", covered).digest())
+        changed = b"".join(b";~checksum: " + checksum + b"\n"
+                            if line.startswith(b";~checksum:") else line
+                            for line in changed.splitlines(keepends=True))
+        self.assertEqual(lane.strip_expectation(changed), payload)
+        self.assertNotEqual(changed, original)
+
+        class MetadataLosingToolkit:
+            def run_bytes(self, *args, **kwargs):
+                output = changed if args[0] == "combine" else (
+                    payload if args[0] == "strip" else b"Checksum verified.")
+                return subprocess.CompletedProcess(args, 0, output, b"")
+
+            def run(self, *args, **kwargs):
+                return 0, ""
+
+        with tempfile.TemporaryDirectory() as tmp, \
+                contextlib.redirect_stdout(io.StringIO()):
+            lane.lane_streams(MetadataLosingToolkit(), [vector], tmp)
+        self.assertTrue(any("combine changed metadata" in x for x in lane.FAILURES))
+        self.assertEqual(len(lane.FAILURES), 1)
+
+    def test_signature_preserves_nested_order_and_scalar_types(self):
+        def header(nested):
+            return (";~checksum: ignored\n;~metadataAuthor:\n" + nested).encode()
+
+        before = header(";~- name: Example\n;~  uri: '1'\n")
+        reordered = header(";~- uri: '1'\n;~  name: Example\n")
+        mistyped = header(";~- name: Example\n;~  uri: 1\n")
+        self.assertNotEqual(lane.metadata_signature(before), lane.metadata_signature(reordered))
+        self.assertNotEqual(lane.metadata_signature(before), lane.metadata_signature(mistyped))
+        self.assertEqual(lane.metadata_signature(before), lane.metadata_signature(
+            before.replace(b"checksum: ignored", b"checksum: regenerated")))
+        nested = b";~checksum: root\n;~derivedFrom:\n;~- checksum: parent-one\n"
+        self.assertNotEqual(lane.metadata_signature(nested), lane.metadata_signature(
+            nested.replace(b"parent-one", b"parent-two")))
 
     def test_named_toolkit_default_cannot_accept_fht(self):
         class IncorrectDefault:
