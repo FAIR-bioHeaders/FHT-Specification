@@ -12,7 +12,7 @@ amends any schema.
 | Workflow | Trigger | Covers |
 | --- | --- | --- |
 | [`validate-specification.yml`](../.github/workflows/validate-specification.yml) | push/PR | The **current FHT 1.0 development contract**: unit tests over the generated `fht.json` (positive/rejection fixtures in `tests/test_fht_schema.py`, synthetic examples in `examples/`, byte-backed conformance vectors via `tests/test_fixtures.py`), LinkML regeneration drift and the pinned shared-import provenance. Pre-existing; extended by #8. |
-| [`fht-fixtures.yml`](../.github/workflows/fht-fixtures.yml) | push/PR | The issue **#8** byte-backed fixtures via `scripts/check_fht_fixtures.py`: regeneration determinism (in-process rerun compared byte-for-byte with `conformance/` and the owned `examples/` files), an independently written R1-R5 reader recomputing every vector checksum, strict R6-R8/R10/R12/R13 header checks, `fht.json` contract validation with `FormatChecker`, V1/V5 schema selection (with the V7 draft-lane note), C3 parent-link outcomes with parent paths confined to the distributed tree, and the examples recomputation. No installed toolkit is invoked (there is no FHT reader yet — #9). |
+| [`fht-fixtures.yml`](../.github/workflows/fht-fixtures.yml) | push/PR | The issue **#8** byte-backed fixtures via `scripts/check_fht_fixtures.py`: regeneration determinism (in-process rerun compared byte-for-byte with `conformance/` and the owned `examples/` files), an independently written R1-R5 reader recomputing every vector checksum, strict R6-R8/R10/R12/R13 header checks, `fht.json` contract validation with `FormatChecker`, V1/V5 schema selection (with the V7 draft-lane note), C3 parent-link outcomes with parent paths confined to the distributed tree, manifest accountability for every lettered FORMAT.md rule (R1-R15 registered, each with both sides or a recorded `notApplicable` reason), and the examples recomputation. No installed toolkit is invoked (there is no FHT reader yet — #9); the toolkit run is the separate manual lane below. |
 | [`docs-checks.yml`](../.github/workflows/docs-checks.yml) | push/PR | Owned documentation signals: Markdownlint with the reviewed local config `.markdownlint-cli2.jsonc` (pinned `markdownlint-cli2@0.24.0`, rule set 0.42.0), plus `scripts/check_docs.py` for local relative links/anchors, whitespace (trailing spaces, CR bytes, final newline) and git conflict markers. Fails the job only on real findings; no network access. |
 | [`legacy-draft-checks.yml`](../.github/workflows/legacy-draft-checks.yml) | push/PR | Schema health of the preserved legacy draft `legacy/fht-v0.1.json` (`scripts/check_legacy_schema.py`) and the classified example/fixture suite (`scripts/check_legacy_examples.py`). |
 | [`external-links.yml`](../.github/workflows/external-links.yml) | schedule (Mondays) + `workflow_dispatch` | Every http(s) URL cited by repository Markdown, one retry each. Never a PR signal: transient remote failures must not gate unrelated work. |
@@ -42,6 +42,83 @@ same gate. Until #9 lands, the synthetic `examples/` remain labeled
 synthetic, the vectors' expected outcomes are derived from the rule text
 rather than any implementation, and no checksum or SeqCol value here
 describes real biological material.
+
+## Manual lane — the named toolkit version (issue #8 box 7)
+
+`scripts/run_toolkit_lane.py` runs the suite against an **installed**
+`fair-bioheaders` and is the box-7 evidence: the checks are the suite's own
+rule-derived expectations, executed by a second implementation instead of by
+this repository's reader. It is **not** a PR signal and no workflow calls it:
+it needs a toolkit environment, and FHT is a draft, so the lane reads every
+record through the opt-in rule V7 switch
+(`BIOHEADERS_EXPERIMENTAL_FHT=1`, set by the script itself). Running under that
+switch is recognition of a development contract, not shipped support: default
+behavior is unchanged, `fair-bioheaders` still has no FHT feature, and issue
+**#9** owns making any of this a released capability. The script never edits
+`conformance/`; a disagreement is reported as a failure and becomes a finding
+for #9, never a re-expectation.
+
+```sh
+python3 -m venv /tmp/fht0110venv
+/tmp/fht0110venv/bin/pip install fair-bioheaders==0.11.0
+python scripts/run_toolkit_lane.py --venv /tmp/fht0110venv
+```
+
+Measured run of 2026-11-15, recorded here rather than restated from the
+script's prose. Environment: macOS on a case-insensitive APFS volume,
+Python 3.15.0, `bioheaders --version` → `0.11.0`, installed from PyPI into a
+throwaway venv (`pip show fair-bioheaders` reports `Version: 0.11.0` in
+`site-packages` with no editable location). The suite at this commit is 72
+vectors: 28 valid, 44 invalid, 3 parent fixtures.
+
+| Lane | Result |
+| --- | --- |
+| Draft pin | the bundle registers the FHT draft at commit `b9ad19a62772092e08935cff44ee77a50981bbaf`, retrieved 2026-11-12, sha256 `11c69d6647736695beaa72976a1d9b30c0f44f8cfe55f8eb171c9d0bcb6795f8`; the installed `bioheaders/schemas/fht-draft.json` hashes to exactly that digest; this checkout's `fht.json` is `59ad9641adcb0e5591045c2d894c066d1adc9984cca84c5ff6502f8dad88487e`, so the agreement below is agreement with the **pinned** revision, not with `main` |
+| `verify`, lane ON | 28 valid accepted, 44 invalid rejected, **0** disagreements with `expected`. The 7 `selfChecksum: broken` vectors were each reported as a checksum failure, and no `selfChecksum: matches` vector was rejected by the comparison, so no rejection happened by accident |
+| `verify-links`, lane ON | the 10 `parentLink` vectors printed `matched (` / `not checked (` / `not matched (` with exit 0 / 0 / 3 exactly as their entries declare: checked-pass, unchecked and checked-fail stay distinguishable (C3), including the mixed-verdict record where one entry passes and the other fails |
+| `verify`, lane OFF | all 72 rejected, **0** accepted: 61 fail at `$.schemaVersion: '1.0' is not one of ['2.0', '2.1']` after the V5 warning, 1 at `$.schemaVersion: 1.0 is not of type 'string'`, 1 at `$: 'genome' is a required property`, and 9 earlier in the FHR reading (BOM, U+2028, duplicate key, anchor/alias, the two-checksum-line and concatenation YAML block errors, `011`, `.inf`, header-after-record). This is the default path: with the lane closed the released reader has no FHT schema, so rule V5 routes every FHT citation to the current FHR schema |
+| `strip` | for all 28 valid vectors the output equals the input with exactly the `;~` lines removed: record identifiers, line wrapping, the U or T alphabet, letter case (including the lower-case sequence line), ordinary `;` comments and blank lines all stay byte-identical and stay **in place**, including in the CR, CRLF, mixed-ending, no-final-newline and interleaved-comment cases. Compressed vectors are compared on their decompressed bytes, which is what R1 makes the file's content |
+| `combine` | metadata values, key order and value types survive `convert` → `strip` → `combine` for all 28 valid vectors, and every recombined file verifies; **0** of 28 recombined files are byte-identical to the distributed bytes, because the writer emits its own canonical header for the same values — allowed by FORMAT.md ("the combine helpers regenerate a canonical YAML header … Strip removes complete FHR lines and leaves ordinary comments intact"), and recorded here because it bounds what "preserve exact bytes" can mean |
+
+Findings for #9 from the same run, none of which changed a vector or an
+expectation:
+
+- **The draft pin is older than `main`** (above), so a run against an installed
+  0.11.0 is a run against `b9ad19a6…`'s contract bytes.
+- **The lane warning does not name the commit or the digest.** Rule V7 asks for
+  `… is an unreleased draft (commit <full sha>, sha256 <digest> of those bytes)`,
+  and 0.11.0's warning names only the URL and the opt-in variable
+  (`grep` for the pinned commit `b9ad19a6…`, the digest `11c69d66…`, the words
+  `commit` or `sha256` across the captured stdout and stderr of a lane-on
+  `verify` returns no match). The information exists in
+  `schemas/bundled.json`; it is not surfaced per record.
+- **A checksum failure is printed with the `FHR:` prefix** even for a record
+  selected through the FHT draft lane (`fht-fasta-sequence-tampered.fht.fasta` →
+  `FHR: Checksum verification failed`), which misattributes the verdict.
+- **The writer re-quotes plain scalars** it considers unambiguous
+  (`version: '1.0.0'` → `version: 1.0.0`), which is a canonical-header choice
+  under FORMAT.md but means a byte-exact whole-file round trip is not what
+  combine promises.
+- **`bioheaders assess` answers `not assessed: unsupported-header-type`** for an
+  FHT record read through the lane (re-measured on `fht-fasta-lf.fht.fasta`,
+  matching the pilot's observation in
+  [`../pilot/dmel-chr4/README.md`](../pilot/dmel-chr4/README.md)).
+- **Only JSON and YAML are serializable today.** With the lane open,
+  `bioheaders convert <fht file> out.{json,yaml} --to {json,yaml}` succeed from
+  an FHT FASTA input, while `--to jsonld` exits 1 with `JSON-LD output is not
+  available for FHT metadata yet` and `--to html` exits 1 with `HTML microdata
+  output is not available for FHT metadata: no reviewed FHT binding exists
+  (FHT-Specification#9)`. That is the measured basis for box 2 keeping JSON-LD
+  and microdata out of `examples/`, and for R9 — a microdata-only rule — having
+  no vector here.
+
+This lane is **not** box 4's or #9's acceptance: it is a draft-lane preview on a
+case-insensitive filesystem, so it establishes that the released reader's
+behavior agrees with the rule text on this suite today — not that FHT is
+supported in the default path, and not Linux or macOS case-sensitivity as
+separate evidence. Issue **#9** owns the default-path implementation, its own
+acceptance run, and the stdin/stdout question this file-based suite cannot
+express.
 
 ## Pinned tools (PR lanes)
 
@@ -84,6 +161,10 @@ python scripts/make_fht_fixtures.py
 
 # Current contract lane (pre-existing; needs requirements-linkml.txt)
 python -m unittest discover -s tests -v   # includes tests/test_ci_checks.py
+
+# Manual lane (issue #8 box 7) — needs an installed fair-bioheaders and is
+# never a PR signal; runs the suite through the opt-in rule V7 draft lane
+python scripts/run_toolkit_lane.py --venv /path/to/fair-bioheaders-venv
 
 # Scheduled lane only — never part of a PR signal (network required)
 python scripts/check_external_links.py

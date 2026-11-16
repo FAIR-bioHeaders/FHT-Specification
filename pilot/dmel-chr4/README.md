@@ -371,8 +371,8 @@ the curator list below.
 | `extract_chr4.py`, `rederive_checksum.py`, `reproduce.sh`, this file | pilot evidence for #10 | documentation plus reproduction script |
 | `GCF_000001215.4_chr4.fhr.fasta`, `GCF_000001215.4_chr4_transcripts.fht.fasta` | **not committed** | 1.4 M each of third-party sequence; rebuilt and digest-checked by `reproduce.sh`, following the `../README.md` precedent |
 
-**No conformance vectors were added.** `conformance/` stays exactly as it was
-(66 vectors, 1 parent fixture; see
+**No conformance vectors were added.** `conformance/` stayed exactly as it was
+at this PR's date (66 vectors, 1 parent fixture; see
 [`../../conformance/README.md`](../../conformance/README.md)). A real example is
 not promoted to a normative vector here, for the reason that file already
 states: vector `expected` outcomes must be independently reviewed against the
@@ -406,6 +406,15 @@ unchanged by design:
 | `python -m unittest discover -s tests` | `Ran 45 tests … OK` (needs `linkml==1.11.1`; without it, 44 pass and `test_generation` errors on the missing module) | `Ran 45 tests … OK` |
 | `python scripts/check_docs.py` | passed, 12 Markdown files, 34 external URLs noted | passed, **13** Markdown files (this one added), 34 external URLs noted |
 | `npx -y markdownlint-cli2@0.24.0` | clean | clean: `Linting: 13 files`, `Summary: 0 issues in 0 files` |
+
+The counts above are the record for this directory's review date (2026-11-15,
+PR #45). The suite grew later the same day: the issue #8 box-3 work registered
+R9 and added the two stream vectors, and the pilot promotion candidates (#47)
+added four more vectors and two more parent fixtures, so `conformance/` is now
+**72 vectors
+(28 valid + 44 invalid), 21 rules, 3 parent fixtures**. Read
+[`../../conformance/README.md`](../../conformance/README.md) for the current
+census; nothing in the pilot changed.
 
 `scripts/check_examples.py` does not exist in this repository; the equivalent
 lanes are `scripts/check_fht_fixtures.py` (examples recomputation) and

@@ -164,6 +164,8 @@ RULES = {
     "R7": "Header parsing: a FASTA file must not begin with a UTF-8 byte order mark.",
     "R8": "Header parsing: no duplicate mapping keys, YAML anchors, aliases or "
           "merge keys.",
+    "R9": "Header parsing: in microdata the first of repeated attributes applies; "
+          "itemtype and itemprop are space-separated token lists.",
     "R10": "Header parsing: header lines form the leading block before the first "
            "FASTA record; a ';~' line after that point, including one from a "
            "concatenated file, is invalid; ordinary ';' comments and blank lines "
@@ -182,8 +184,14 @@ RULES = {
     "R15": "Extension fields: from the FHT 1.0 development contract (FR-010), a "
            "top-level key matching ^x-[A-Za-z0-9][A-Za-z0-9_.-]*$ may hold any value; "
            "every other unknown key and an x- key in a nested object stay invalid.",
-    "V1": "Schema selection: the raw-main FHT schema URL selects the reader's current "
-          "FHT schema (here the 1.0 development contract).",
+    "V1": "Schema selection: raw-main selects the reader's **current** schema of "
+          "that type, with no fallback to an older release. The shared rule text "
+          "lists the shared publication repository's raw-main URLs; for FHT the "
+          "citation is the owning development repository's raw-main URL, which "
+          "V7 places in the opt-in draft lane. What the V1 vectors here turn on "
+          "is the no-fallback half: a record that states a version other than the "
+          "contract the citation selects is rejected, not retried against another "
+          "schema.",
     "V5": "Schema selection: any schema value outside the recognized released-"
           "schema URLs is FHR, checked against the reader's current FHR schema; "
           "a near-miss URL additionally draws the reader's warning "
@@ -192,6 +200,17 @@ RULES = {
           "are such values — the V7 draft lane is the owning development "
           "repository's raw-main URL only — and V4 unsupported-version begins "
           "only when FHT enters schemas/versions.json.",
+    "V7": "Schema selection: a reader **may** recognise a draft contract cited as "
+          "the raw-main URL of the development repository that owns the type, "
+          "only where the user explicitly chose that lane, reading the draft at "
+          "the revision the reader is built with and warning on every such "
+          "record; without the choice, V5 governs and the outcome is exactly what "
+          "it was before V7 existed. V7 is the precondition of this whole suite, "
+          "not a per-vector outcome: no expected result changes because of it, so "
+          "it has no valid/invalid pair here. Measured 2026-11-15 with "
+          "fair-bioheaders 0.11.0 (docs/CI.md): with the lane closed all 72 "
+          "vectors are invalid as FHR; with it open the 28 valid vectors are "
+          "accepted and the 44 rejections hold.",
     "C1": "FHT development contract (text in conformance/README.md): the parsed header "
           "metadata must validate against fht.json — required fields, enums, "
           "patterns, nested cardinality and the closed top level (plus R15 "
@@ -217,6 +236,22 @@ NOT_APPLICABLE = {
           "sets are disjoint), so V5 has no valid side here. V4 is not "
           "registered as a rule of this suite at all: with no FHT row in "
           "schemas/versions.json there is no citation it can resolve to.",
+    "R9": "R9 is a microdata rule (docs/FORMAT.md: repeated attributes, "
+          "`itemtype`/`itemprop` token lists) and has no FASTA vector; no FHT "
+          "microdata reader or writer exists, so issue #8 box 2 keeps it out of "
+          "this suite. Measured 2026-11-15 with fair-bioheaders 0.11.0: "
+          "`bioheaders convert <fht file> out.html --to html` exits 1 with "
+          "'HTML microdata output is not available for FHT metadata: no "
+          "reviewed FHT binding exists (FHT-Specification#9)'. The typed-HTML "
+          "lane is issue #11.",
+    "V7": "V7 is a reader **configuration**, not a per-vector outcome: it decides "
+          "whether any record in this suite is read as the draft at all, so it "
+          "cannot have a valid/invalid pair inside one byte-exact suite. The "
+          "positive selection vector is `fht-fasta-schema-raw-main`; the "
+          "lane-closed behavior (every record here becomes invalid as FHR under "
+          "V5) is measured in docs/CI.md's manual named-toolkit lane, and a "
+          "configuration-dependent expectation needs its own manifest vocabulary "
+          "— see conformance/README.md, 'The rule this suite cannot carry yet'.",
 }
 
 # ------------------------------------------------------------- emission ----
@@ -368,6 +403,14 @@ def bgzf(data, block_size=96):
     return out + BGZF_EOF
 
 
+def multimember_gzip(data, split):
+    """A two-member gzip stream: member 1 is ``data[:split]``, member 2 is
+    ``data[split:]``, so the concatenated members uncompress to exactly
+    ``data``. Mirrors the shared generator's ``multimember_gzip`` so the FHT
+    case is the same case, not a variant of it."""
+    return gzip_member(data[:split]) + gzip_member(data[split:])
+
+
 def decompress(data):
     """Concatenated gzip members (also valid BGZF input)."""
     out = b""
@@ -492,10 +535,11 @@ def valid(name, data, rules, description, checksum, expected=EXPECTED_METADATA,
 
 
 def invalid(name, data, rule, reason, self_checksum, metadata=None, result=None,
-            parent_links=None):
+            parent_links=None, compression=None):
     INVALID.append(dict(name=name, data=data, rule=rule, reason=reason,
                         self_checksum=self_checksum, metadata=metadata,
-                        result=result, parent_links=parent_links, status="invalid"))
+                        result=result, parent_links=parent_links,
+                        compression=compression, status="invalid"))
 
 
 def record_of(drop=(), **changes):
@@ -737,6 +781,18 @@ def build_vectors():
     valid("fht-fasta-bgzf", bgzf(plain), ["R1"],
           "fht-fasta-lf compressed as multi-block BGZF (with EOF block); same "
           "checksum.", checksum=value, compression="bgzf")
+    # R1 covers the *decompressed* bytes, so the framing of the stream is not
+    # part of what is hashed: a multi-member gzip stream whose members
+    # concatenate to fht-fasta-lf's bytes carries that file's checksum, and a
+    # member boundary inside the root checksum line is still one file. This is
+    # the shared suite's fasta-gzip-multimember / gfa-gzip-multimember case,
+    # with the same split point (20 bytes past the start of "checksum: ").
+    valid("fht-fasta-gzip-multimember",
+          multimember_gzip(plain, plain.index(b"checksum: ") + 20), ["R1"],
+          "fht-fasta-lf as two gzip members split inside the checksum line; "
+          "same checksum (R1 hashes the decompressed bytes, so stream framing "
+          "is not hashed and the members are one file).", checksum=value,
+          compression="gzip")
 
     # ---- valid: schema selection (V1, C2) ------------------------------------
     valid("fht-fasta-schema-raw-main", plain, ["V1", "C2"],
@@ -857,6 +913,14 @@ def build_vectors():
     invalid("fht-fasta-sequence-tampered", data.replace(b"CCGUACGAAG", b"CCGUACGAAC"),
             "R3", "A nucleotide changed after the checksum was computed (checksum "
             "mismatch); the metadata itself is untouched and still valid.", "broken")
+    # The same defect under compression: R1 hashes the decompressed bytes, so
+    # gzip framing neither hides nor repairs a covered-byte change. This is the
+    # shared suite's fasta-gzip-sequence-tampered case.
+    invalid("fht-fasta-gzip-sequence-tampered",
+            gzip_member(data.replace(b"CCGUACGAAG", b"CCGUACGAAC")), "R3",
+            "fht-fasta-sequence-tampered compressed as one gzip member: the "
+            "covered bytes still disagree after decompression, so the mismatch "
+            "survives framing.", "broken", compression="gzip")
 
     def wrong_digest(algorithm):
         return lambda covered: base64.b64encode(
@@ -1539,16 +1603,18 @@ def self_check():
         stated, computed = reference_checksum(data)
         assert stated == computed == entry["checksum"], entry["name"]
     for entry in INVALID:
+        data = (decompress(entry["data"]) if entry.get("compression")
+                else entry["data"])
         if entry["self_checksum"] == "matches":
-            stated, computed = reference_checksum(entry["data"])
+            stated, computed = reference_checksum(data)
             assert stated == computed, entry["name"]
         elif entry["self_checksum"] == "broken":
-            stated, computed = reference_checksum(entry["data"])
+            stated, computed = reference_checksum(data)
             assert stated != computed, entry["name"]
         else:
             assert entry["self_checksum"] == "unreachable", entry["name"]
             try:
-                reference_checksum(entry["data"])
+                reference_checksum(data)
             except ValueError:
                 continue
             raise AssertionError(f"{entry['name']}: claimed unreachable, but the "
