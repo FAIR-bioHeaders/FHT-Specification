@@ -32,7 +32,7 @@ Local usage:
     python scripts/make_fht_fixtures.py
 
 writes conformance/ (valid/, invalid/, parents/, manifest.json) and the
-example files this generator owns under examples/ (see OWNED_EXAMPLES).
+example files this generator owns under examples/ (see owned_example_names()).
 """
 
 import argparse
@@ -1323,19 +1323,59 @@ def fht_lines_valid(name, lines, rules, description, expected=EXPECTED_METADATA,
 
 # -------------------------------------------------------------- examples ----
 # The generator owns these example bytes: three minimal records (JSON, YAML
-# and embedded FASTA) and the JSON/YAML mirrors of the two FASTA-only examples
-# added by #23. The pre-existing de-novo.fht.* files and the genome-guided /
-# annotation-derived FASTA originals keep their reviewed bytes untouched;
+# and embedded FASTA), the two rich examples whose contents changed with the
+# curator-review decisions (de-novo and genome-guided: FASTA, JSON and YAML,
+# checksum computed here), and the JSON/YAML mirrors of the annotation-derived
+# FASTA added by #23, whose reviewed FASTA bytes stay untouched.
 # check_fht_fixtures.py proves every mirror parses to exactly the record its
 # FASTA header carries.
-MIRROR_RECORDS = {
+SYNTHETIC_NOTE = ("Synthetic example for the FHT development contract: names, "
+                  "statistics and sequence bytes are invented; taxon and ontology "
+                  "identifiers and kit names are real.")
+RICH_RECORDS = {
+    "de-novo": {
+        "schema": RAW_MAIN,
+        "schemaVersion": "1.0",
+        "transcriptome": "Bombus impatiens worker brain transcriptome "
+                         "(synthetic example)",
+        "assemblyType": "de novo",
+        "moleculeType": "mRNA",
+        "taxon": {"name": "Bombus impatiens",
+                  "uri": "https://identifiers.org/taxonomy:132113"},
+        "version": "1.0",
+        "metadataAuthor": [{"name": "Example Pollinator Genomics Lab",
+                            "nameType": "Organizational"}],
+        "assemblyAuthor": [{"name": "R. Example", "nameType": "Personal"}],
+        "dateCreated": "2026-09-15",
+        "assemblySoftware": [
+            {"name": "Trinity", "version": "2.15.2",
+             "uri": "https://github.com/trinityrnaseq/trinityrnaseq",
+             "commandLineOption": ["--SS_lib_type", "RF"]},
+        ],
+        "sample": [
+            {"tissue": "brain", "tissueIdentifier": "UBERON:0000955",
+             "developmentalStage": "adult worker"},
+        ],
+        "libraryStrategy": "RNA-Seq",
+        "strandedness": "reverse",
+        "vitalStats": {"totalTranscripts": 84211, "N50": 1874,
+                       "averageTranscriptLength": 1032.6},
+        "completeness": {"lineageDataset": "hymenoptera_odb10",
+                         "buscoVersion": "6.1.0", "mode": "transcriptome",
+                         "completeSingle": 5012, "completeDuplicated": 712,
+                         "fragmented": 98, "missing": 169, "total": 5991},
+        "documentation": "dUTP stranded poly(A) library (Illumina TruSeq Stranded "
+                         "mRNA): Trinity RF, recorded as strandedness reverse. "
+                         + SYNTHETIC_NOTE,
+        "reuseConditions": "CC-BY-4.0",
+    },
     "genome-guided": {
-        "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/"
-                  "FHT-Specification/main/fht.json",
+        "schema": RAW_MAIN,
         "schemaVersion": "1.0",
         "transcriptome": "Zea mays B73 leaf drought-response transcriptome "
                          "(synthetic example)",
         "assemblyType": "genome-guided",
+        "moleculeType": "mixed",
         "taxon": {"name": "Zea mays", "uri": "https://identifiers.org/taxonomy:4577"},
         "version": "2.1",
         "metadataAuthor": [{"name": "M. Example", "nameType": "Personal"}],
@@ -1359,15 +1399,29 @@ MIRROR_RECORDS = {
         "relatedLink": [
             "https://www.maizegdb.org/genome/assembly/Zm-B73-REFERENCE-NAM-5.0"],
         "documentation": "Reads aligned to Zm-B73-REFERENCE-NAM-5.0; models "
-                         "assembled with StringTie and written out with gffread. "
-                         "rRNA-depleted total RNA libraries, so no single molecule "
-                         "type is claimed. Genome guidance alone is not a "
-                         "transcribedFrom parent link. Synthetic example for the "
-                         "FHT development contract: names, statistics and sequence "
-                         "bytes are invented; taxon and ontology identifiers are "
-                         "real.",
-        "checksum": "hjf2YDKlF+uTf8bv+aPHgaJKrTk1Q5M92qyE6jmA6tw=",
+                         "assembled with StringTie and written out from the "
+                         "genome with gffread. rRNA-depleted total RNA libraries "
+                         "(Illumina Stranded Total RNA Prep, Ligation with "
+                         "Ribo-Zero Plus); "
+                         "the models include protein-coding and long non-coding "
+                         "transcripts, so moleculeType is mixed. Because the final "
+                         "sequences were extracted from the genome, a real record "
+                         "links that genome as an FHR transcribedFrom parent with "
+                         "its checksum; none is given here because no FHR-headed "
+                         "genome file is cited. " + SYNTHETIC_NOTE,
     },
+}
+RICH_FASTA_BODIES = {
+    "de-novo": [
+        b">synthetic_transcript_1",
+        b"ATGGCGTCTAAAGGTGAAGAACTGTTCACCGGTGTTGTTCCGATCCTGGTTGAACTGGATGGTGATGTTAACGGTCACAAATTC",
+    ],
+    "genome-guided": [
+        b">synthetic_transcript_1",
+        b"ATGGAGGCGCTCCTCGTCGCCGCCGCCGTCCTCCTCGCCGCGGCCGTGGCGGCGGCGCAGGCGGAGGCGCAGCAGTAC",
+    ],
+}
+MIRROR_RECORDS = {
     "annotation-derived": {
         "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/"
                   "FHT-Specification/main/fht.json",
@@ -1451,13 +1505,21 @@ def example_records():
         record = {"schema": RAW_MAIN, "schemaVersion": "1.0"}
         record.update(copy.deepcopy(fields))
         records[stem] = record
+    records.update(copy.deepcopy(RICH_RECORDS))
     records.update(copy.deepcopy(MIRROR_RECORDS))
     return records
 
 
+def example_bodies():
+    """FASTA record lines for every example whose FASTA bytes are owned here."""
+    bodies = {stem: EXAMPLE_FASTA_BODY for stem in EXAMPLE_MINIMALS}
+    bodies.update(RICH_FASTA_BODIES)
+    return bodies
+
+
 def owned_example_names():
     names = []
-    for stem in EXAMPLE_MINIMALS:
+    for stem in list(EXAMPLE_MINIMALS) + list(RICH_RECORDS):
         names += [f"{stem}.fht.fasta", f"{stem}.fht.json", f"{stem}.fht.yaml"]
     for stem in MIRROR_RECORDS:
         names += [f"{stem}.fht.json", f"{stem}.fht.yaml"]
@@ -1467,10 +1529,11 @@ def owned_example_names():
 def example_outputs():
     """Return {name: bytes} for every example file owned here (no writing)."""
     outputs = {}
+    bodies = example_bodies()
     for stem, record in example_records().items():
-        if stem in EXAMPLE_MINIMALS:
+        if stem in bodies:
             data, value = assemble(header_of(record)
-                                   + [Line(text) for text in EXAMPLE_FASTA_BODY])
+                                   + [Line(text) for text in bodies[stem]])
             record["checksum"] = value
             outputs[f"{stem}.fht.fasta"] = data
         outputs[f"{stem}.fht.json"] = (json.dumps(record, indent=2,

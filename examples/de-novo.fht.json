@@ -57,7 +57,7 @@
     "missing": 169,
     "total": 5991
   },
-  "documentation": "Synthetic example for the FHT development contract: names, statistics and sequence bytes are invented; taxon and ontology identifiers are real.",
+  "documentation": "dUTP stranded poly(A) library (Illumina TruSeq Stranded mRNA): Trinity RF, recorded as strandedness reverse. Synthetic example for the FHT development contract: names, statistics and sequence bytes are invented; taxon and ontology identifiers and kit names are real.",
   "reuseConditions": "CC-BY-4.0",
-  "checksum": "YNB8LtJpcoVxZEzr3rkga8nGgFSWFQuVpy1U6KR1EDU="
+  "checksum": "WkTjOiWXW0Uj/OaKnPZstlSPhKqT6nL9Oh2R52GEjTs="
 }
