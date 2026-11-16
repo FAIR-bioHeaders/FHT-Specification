@@ -144,6 +144,25 @@ class StreamControls(unittest.TestCase):
             lane.lane_unsupported_mixed(EnumRejection(), [vector], None)
         self.assertIn("did not specifically reject", lane.FAILURES[0])
 
+    def test_unsupported_mixed_rejects_enum_plus_checksum_failure(self):
+        vector = next(v for v in lane.load_suite() if v["id"] == lane.MIXED_VECTOR)
+        enum = ("FHT: schema validation failed at $.moleculeType: "
+                "'mixed' is not one of ['mRNA', 'rRNA', 'tRNA', 'transcribed RNA']")
+
+        class CombinedRejection:
+            def run(self, *args, **kwargs):
+                return 1, enum + "\n" + checksum
+
+        for checksum in ("Checksum verification failed.",
+                         "FHT: Checksum verification failed.",
+                         "FHR: Checksum verification failed."):
+            with self.subTest(diagnostic=checksum):
+                lane.FAILURES.clear()
+                with patch.object(lane, "place", return_value=Path("unused")), \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    lane.lane_unsupported_mixed(CombinedRejection(), [vector], None)
+                self.assertIn("did not specifically reject", lane.FAILURES[0])
+
     def test_named_toolkit_default_cannot_accept_fht(self):
         class IncorrectDefault:
             def version(self):
