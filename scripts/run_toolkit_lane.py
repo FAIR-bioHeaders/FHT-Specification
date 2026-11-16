@@ -231,7 +231,9 @@ def lane_unsupported_mixed(toolkit, vectors, work):
         code, output = toolkit.run("verify", place(vector, work))
         diagnostic = "schema validation failed at $.moleculeType: 'mixed' is not one of "
         failures = [line for line in output.splitlines() if "validation failed" in line]
-        if code != 1 or len(failures) != 1 or diagnostic not in failures[0]:
+        checksum_failed = "checksum verification failed" in output.casefold()
+        if (code != 1 or len(failures) != 1 or diagnostic not in failures[0]
+                or checksum_failed):
             fail(f"{vector['id']}: old-schema unsupported probe did not specifically reject moleculeType mixed")
         finding(f"{vector['id']}: current-contract acceptance/strip/combine NOT-RUN: "
                 "the installed pinned MoleculeType enum lacks mixed; its rejection "
