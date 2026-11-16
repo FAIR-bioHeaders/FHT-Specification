@@ -221,6 +221,10 @@ def lane_verify(toolkit, vectors, work):
                  f"exited {code}: {output.strip().splitlines()[-1:]!r}")
             continue
         classification = entry["selfChecksum"]
+        if classification == "unreachable" and (
+                "Checksum verification failed" in output or "Checksum verified." in output):
+            fail(f"{label}: declares an unreachable checksum but reported "
+                 f"a checksum comparison: {output.strip()[:160]!r}")
         if classification == "broken" and "Checksum verification failed" not in output:
             fail(f"{label}: declares selfChecksum broken but did not report a "
                  f"checksum failure: {output.strip()[:160]!r}")
