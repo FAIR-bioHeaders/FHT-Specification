@@ -8,8 +8,9 @@ Wright et al., *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122.
 
 **Status: development contract for review under issue #7.** The LinkML model and
 generated JSON Schema implement the design approved for #6. They are not a
-published release, not adopted community guidance, and not supported by the
-family toolkit yet. No release tag, w3id alias, DOI or toolkit support is
+published release, not adopted community guidance, and have no default support in the
+family toolkit. Released toolkit 0.11.0 can read the revision-pinned development
+contract through the opt-in rule V7 lane; this is draft recognition. No release tag, w3id alias, DOI or toolkit support is
 established by this repository state. See
 [the contract and migration record](docs/FHT-MIGRATION.md).
 
@@ -97,7 +98,9 @@ real. The byte-exact positive/rejection conformance vectors are in
 `conformance/` (issue #8): RNA/cDNA, line-ending, comment, nested-checksum,
 gzip/BGZF, parent-link and schema-selection cases with independently
 cross-checked checksums — see [`conformance/README.md`](conformance/README.md)
-for what they do and do not yet prove (no toolkit round trips; that is #9).
+for their scope. Installed-toolkit draft-lane round trips and stream evidence
+are described in [the acceptance packet](docs/FHT-READINESS.md); default released
+support remains #9.
 The historical pre-contract examples are preserved verbatim under
 `legacy/examples/` as review inputs, not valid FHT 1.0 fixtures.
 

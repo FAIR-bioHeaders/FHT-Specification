@@ -5,7 +5,7 @@ name: FHT fixtures
 # validation, schema-selection and parent-link vectors, and the examples
 # recomputation. Everything runs through scripts/check_fht_fixtures.py,
 # whose lanes conformance/README.md documents; no installed toolkit is
-# invoked (fair-bioheaders has no FHT support yet — issue #9) and this lane
+# invoked in the independent job; the separate installed-draft job uses rule V7. This lane
 # makes no claim about shared-suite publication (issue #55).
 #
 # All steps run on every push/PR; the summary step always reports and gates
@@ -55,10 +55,29 @@ jobs:
             echo '## FHT fixtures'
             echo "- scripts/check_fht_fixtures.py (independent reader, manifest, examples): ${{ steps.fixtures.outcome }}"
             echo "- scripts/make_fht_fixtures.py rerun into a scratch directory: ${{ steps.generator.outcome }}"
-            echo '- No installed toolkit runs here: fair-bioheaders has no FHT support yet (#9); shared publication awaits #55.'
+            echo '- This independent job runs no toolkit; installed-draft is separate. FHT remains unreleased.'
           } >> "$GITHUB_STEP_SUMMARY"
           if [ "${{ steps.fixtures.outcome }}" != 'success' ] || \
              [ "${{ steps.generator.outcome }}" != 'success' ]; then
             echo 'A fixture check failed above.' >&2
             exit 1
           fi
+
+  installed-draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - name: Install independent reader dependencies
+        run: python -m pip install "jsonschema[format]==4.26.0" "PyYAML==6.0.3"
+      - name: Install named released toolkit outside the checkout
+        run: |
+          python -m venv "$RUNNER_TEMP/toolkit"
+          "$RUNNER_TEMP/toolkit/bin/python" -m pip install "fair-bioheaders==0.11.0"
+      - name: Installed artifact and byte-exact stream evidence (V7, not released FHT support)
+        run: python scripts/run_toolkit_lane.py --venv "$RUNNER_TEMP/toolkit"
