@@ -227,6 +227,8 @@ class _TreeBuilder(HTMLParser):
             if self.stack[index].tag == tag:
                 del self.stack[index:]
                 return
+            if self.stack[index].tag == "template":
+                return  # Inert fragment end tags cannot close an outer scope.
 
     def handle_data(self, data):
         self.stack[-1].children.append(data)
@@ -476,12 +478,12 @@ def _draft_schema(allow_draft, schema):
     if selected.get("$schema") != "https://json-schema.org/draft/2020-12/schema":
         raise MicrodataError("reference requires the declared FHT Draft 2020-12 schema")
     Draft202012Validator.check_schema(selected)
-    return selected
+    return selected, provenance
 
 
 def read_page(text, schema=None, *, allow_draft=False, warn=None):
     """Extract and schema-check one draft FHT record; never verify sequence bytes."""
-    schema = _draft_schema(allow_draft, schema)
+    schema, provenance = _draft_schema(allow_draft, schema)
     builder = _TreeBuilder()
     # HTML preprocessing normalizes literal line endings before tokenization;
     # character references such as &#13; are decoded later and stay intact.
@@ -511,11 +513,8 @@ def read_page(text, schema=None, *, allow_draft=False, warn=None):
         raise MicrodataError("extension fields are not permitted in microdata (M5)")
     _validate(record, selected)
     _html_text(record)
-    provenance = json.loads(
-        (ROOT / "tests/fixtures/microdata/provenance.json").read_text(encoding="utf-8")
-    )
     message = (
-        "V7 FHT draft validation: commit " + provenance["owningSourceCommit"]
+        "V7 FHT draft " + FHT_ITEMTYPE + ": commit " + provenance["owningSourceCommit"]
         + "; schema SHA-256 " + provenance["fhtSchemaSha256"]
         + "; released=false (not validation against a released contract)"
     )
@@ -571,7 +570,7 @@ def write_page(
     record, schema=None, *, allow_draft=False, title="FHT draft metadata", warn=None
 ):
     """Write one visible typed table; omit M5 extension fields with an explicit warning."""
-    schema = _draft_schema(allow_draft, schema)
+    schema, _ = _draft_schema(allow_draft, schema)
     selected = resolve_schema(record.get("schema"), schema)
     _validate(record, selected)
     keys = [name for name in record if name.startswith("x-")]

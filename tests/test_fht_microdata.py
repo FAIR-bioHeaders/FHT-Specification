@@ -268,6 +268,11 @@ class FHTMicrodataTests(unittest.TestCase):
                 inert = f'<{tag}{attributes}>example:malicious</{tag}>'
                 altered = text.replace('</ol>', inert + '</ol>', 1)
                 typed_equal(self, record, read_page(altered, allow_draft=True))
+        # An end tag inside template contents cannot close the outer array.
+        inert = ('<template></ol><span itemprop="identifier">'
+                 'example:template</span></template>')
+        altered = text.replace('</ol>', inert + '</ol>', 1)
+        typed_equal(self, record, read_page(altered, allow_draft=True))
 
     def test_every_successful_read_reports_verified_draft_provenance(self):
         text = write_page(self.record, allow_draft=True)
@@ -282,7 +287,7 @@ class FHTMicrodataTests(unittest.TestCase):
         self.assertEqual(len(captured), 2)
         provenance = json.loads((FIXTURES / "provenance.json").read_text())
         for message in diagnostics:
-            for detail in ["V7 FHT draft", provenance["owningSourceCommit"],
+            for detail in ["V7 FHT draft", FHT_ITEMTYPE, provenance["owningSourceCommit"],
                            provenance["fhtSchemaSha256"], "released=false"]:
                 self.assertIn(detail, message)
         original = Path.read_bytes
@@ -297,6 +302,30 @@ class FHTMicrodataTests(unittest.TestCase):
         schema["description"] = "custom unmatched contract"
         with self.assertRaisesRegex(MicrodataError, "custom schema"):
             read_page(text, schema=schema, allow_draft=True, warn=diagnostics.append)
+
+    def test_warning_uses_the_verified_provenance_snapshot(self):
+        text = write_page(self.record, allow_draft=True)
+        pinned = json.loads((FIXTURES / "provenance.json").read_text())
+        original = Path.read_text
+        reads = 0
+
+        def changed(file, *args, **kwargs):
+            nonlocal reads
+            raw = original(file, *args, **kwargs)
+            if file == FIXTURES / "provenance.json":
+                reads += 1
+                if reads > 1:
+                    later = json.loads(raw)
+                    later["fhtSchemaSha256"] = "0" * 64
+                    return json.dumps(later)
+            return raw
+
+        diagnostics = []
+        with patch.object(Path, "read_text", changed):
+            read_page(text, allow_draft=True, warn=diagnostics.append)
+        self.assertEqual(len(diagnostics), 1)
+        self.assertIn(pinned["fhtSchemaSha256"], diagnostics[0])
+        self.assertNotIn("0" * 64, diagnostics[0])
 
     def test_required_roots_do_not_imply_required_taxon_members(self):
         schema = json.loads((ROOT / "fht.json").read_text())
