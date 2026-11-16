@@ -87,7 +87,7 @@ FHR 2.0 still accepts and plans to reject in its next major (shared
 | Field | Rule |
 | --- | --- |
 | `transcriptome`, `version` | `minLength: 1` and at least one non-whitespace character |
-| `dateCreated` | `minLength: 1`, plus the `date` format |
+| `dateCreated` | `minLength: 1` and a non-whitespace character, plus the `date` format |
 | `metadataAuthor` | `minItems: 1`; every author requires a non-blank `name` (the shared `Author` object, so `assemblyAuthor` items too) |
 | `taxon` | Unchanged by maintainer decision (#8, 2026-11-16): `name` and `uri` stay optional members, and no taxonomy identifier is required. The next FHR, FHP and FHGFF3 majors will require an NCBI Taxonomy or ITIS `uri` (shared #189); that is not imported into FHT |
 | `schema`, `schemaVersion`, `assemblyType`, `checksum` | Already non-empty through their pattern, enum or exact length |

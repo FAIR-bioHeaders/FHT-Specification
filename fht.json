@@ -170,7 +170,7 @@
       "type": "object",
       "allOf": [
         {
-          "description": "Permitted FHT parent relationship: another FHT file filtered into this set, or an FHR genome whose bases were extracted (annotation-derived). Genome guidance alone is not a transcribedFrom link. The shared object already requires the parent checksum; accessionID is additional, not a substitute.",
+          "description": "Permitted FHT parent relationship: another FHT file filtered into this set, or an FHR genome whose bases were extracted (annotation-derived, or genome-guided models written out from the genome). Genome guidance alone is not a transcribedFrom link. The shared object already requires the parent checksum; accessionID is additional, not a substitute.",
           "anyOf": [
             {
               "properties": {
@@ -247,7 +247,8 @@
           "description": "Date the transcriptome resource was created, not the sample collection date",
           "format": "date",
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "derivedFrom": {
           "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were written out from the genome (for example StringTie models extracted with gffread) links that genome as an FHR transcribedFrom parent, exactly as an annotation-derived set does. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
@@ -668,7 +669,8 @@
       "description": "Date the transcriptome resource was created, not the sample collection date",
       "format": "date",
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "derivedFrom": {
       "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were written out from the genome (for example StringTie models extracted with gffread) links that genome as an FHR transcribedFrom parent, exactly as an annotation-derived set does. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",

@@ -88,10 +88,11 @@ def apply_required_value_rules(generated):
         properties = node["properties"]
         for name in REQUIRED_STRINGS:
             properties[name]["minLength"] = 1
+            properties[name].setdefault("pattern", "\\S")
         properties["metadataAuthor"]["minItems"] = 1
     defs = generated["$defs"]
     author = defs["Author"]
-    author["required"] = ["name"]
+    author["required"] = sorted(set(author.get("required", [])) | {"name"})
     author["properties"]["name"].update(NON_BLANK)
     # Taxon is deliberately left as the pinned core defines it: the maintainers
     # chose to keep the current taxon rules (name and uri both optional) for
@@ -156,7 +157,8 @@ def apply_fht_parent_rules(generated):
             "description": (
                 "Permitted FHT parent relationship: another FHT file filtered "
                 "into this set, or an FHR genome whose bases were extracted "
-                "(annotation-derived). Genome guidance alone is not a "
+                "(annotation-derived, or genome-guided models written out from "
+                "the genome). Genome guidance alone is not a "
                 "transcribedFrom link. The shared object already requires the "
                 "parent checksum; accessionID is additional, not a substitute."
             ),

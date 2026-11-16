@@ -230,10 +230,19 @@ class FhtSchemaTests(unittest.TestCase):
     def test_required_values_are_non_empty(self):
         # Curator review Q4 and FHR's planned GAP-1 rule: a required key must
         # carry a value, not an empty string, list or object.
-        for name in ("transcriptome", "version"):
-            for value in ("", " ", "\t", "\n"):
+        for node in (self.schema, self.schema["$defs"]["FHT"]):
+            for name in ("transcriptome", "version", "dateCreated"):
+                self.assertEqual(node["properties"][name]["minLength"], 1)
+                self.assertEqual(node["properties"][name]["pattern"], "\\S")
+            self.assertEqual(node["properties"]["metadataAuthor"]["minItems"], 1)
+        for name in ("transcriptome", "version", "dateCreated"):
+            self.assert_invalid(self.record(**{name: ""}), "should be non-empty")
+            for value in (" ", "\t", "\n"):
                 with self.subTest(field=name, value=value):
-                    self.assert_invalid(self.record(**{name: value}), "")
+                    self.assert_invalid(self.record(**{name: value}), "does not match")
+        # Without format assertion, a blank date is still rejected by pattern.
+        plain = Draft202012Validator(self.schema)
+        self.assertTrue(list(plain.iter_errors(self.record(dateCreated=" "))))
         self.assert_invalid(self.record(version=""), "should be non-empty")
         self.assert_invalid(self.record(dateCreated=""), "should be non-empty")
         self.assert_invalid(self.record(metadataAuthor=[]), "should be non-empty")
