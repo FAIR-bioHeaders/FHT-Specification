@@ -170,6 +170,48 @@ Legacy expression/completeness strings must not be guessed into typed numerical
 objects. #7 owns the reviewed migration and generated schema, and #8 the actual
 byte-backed fixtures. No new FHT version or persistent identifier is assigned here.
 
+## Curator-review decisions (November 2026)
+
+The November 2026 curator-review packet asked nine questions about this
+design. David Molik answered them, and Adam Wright relayed the answers. David's
+general rule: "with the non-FHR [types] try to follow FHR logic". The record
+above stays as written; where it differs, these decisions supersede it.
+
+- **Q1, construction types.** "de novo, genome-guided and annotation-derived are
+  a good start, we should implement the controlled vocabulary for this now."
+  D2's three values are the controlled vocabulary, as already implemented. A
+  composite history still gets no fourth value: `assemblyType` is required, so
+  the record stays incomplete until the case is reviewed, which is how FHR
+  treats any unavailable required value.
+- **Q2, molecule type.** "mixed is acceptable, so it should be five values:
+  mRNA, rRNA, tRNA, transcribed RNA, mixed." This amends D1: `mixed` is added
+  for a set known to combine classes. An unknown class is still omitted, and
+  `total RNA`, `cDNA` and `ncRNA` stay rejected.
+- **Q3, strand.** "forward and reverse is worth preserving, but protocol name or
+  kit should have a way to be recorded as well." D3's `strandedness` is kept.
+  The protocol or kit name goes in `documentation` and a protocol URL in
+  `relatedLink`.
+- **Q4, required fields.** "these are absolutely required, everytime, no
+  exceptions." The nine stay required, and the empty forms (empty strings,
+  `metadataAuthor: []`, a nameless author) are rejected, as FHR plans for its
+  next major (shared GAP-1). David also asked to keep the current taxon rules
+  (recorded on #8): `name` and `uri` stay optional and no taxonomy identifier
+  is required; the #189 rule stays scoped to the next FHR, FHP and FHGFF3
+  majors.
+- **Q5 and Q6.** Nothing to add; the statistics and units stay as they are.
+- **Q7, sample.** "check what FHR does for this, do that." FHR links a BioSample
+  record by URL in `relatedLink` and describes the specimen in
+  `voucherSpecimen`; FHT does the same and adds no sample-accession field.
+  `sample` keeps the tissue, stage, condition and strain context that FHR has no
+  field for.
+- **Q8, parent links.** The drafted `derivedFrom` rules stay. A genome-guided set
+  whose final sequences were written out from the genome links that genome as an
+  `FHR` + `transcribedFrom` parent with its checksum.
+- **Q9, names.** The field names stay.
+
+[`docs/FHT-MIGRATION.md`](../docs/FHT-MIGRATION.md#curator-review-decisions-november-2026)
+records the contract changes and their compatibility impact.
+
 ## Acceptance disposition and owned follow-up work
 
 The [revised spec 005 proposal](005-rna-transcriptome-header/spec.md) and

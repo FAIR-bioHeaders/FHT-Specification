@@ -27,7 +27,7 @@ record satisfies every applicable minimum. #157 therefore remains open.
 | taxon.name / taxon.uri | Organism/taxonomy | Actual identity and required rank must be checked; URI syntax alone does not establish rank or sequence origin |
 | metadataAuthor | Header-author attribution | Not automatically deposit submitter, sequence producer, owner or institutional affiliation |
 | assemblySoftware | Method, version and options | Shared Software has a real version member. Retain ordered options; do not claim missing version data is present |
-| moleculeType | Per-record biological molecule type | Proposed optional file-wide class is not per-record evidence; do not translate total RNA, cDNA or ncRNA mechanically |
+| moleculeType | Per-record biological molecule type | Proposed optional file-wide class is not per-record evidence; do not translate total RNA, cDNA or ncRNA mechanically. `mixed` has no single `/mol_type` value: each record needs its own |
 | libraryStrategy | Experiment library strategy | Use supplied experiment values, such as RNA-Seq; do not put selection or source values in this field |
 | strandedness | Experiment/protocol description | Requires an explicit read/read-1 convention; proposed FHT normalized terms are not an ENA-controlled enum |
 | sequencingRuns | Input run links | Actual SRR/ERR/DRR accessions and their associations must be checked. SRS is a sample class, not a run |

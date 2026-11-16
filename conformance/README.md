@@ -66,7 +66,7 @@ rule text, derived from the merged contract, is:
   required fields (`schema`, `schemaVersion` `"1.0"`, `transcriptome`,
   `assemblyType`, `taxon`, `version`, `metadataAuthor`, `dateCreated`,
   `checksum`) present and non-empty; enums (`de novo`, `genome-guided`,
-  `annotation-derived`; `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`;
+  `annotation-derived`; `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`, `mixed`;
   `unstranded`, `forward`, `reverse`); patterns (checksums, run accessions,
   taxon URI, DOI); nested cardinality (`sample` items need one value,
   optional arrays non-empty when present); the closed top level plus the
@@ -196,7 +196,7 @@ cited at its recomputed value by the checked-pass vectors.
 | Header text (R6-R8, R10, R12/R13) | ordinary comments/blank lines incl. `;~#` and a post-record `;` comment, raw UTF-8 value; rejections: U+2028 (R6), BOM (R7), duplicate key and anchor/alias (R8), `;~` after record and concatenation (R10), `011` (R12), `.inf` (R13) |
 | Writer recommendations | escaped `\x3E`/`\x40` (R11), `javascript:` relatedLink kept valid with `warnings: ["R14"]` |
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
-| Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
+| Contract (C1) | minimal (nine required fields only), rich (every optional field of the contract before the November 2026 curator review; `moleculeType: mixed` and the non-empty required-value rules are covered by `tests/test_fht_schema.py` until the toolkit's draft pin moves, #9), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
 | Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
 | Parent links (C3) | checked-pass ×5 (the two-link rich record, `-parent-transcribed-from`, `-parent-filtered-from`, and the two pilot candidates `-parent-subset-citing-whole` and `-parent-masked-exact`), unchecked ×1, checked-fail ×3 (`-parent-mismatched`, and the pilot candidates `-parent-real-digest-wrong-file` and `-parent-case-folded-digest`, whose stated value is a genuine digest of a *different* shipped file), mixed verdicts ×1 (checked-pass + checked-fail in one record; #37) |
 

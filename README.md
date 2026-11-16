@@ -52,11 +52,16 @@ ACGTACGT
 
 The nine required fields are `schema`, `schemaVersion`, `transcriptome`,
 `assemblyType`, `taxon`, `version`, `metadataAuthor`, `dateCreated` and
-`checksum`. Optional fields cover biological molecule class, software, sample
-context, library strategy/strandedness, run accessions, statistics, BUSCO
-completeness, reviewed parent links and shared provenance/identity fields. Omit
-unknown optional values; do not use `null`, empty strings or invented
-placeholders.
+`checksum`. Each must carry a value, not an empty one: required strings are
+non-empty and not blank, and `metadataAuthor` lists at least one author and
+every author has a `name`. These are the non-empty rules FHR plans for its next
+major (shared GAP-1), adopted now because FHT is unreleased. `taxon` keeps its
+current rules: `name` and `uri` are optional members, and no taxonomy identifier
+is required. Optional fields cover biological molecule class,
+software, sample context, library strategy/strandedness, run
+accessions, statistics, BUSCO completeness, reviewed parent links and shared
+provenance/identity fields. Omit unknown optional values; do not use `null`,
+empty strings or invented placeholders.
 
 Extension fields: as in FHR 2.1, FHP 1.1 and FHGFF3 1.1 (FAIR-bioHeaders-Specification
 `docs/FORMAT.md` rule R15), the draft accepts top-level keys that match
@@ -73,9 +78,14 @@ leave extension fields out.
 | `genome-guided` | Read evidence plus a reference constructed models or grouped reads |
 | `annotation-derived` | Sequences extracted from existing annotation coordinates and the matching genome |
 
-A composite or uncertain history is not guessed. The record is incomplete until
-the case is reviewed. Genome guidance alone does not justify a `transcribedFrom`
-parent link.
+These three values are a controlled vocabulary, confirmed by the maintainers
+after the November 2026 curator review. A composite or uncertain history is not
+guessed and has no fourth value: because `assemblyType` is required, the record
+is incomplete until the case is reviewed. Genome guidance alone does not justify
+a `transcribedFrom` parent link, but a genome-guided set whose final sequences
+were written out from the genome (for example StringTie models extracted with
+gffread) links that genome as an FHR `transcribedFrom` parent with its checksum.
+See [the curator-review decisions](docs/FHT-MIGRATION.md#curator-review-decisions-november-2026).
 
 ## Verify the schema in this repository
 

@@ -1,6 +1,8 @@
 # Feature specification proposal: RNA and transcriptome FASTA header (FHT)
 
 Status: **initial development design approved by David; adoption recorded on PR #20 merge**, October 24, 2026.
+Revised for the curator-review decisions of November 2026
+([migration record](../../docs/FHT-MIGRATION.md#curator-review-decisions-november-2026)).
 This is a proposed revision of shared spec 005 at
 `980029e5886a1a56a2d2545bfe59c7107539d38d`, developed in the owning FHT repository.
 It does not replace the shared publication copy until maintainers review and
@@ -38,13 +40,22 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
   `transcriptome` without altering other types. Core constraints remain shared
   rather than duplicated. Exactly nine fields are required: `schema`,
   `schemaVersion` (the string `"1.0"`), `transcriptome`, `assemblyType`,
-  `taxon`, `version`, `metadataAuthor`, `dateCreated` and `checksum`.
+  `taxon`, `version`, `metadataAuthor`, `dateCreated` and `checksum`. They are
+  required every time, with no exceptions, and none can be satisfied with an
+  empty value: required strings have `minLength: 1` and a non-whitespace
+  character, and `metadataAuthor` has `minItems: 1` and every author a
+  non-blank `name` (FHR's planned GAP-1 rule, adopted now because FHT is
+  unreleased). `taxon` keeps the current shared rules: `name` and `uri` are
+  optional members and no taxonomy identifier is required.
 - **FR-002:** Require one `assemblyType` string: `de novo`, `genome-guided` or
-  `annotation-derived`, with the D2 construction definitions. Make `moleculeType`
-  optional: one producer-justified biological class applying to the whole set,
-  selected from `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`. Omit it for unknown or
-  heterogeneous sets without a justified uniform classification. Remove the
-  old mixed molecule/material enum; no automatic value migration is authorized.
+  `annotation-derived`, with the D2 construction definitions; this controlled
+  vocabulary has no fourth value, and a composite history leaves the record
+  incomplete until reviewed. Make `moleculeType` optional: one
+  producer-justified biological class applying to the whole set, selected from
+  `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`, or `mixed` when the set is known to
+  contain more than one class. Omit it when the class is unknown; `mixed` never
+  stands for unknown. Remove the old mixed molecule/material enum (`total RNA`,
+  `cDNA`, `ncRNA`); no automatic value migration is authorized.
 - **FR-003:** Keep optional ordered `assemblySoftware` using shared `Software`;
   optional `sample`, `libraryStrategy`, `strandedness`, `sequencingRuns`,
   `vitalStats`, `completeness` and `derivedFrom`; the shared optional fields
@@ -61,13 +72,18 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
   `developmentalStage`, `condition` and `strain`. Each entry must carry at least
   one of these, and text values must be non-blank. Pooled material is repeated
   entries, each with only its own supplied values, not one fabricated uniform
-  sample or a complete BioSample record. `sequencingRuns` items must match
+  sample or a complete BioSample record. As in FHR, a BioSample or other sample
+  record is linked by URL in `relatedLink` and the physical specimen is
+  described in `voucherSpecimen`; `sample` carries only the context FHR has no
+  field for. `sequencingRuns` items must match
   `^(SRR|ERR|DRR)[0-9]+$`; an SRS sample accession is not a run.
 - **FR-004:** Define optional file-wide library fields separately from molecule
   class. `libraryStrategy` is one supplied strategy string, using the producer's
   ENA term where applicable. Proposed `strandedness` enum: `unstranded`, `forward`,
-  `reverse`, with D3's explicit read/read-1 orientation convention. Unknown and
-  heterogeneous library assertions are omitted, not defaulted or inferred.
+  `reverse`, with D3's explicit read/read-1 orientation convention. The library
+  protocol or kit name is recorded in `documentation` and a protocol URL in
+  `relatedLink`. Unknown and heterogeneous library assertions are omitted, not
+  defaulted or inferred, and strandedness is never inferred from a kit name.
 - **FR-005:** Statistics are optional producer-reported measurements using D3's
   names, types, units and whole-file population: `vitalStats.totalTranscripts`
   (integer >= 0, FASTA records including isoforms), `N50` (integer >= 1) and
@@ -90,7 +106,9 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
   Every item requires the parent's FHR-family `checksum`; `accessionID` is
   additional, never a substitute. `FHP` parents and other relationship values
   are rejected. No genome parent is required for de novo. Genome guidance alone
-  never establishes a `transcribedFrom` sequence derivation. Annotations
+  never establishes a `transcribedFrom` sequence derivation, but a genome-guided
+  set whose final sequences were written out from the genome links it as an
+  `FHR` + `transcribedFrom` parent with its checksum. Annotations
   (including FHGFF3 files), projects, samples, runs and protocols, and source
   references without verifiable family links, stay assertions in
   `relatedLink`/`documentation`.
@@ -131,6 +149,8 @@ or successful pilot is invented by these designs. #157 remains the INSDC gate.
 ## Contract impact for review
 
 This changes proposed requiredness and meaning for moleculeType, proposes a strand
-enum and numerical constraints, and clarifies construction semantics. Those are
-contract decisions requiring their own review, not incidental documentation fixes.
+enum and numerical constraints, and clarifies construction semantics. The
+November 2026 curator-review revision adds `mixed` to `moleculeType` and rejects
+empty values for the required fields. Those are contract decisions requiring
+their own review, not incidental documentation fixes.
 Released FHR/FHP/FHGFF3 artifacts and the legacy FHT schema are unchanged.
