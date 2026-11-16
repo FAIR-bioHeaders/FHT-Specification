@@ -33,7 +33,9 @@
       "properties": {
         "name": {
           "description": "Name of the person or organization",
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "nameType": {
           "$ref": "#/$defs/NameType",
@@ -47,7 +49,10 @@
         }
       },
       "title": "Author",
-      "type": "object"
+      "type": "object",
+      "required": [
+        "name"
+      ]
     },
     "BuscoMode": {
       "description": "BUSCO run modes",
@@ -241,10 +246,11 @@
         "dateCreated": {
           "description": "Date the transcriptome resource was created, not the sample collection date",
           "format": "date",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "derivedFrom": {
-          "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
+          "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were written out from the genome (for example StringTie models extracted with gffread) links that genome as an FHR transcribedFrom parent, exactly as an annotation-derived set does. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
           "items": {
             "$ref": "#/$defs/DerivedFrom"
           },
@@ -286,11 +292,12 @@
           "items": {
             "$ref": "#/$defs/Author"
           },
-          "type": "array"
+          "type": "array",
+          "minItems": 1
         },
         "moleculeType": {
           "$ref": "#/$defs/MoleculeType",
-          "description": "One producer-supported biological molecule class that applies to the whole described set. Omit for unknown or heterogeneous sets; total RNA and cDNA are preparation contexts, not uniform biological classes."
+          "description": "One producer-supported biological molecule class that applies to the whole described set, or mixed when the set is known to combine more than one class. Omit when the class is unknown; never use mixed for unknown. total RNA and cDNA are preparation contexts, not biological classes, and do not by themselves establish mixed."
         },
         "relatedLink": {
           "description": "Related source, project, sample, experiment or protocol URLs",
@@ -305,7 +312,7 @@
           "type": "string"
         },
         "sample": {
-          "description": "Supplied biological sample context. Repeat the object for pooled material; each item carries only the values actually known for that source. This is not a complete BioSample record and does not establish a uniform pooled identity.",
+          "description": "Supplied biological sample context (tissue, stage, condition, strain), which FHR has no field for. Repeat the object for pooled material; each item carries only the values actually known for that source. This is not a complete BioSample record and does not establish a uniform pooled identity. As in FHR, a BioSample or other sample record is linked by its URL in relatedLink, and the physical specimen is described in voucherSpecimen; identifier and accessionID identify the transcriptome itself, never its sample.",
           "items": {
             "$ref": "#/$defs/Sample"
           },
@@ -341,7 +348,7 @@
         },
         "strandedness": {
           "$ref": "#/$defs/Strandedness",
-          "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded."
+          "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded. Record the protocol or kit name in documentation and a protocol URL in relatedLink; never infer strandedness from a kit name."
         },
         "taxon": {
           "$ref": "#/$defs/Taxon",
@@ -350,7 +357,8 @@
         "transcriptome": {
           "description": "Name of the transcriptome resource described by the file",
           "pattern": "\\S",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "transcriptomeSynonym": {
           "description": "Other supplied names for the transcriptome",
@@ -363,7 +371,9 @@
         },
         "version": {
           "description": "Version of the transcriptome resource",
-          "type": "string"
+          "pattern": "\\S",
+          "type": "string",
+          "minLength": 1
         },
         "vitalStats": {
           "$ref": "#/$defs/VitalStats",
@@ -410,12 +420,13 @@
       "type": "string"
     },
     "MoleculeType": {
-      "description": "Restricted biological molecule classes for the whole described set (D1). These are not preparation methods, and matching a string does not prove per-record INSDC compliance.",
+      "description": "Restricted biological molecule classes for the whole described set (D1), plus mixed for a set known to combine classes (maintainer decision on the curator review). These are not preparation methods, and matching a string does not prove per-record INSDC compliance.",
       "enum": [
         "mRNA",
         "rRNA",
         "tRNA",
-        "transcribed RNA"
+        "transcribed RNA",
+        "mixed"
       ],
       "title": "MoleculeType",
       "type": "string"
@@ -656,10 +667,11 @@
     "dateCreated": {
       "description": "Date the transcriptome resource was created, not the sample collection date",
       "format": "date",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "derivedFrom": {
-      "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
+      "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were written out from the genome (for example StringTie models extracted with gffread) links that genome as an FHR transcribedFrom parent, exactly as an annotation-derived set does. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
       "items": {
         "$ref": "#/$defs/DerivedFrom"
       },
@@ -701,11 +713,12 @@
       "items": {
         "$ref": "#/$defs/Author"
       },
-      "type": "array"
+      "type": "array",
+      "minItems": 1
     },
     "moleculeType": {
       "$ref": "#/$defs/MoleculeType",
-      "description": "One producer-supported biological molecule class that applies to the whole described set. Omit for unknown or heterogeneous sets; total RNA and cDNA are preparation contexts, not uniform biological classes."
+      "description": "One producer-supported biological molecule class that applies to the whole described set, or mixed when the set is known to combine more than one class. Omit when the class is unknown; never use mixed for unknown. total RNA and cDNA are preparation contexts, not biological classes, and do not by themselves establish mixed."
     },
     "relatedLink": {
       "description": "Related source, project, sample, experiment or protocol URLs",
@@ -720,7 +733,7 @@
       "type": "string"
     },
     "sample": {
-      "description": "Supplied biological sample context. Repeat the object for pooled material; each item carries only the values actually known for that source. This is not a complete BioSample record and does not establish a uniform pooled identity.",
+      "description": "Supplied biological sample context (tissue, stage, condition, strain), which FHR has no field for. Repeat the object for pooled material; each item carries only the values actually known for that source. This is not a complete BioSample record and does not establish a uniform pooled identity. As in FHR, a BioSample or other sample record is linked by its URL in relatedLink, and the physical specimen is described in voucherSpecimen; identifier and accessionID identify the transcriptome itself, never its sample.",
       "items": {
         "$ref": "#/$defs/Sample"
       },
@@ -756,7 +769,7 @@
     },
     "strandedness": {
       "$ref": "#/$defs/Strandedness",
-      "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded."
+      "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded. Record the protocol or kit name in documentation and a protocol URL in relatedLink; never infer strandedness from a kit name."
     },
     "taxon": {
       "$ref": "#/$defs/Taxon",
@@ -765,7 +778,8 @@
     "transcriptome": {
       "description": "Name of the transcriptome resource described by the file",
       "pattern": "\\S",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "transcriptomeSynonym": {
       "description": "Other supplied names for the transcriptome",
@@ -778,7 +792,9 @@
     },
     "version": {
       "description": "Version of the transcriptome resource",
-      "type": "string"
+      "pattern": "\\S",
+      "type": "string",
+      "minLength": 1
     },
     "vitalStats": {
       "$ref": "#/$defs/VitalStats",

@@ -125,23 +125,63 @@ class FhtSchemaTests(unittest.TestCase):
         self.assert_invalid(self.record(schemaVersion="1.1"), "is not one of ['1.0']")
 
     def test_assembly_type_values(self):
+        # Curator review Q1: exactly three controlled values, no fourth value
+        # for mixed or unknown histories (the record stays incomplete).
+        self.assertEqual(
+            self.schema["$defs"]["AssemblyType"]["enum"],
+            ["de novo", "genome-guided", "annotation-derived"],
+        )
         for value in ("de novo", "genome-guided", "annotation-derived"):
             self.assert_valid(self.record(assemblyType=value))
-        self.assert_invalid(self.record(assemblyType="mixed"), "is not one of")
-        self.assert_invalid(self.record(assemblyType="unknown"), "is not one of")
+        for value in ("mixed", "unknown", "hybrid", "other", "composite"):
+            with self.subTest(assemblyType=value):
+                self.assert_invalid(self.record(assemblyType=value), "is not one of")
+
+    def test_assembly_type_is_matched_exactly(self):
+        # Case, spacing and punctuation variants are not normalized.
+        for value in ("De novo", "de-novo", "denovo", "de_novo", "de  novo",
+                      " de novo", "de novo ", "Genome-guided", "genome guided",
+                      "genome_guided", "annotation derived", "Annotation-derived",
+                      "reference-guided", ""):
+            with self.subTest(assemblyType=value):
+                self.assert_invalid(self.record(assemblyType=value), "is not one of")
+        self.assert_invalid(self.record(assemblyType=None), "is not of type 'string'")
+        self.assert_invalid(
+            self.record(assemblyType=["de novo", "genome-guided"]),
+            "is not of type 'string'",
+        )
 
     def test_molecule_type_is_optional_and_restricted(self):
+        # Curator review Q2: five values, mixed added.
+        self.assertEqual(
+            self.schema["$defs"]["MoleculeType"]["enum"],
+            ["mRNA", "rRNA", "tRNA", "transcribed RNA", "mixed"],
+        )
         self.assert_valid(minimal())
-        for value in ("mRNA", "rRNA", "tRNA", "transcribed RNA"):
+        for value in ("mRNA", "rRNA", "tRNA", "transcribed RNA", "mixed"):
             self.assert_valid(self.record(moleculeType=value))
-        for value in ("total RNA", "cDNA", "ncRNA"):
+        for value in ("total RNA", "cDNA", "ncRNA", "unknown", "lncRNA"):
             self.assert_invalid(self.record(moleculeType=value), "is not one of")
 
+    def test_mixed_molecule_type_is_matched_exactly(self):
+        # mixed is one value, not a list of classes or a free-text variant.
+        for value in ("Mixed", "MIXED", "mixed RNA", "mixed ", "heterogeneous",
+                      "mixture", ""):
+            with self.subTest(moleculeType=value):
+                self.assert_invalid(self.record(moleculeType=value), "is not one of")
+        self.assert_invalid(
+            self.record(moleculeType=["mRNA", "rRNA"]), "is not of type 'string'"
+        )
+
     def test_strandedness_is_optional_and_normalized(self):
+        # Curator review Q3: the forward/reverse convention is kept.
         for value in ("unstranded", "forward", "reverse"):
             self.assert_valid(self.record(strandedness=value))
         self.assert_invalid(self.record(strandedness="firststrand"), "is not one of")
         self.assert_invalid(self.record(strandedness="secondstrand"), "is not one of")
+        for value in ("RF", "FR", "fr-firststrand", "dUTP", "mixed", "unknown"):
+            with self.subTest(strandedness=value):
+                self.assert_invalid(self.record(strandedness=value), "is not one of")
 
     def test_sample_is_an_ordered_non_empty_array(self):
         sample = {"tissue": "ovary", "tissueIdentifier": "UBERON:0000992"}
@@ -185,6 +225,109 @@ class FhtSchemaTests(unittest.TestCase):
             )
         self.assert_invalid(
             self.record(sample=[{}]), "is not valid under any of the given schemas"
+        )
+
+    def test_required_values_are_non_empty(self):
+        # Curator review Q4 and FHR's planned GAP-1 rule: a required key must
+        # carry a value, not an empty string, list or object.
+        for name in ("transcriptome", "version"):
+            for value in ("", " ", "\t", "\n"):
+                with self.subTest(field=name, value=value):
+                    self.assert_invalid(self.record(**{name: value}), "")
+        self.assert_invalid(self.record(version=""), "should be non-empty")
+        self.assert_invalid(self.record(dateCreated=""), "should be non-empty")
+        self.assert_invalid(self.record(metadataAuthor=[]), "should be non-empty")
+        self.assert_invalid(
+            self.record(metadataAuthor=[{}]), "'name' is a required property"
+        )
+        self.assert_invalid(
+            self.record(metadataAuthor=[{"nameType": "Personal"}]),
+            "'name' is a required property",
+        )
+        for name in ("", "  "):
+            with self.subTest(author_name=name):
+                self.assert_invalid(
+                    self.record(metadataAuthor=[{"name": name}]), "does not match"
+                )
+        self.assert_invalid(
+            self.record(
+                metadataAuthor=[{"name": "Example author"}, {"name": ""}]
+            ),
+            "should be non-empty",
+        )
+        self.assert_invalid(self.record(taxon={"uri": ""}), "does not match")
+        for value in (None, [], ""):
+            for name in ("transcriptome", "version", "metadataAuthor", "taxon",
+                         "dateCreated", "assemblyType", "schemaVersion"):
+                with self.subTest(field=name, value=value):
+                    self.assert_invalid(self.record(**{name: value}), "")
+        for value in (None, [], "", {}):
+            for name in ("transcriptome", "version", "metadataAuthor",
+                         "dateCreated", "assemblyType", "schemaVersion"):
+                with self.subTest(field=name, value=value):
+                    self.assert_invalid(self.record(**{name: value}), "")
+
+    def test_taxon_rules_are_unchanged(self):
+        # Maintainer decision (FHT-Specification#8, 2026-11-16): keep the
+        # current taxon rules. name and uri stay optional members, and no
+        # taxonomy identifier is required (FAIR-bioHeaders-Specification#189
+        # applies to the next FHR, FHP and FHGFF3 majors only).
+        self.assertNotIn("required", self.schema["$defs"]["Taxon"])
+        self.assert_valid(self.record(taxon={"name": "Arabidopsis thaliana"}))
+        self.assert_valid(
+            self.record(taxon={"uri": "https://identifiers.org/taxonomy:3702"})
+        )
+        self.assert_valid(self.record(taxon={}))
+
+    def test_author_names_are_required_in_assembly_author_too(self):
+        # The shared Author object carries the rule, so assemblyAuthor items
+        # (optional field) cannot be empty either, as FHR plans.
+        self.assert_invalid(self.record(assemblyAuthor=[{}]), "'name' is a required property")
+        self.assert_invalid(self.record(assemblyAuthor=[]), "should be non-empty")
+        self.assert_valid(self.record(assemblyAuthor=[{"name": "Example assembler"}]))
+
+    def test_sample_record_links_follow_fhr(self):
+        # Curator review Q7: as in FHR, a BioSample record is a relatedLink URL
+        # and the physical specimen is voucherSpecimen; sample keeps only the
+        # FHT-specific biological context and carries no accession member.
+        self.assert_valid(
+            self.record(
+                sample=[{"tissue": "brain", "tissueIdentifier": "UBERON:0000955"}],
+                relatedLink=["https://www.ncbi.nlm.nih.gov/biosample/SAMN02803731"],
+                voucherSpecimen="Example specimen in an example collection",
+            )
+        )
+        for key in ("biosample", "sampleAccession", "sampleIdentifier", "accession"):
+            with self.subTest(member=key):
+                self.assert_invalid(
+                    self.record(sample=[{"tissue": "brain", key: "SAMN02803731"}]),
+                    "Additional properties",
+                )
+
+    def test_genome_guided_written_out_from_the_genome_links_its_parent(self):
+        # Curator review Q8: a genome-guided set whose final sequences were
+        # extracted from the genome links it as an FHR transcribedFrom parent.
+        parent = {
+            "headerType": "FHR",
+            "relationship": "transcribedFrom",
+            "checksum": CHECKSUM,
+        }
+        self.assert_valid(
+            self.record(assemblyType="genome-guided", derivedFrom=[parent])
+        )
+        self.assert_valid(self.record(assemblyType="genome-guided"))
+        self.assert_invalid(
+            self.record(
+                assemblyType="genome-guided",
+                derivedFrom=[dict(parent, relationship="assembledFrom")],
+            ),
+            "is not valid under any of the given schemas",
+        )
+        no_checksum = dict(parent)
+        del no_checksum["checksum"]
+        self.assert_invalid(
+            self.record(assemblyType="genome-guided", derivedFrom=[no_checksum]),
+            "'checksum' is a required property",
         )
 
     def test_sequencing_runs_are_run_accessions(self):
@@ -321,6 +464,19 @@ class FhtSchemaTests(unittest.TestCase):
                 instrument=["Example sequencer"],
             )
         )
+
+    def test_existing_pilot_record_stays_valid(self):
+        # Backward compatibility: the real-data pilot header (#45), written
+        # before the curator-review changes, still validates unchanged.
+        import yaml
+
+        record = yaml.safe_load(
+            (ROOT / "pilot" / "dmel-chr4" / "metadata.fht.yaml").read_text(
+                encoding="utf-8"
+            )
+        )
+        record["checksum"] = CHECKSUM
+        self.assert_valid(record)
 
     def test_legacy_md5_checksum_is_not_accepted(self):
         self.assert_invalid(

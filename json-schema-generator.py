@@ -4,7 +4,9 @@ The model imports the pinned shared core and shared objects under ``schemas/``.
 ``fht.json`` is generated, never hand-edited. The generator also applies the
 FHT-specific parent rule that LinkML cannot express: a derivedFrom item must be
 a reviewed FHT/FHR relationship. The shared DerivedFrom object already requires
-the parent checksum; an accessionID is additional, never a substitute.
+the parent checksum; an accessionID is additional, never a substitute. It also
+rejects empty values for the required fields (curator review Q4), which the
+pinned shared core cannot express without changing FHR.
 """
 
 import argparse
@@ -66,6 +68,34 @@ def apply_common_rules(generated):
             if prop and prop.get("type") == "array":
                 prop.setdefault("minItems", 1)
     generated["$schema"] = DIALECT
+    return generated
+
+
+# Required values are non-empty (curator review Q4; the FHR next-major rule in
+# FAIR-bioHeaders-Specification docs/SCHEMA-VERSIONS.md "Required values are
+# non-empty", GAP-1). ``required`` makes a key present; these give it a value.
+# FHT is unreleased, so the draft adopts them now rather than at a major.
+REQUIRED_STRINGS = ("transcriptome", "version", "dateCreated")
+NON_BLANK = {"minLength": 1, "pattern": "\\S"}
+
+
+def apply_required_value_rules(generated):
+    """Reject empty required strings, author lists and nameless authors."""
+    roots = [generated]
+    if isinstance(generated.get("$defs", {}).get("FHT"), dict):
+        roots.append(generated["$defs"]["FHT"])
+    for node in roots:
+        properties = node["properties"]
+        for name in REQUIRED_STRINGS:
+            properties[name]["minLength"] = 1
+        properties["metadataAuthor"]["minItems"] = 1
+    defs = generated["$defs"]
+    author = defs["Author"]
+    author["required"] = ["name"]
+    author["properties"]["name"].update(NON_BLANK)
+    # Taxon is deliberately left as the pinned core defines it: the maintainers
+    # chose to keep the current taxon rules (name and uri both optional) for
+    # this draft (FHT-Specification#8, 2026-11-16).
     return generated
 
 
@@ -150,6 +180,7 @@ def generate():
     generated["title"] = "FHT"
     for key in ("metamodel_version", "version"):
         generated.pop(key, None)
+    generated = apply_required_value_rules(generated)
     generated = apply_sample_rules(generated)
     generated = apply_fht_parent_rules(generated)
     return apply_extension_rules(generated)
