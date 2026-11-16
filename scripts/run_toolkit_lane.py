@@ -1,9 +1,9 @@
 """Run the FHT #8 suite against an *installed* fair-bioheaders draft lane.
 
-Manual lane for issue #8 box 7 ("run the shared example/model/drift/conformance
+Installed-artifact lane for issue #8 box 7 ("run the shared example/model/drift/conformance
 checks with the named toolkit version, documenting limitations") and for the
-executable half of box 4. It is never part of a PR signal: the CI lanes do not
-install a toolkit, and fair-bioheaders has no default FHT support — FHT is a
+executable half of box 4. CI installs a named released toolkit in an isolated environment.
+fair-bioheaders has no default FHT support — FHT is a
 draft read only through the opt-in rule V7 lane
 (`BIOHEADERS_EXPERIMENTAL_FHT=1`), which is recognition of a development
 contract, not shipped support (issue #9 owns that).
@@ -32,7 +32,7 @@ Lanes:
 3. `verify-links` with the lane ON, per `parentLink` vector: `checked-pass` and
    `unchecked` exit 0 and print `matched` / `not checked`; `checked-fail` exits 3
    and prints `not matched`. The three verdicts must stay distinguishable (C3).
-4. `verify` with the lane OFF, per vector: reported, never asserted. Rule V5
+4. `verify` with the lane OFF, per vector: reported; 0.11.0 must refuse all. Rule V5
    sends every FHT citation to the current FHR schema when the lane is closed, so
    the default path rejects the whole suite; that is the documented limitation,
    and the class distribution is printed so a later release can be compared with
@@ -120,14 +120,18 @@ class Toolkit:
             raise SystemExit(f"{self.binary} not found: pass --venv pointing at a "
                              f"Python environment with fair-bioheaders installed")
 
-    def run(self, *args, lane=True):
+    def run_bytes(self, *args, lane=True, data=None):
         env = dict(os.environ)
         env.pop(DRAFT_ENV, None)
         if lane:
             env[DRAFT_ENV] = "1"
         result = subprocess.run([str(self.binary), *[str(a) for a in args]],
-                                capture_output=True, text=True, env=env)
-        return result.returncode, result.stdout + result.stderr
+                                capture_output=True, input=data, env=env, timeout=60)
+        return result
+
+    def run(self, *args, lane=True):
+        result = self.run_bytes(*args, lane=lane)
+        return result.returncode, (result.stdout + result.stderr).decode("utf-8", "replace")
 
     def version(self):
         code, out = self.run("--version")
@@ -271,7 +275,7 @@ def lane_links(toolkit, vectors, work):
 
 
 def lane_default_path(toolkit, vectors, work):
-    """Lane 4: what the *closed* lane does. Reported, never asserted (V5)."""
+    """Lane 4: report V5 behavior and guard the named 0.11.0 default."""
     classes = {}
     for entry in vectors:
         path = place(entry, work, name=f"off-{entry['id']}.fht.fasta")
@@ -284,6 +288,8 @@ def lane_default_path(toolkit, vectors, work):
     measured(f"default path (draft lane OFF): {accepted} of {len(vectors)} "
              f"vectors accepted; FHT has no default reader, so rule V5 routes "
              f"the rest to the current FHR schema")
+    if toolkit.version() == "0.11.0" and accepted:
+        fail("0.11.0 accepted FHT vectors with its draft lane disabled")
     for (code, message), ids in sorted(classes.items(), key=lambda kv: str(kv[0])):
         measured(f"  exit={code} n={len(ids):2d} {message!r}"
                  + (f" {ids}" if len(ids) <= 4 else ""))
@@ -396,6 +402,49 @@ def lane_combine(toolkit, vectors, work):
           f"verification)")
 
 
+def lane_streams(toolkit, vectors, work):
+    """Exercise actual stdin/stdout, outside the file-only manifest vocabulary.
+
+    Compare raw stdout bytes; diagnostic text on stderr must never become payload.
+    Compressed inputs are tested exactly as distributed, not pre-decompressed.
+    """
+    counts = {"verify": 0, "strip": 0, "combine": 0}
+    for entry in vectors:
+        raw = (ROOT / "conformance" / entry["file"]).read_bytes()
+        expected_code = 0 if (entry["expected"] == "valid" or any(
+            link["result"] == "checked-fail" for link in entry.get("parentLink", [])
+        )) else 1
+        result = toolkit.run_bytes("verify", "-", "--type", "fasta", data=raw)
+        counts["verify"] += 1
+        if result.returncode != expected_code:
+            fail(f"{entry['id']}: stdin verify exit {result.returncode}, expected {expected_code}")
+        if entry["expected"] != "valid":
+            continue
+        result = toolkit.run_bytes("strip", "-", "-", "--type", "fasta", data=raw)
+        counts["strip"] += 1
+        payload = strip_expectation(vector_bytes(entry))
+        if result.returncode != 0 or result.stdout != payload:
+            fail(f"{entry['id']}: stdin/stdout strip changed payload bytes or failed")
+        source = place(entry, work, name=f"stream-{entry['id']}.fht.fasta")
+        metadata = Path(work) / f"stream-{entry['id']}.yaml"
+        code, output = toolkit.run("convert", source, metadata, "--to", "yaml")
+        if code != 0:
+            fail(f"{entry['id']}: stream setup convert failed: {output[:160]}")
+            continue
+        result = toolkit.run_bytes("combine", metadata, "-", "-o", "-",
+                                   "--type", "fasta", data=payload)
+        counts["combine"] += 1
+        if result.returncode != 0 or strip_expectation(result.stdout) != payload:
+            fail(f"{entry['id']}: stdin/stdout combine changed payload bytes or failed")
+            continue
+        verified = toolkit.run_bytes("verify", "-", "--type", "fasta", data=result.stdout)
+        if verified.returncode != 0 or b"Checksum verified." not in verified.stdout + verified.stderr:
+            fail(f"{entry['id']}: combined stdout does not verify")
+    if not counts["verify"] or not counts["strip"] or not counts["combine"]:
+        fail("stream lane executed zero cases for an operation")
+    print(f"streams (stdin/stdout, draft lane ON): {counts}")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--venv", required=True, type=Path,
@@ -408,6 +457,9 @@ def main(argv=None):
         return 1
     toolkit = Toolkit(args.venv)
     version, entry = lane_identity(toolkit)
+    if FAILURES:
+        print("Identity check failed: NOTHING SCORED")
+        return 1
     vectors = load_suite()
     work = Path(tempfile.mkdtemp(prefix="fht-toolkit-lane-"))
     try:
@@ -416,6 +468,7 @@ def main(argv=None):
         lane_default_path(toolkit, vectors, work)
         lane_strip(toolkit, vectors, work)
         lane_combine(toolkit, vectors, work)
+        lane_streams(toolkit, vectors, work)
     finally:
         if args.keep:
             print(f"scratch: {work}")

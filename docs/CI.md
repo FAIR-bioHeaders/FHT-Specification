@@ -12,7 +12,7 @@ amends any schema.
 | Workflow | Trigger | Covers |
 | --- | --- | --- |
 | [`validate-specification.yml`](../.github/workflows/validate-specification.yml) | push/PR | The **current FHT 1.0 development contract**: unit tests over the generated `fht.json` (positive/rejection fixtures in `tests/test_fht_schema.py`, synthetic examples in `examples/`, byte-backed conformance vectors via `tests/test_fixtures.py`), LinkML regeneration drift and the pinned shared-import provenance. Pre-existing; extended by #8. |
-| [`fht-fixtures.yml`](../.github/workflows/fht-fixtures.yml) | push/PR | The issue **#8** byte-backed fixtures via `scripts/check_fht_fixtures.py`: regeneration determinism (in-process rerun compared byte-for-byte with `conformance/` and the owned `examples/` files), an independently written R1-R5 reader recomputing every vector checksum, strict R6-R8/R10/R12/R13 header checks, `fht.json` contract validation with `FormatChecker`, V1/V5 schema selection (with the V7 draft-lane note), C3 parent-link outcomes with parent paths confined to the distributed tree, manifest accountability for every lettered FORMAT.md rule (R1-R15 registered, each with both sides or a recorded `notApplicable` reason), and the examples recomputation. No installed toolkit is invoked (there is no FHT reader yet — #9); the toolkit run is the separate manual lane below. |
+| [`fht-fixtures.yml`](../.github/workflows/fht-fixtures.yml) | push/PR | The issue **#8** byte-backed fixtures via `scripts/check_fht_fixtures.py`: regeneration determinism (in-process rerun compared byte-for-byte with `conformance/` and the owned `examples/` files), an independently written R1-R5 reader recomputing every vector checksum, strict R6-R8/R10/R12/R13 header checks, `fht.json` contract validation with `FormatChecker`, V1/V5 schema selection (with the V7 draft-lane note), C3 parent-link outcomes with parent paths confined to the distributed tree, manifest accountability for every lettered FORMAT.md rule (R1-R15 registered, each with both sides or a recorded `notApplicable` reason), and the examples recomputation. The independent job invokes no toolkit. A separate installed-draft job runs the named toolkit under V7; see below. |
 | [`docs-checks.yml`](../.github/workflows/docs-checks.yml) | push/PR | Owned documentation signals: Markdownlint with the reviewed local config `.markdownlint-cli2.jsonc` (pinned `markdownlint-cli2@0.24.0`, rule set 0.42.0), plus `scripts/check_docs.py` for local relative links/anchors, whitespace (trailing spaces, CR bytes, final newline) and git conflict markers. Fails the job only on real findings; no network access. |
 | [`legacy-draft-checks.yml`](../.github/workflows/legacy-draft-checks.yml) | push/PR | Schema health of the preserved legacy draft `legacy/fht-v0.1.json` (`scripts/check_legacy_schema.py`) and the classified example/fixture suite (`scripts/check_legacy_examples.py`). |
 | [`external-links.yml`](../.github/workflows/external-links.yml) | schedule (Mondays) + `workflow_dispatch` | Every http(s) URL cited by repository Markdown, one retry each. Never a PR signal: transient remote failures must not gate unrelated work. |
@@ -43,12 +43,12 @@ synthetic, the vectors' expected outcomes are derived from the rule text
 rather than any implementation, and no checksum or SeqCol value here
 describes real biological material.
 
-## Manual lane — the named toolkit version (issue #8 box 7)
+## Installed-artifact lane — the named toolkit version (issue #8 box 7)
 
 `scripts/run_toolkit_lane.py` runs the suite against an **installed**
 `fair-bioheaders` and is the box-7 evidence: the checks are the suite's own
 rule-derived expectations, executed by a second implementation instead of by
-this repository's reader. It is **not** a PR signal and no workflow calls it:
+this repository's reader. The independent fixture job does not call it; a separate installed-draft job now does:
 it needs a toolkit environment, and FHT is a draft, so the lane reads every
 record through the opt-in rule V7 switch
 (`BIOHEADERS_EXPERIMENTAL_FHT=1`, set by the script itself). Running under that
@@ -117,8 +117,8 @@ case-insensitive filesystem, so it establishes that the released reader's
 behavior agrees with the rule text on this suite today — not that FHT is
 supported in the default path, and not Linux or macOS case-sensitivity as
 separate evidence. Issue **#9** owns the default-path implementation, its own
-acceptance run, and the stdin/stdout question this file-based suite cannot
-express.
+acceptance run, and released stdin/stdout acceptance. The process-level stream lane below
+adds draft evidence without extending the file-based manifest.
 
 ## Pinned tools (PR lanes)
 
@@ -163,7 +163,7 @@ python scripts/make_fht_fixtures.py
 python -m unittest discover -s tests -v   # includes tests/test_ci_checks.py
 
 # Manual lane (issue #8 box 7) — needs an installed fair-bioheaders and is
-# never a PR signal; runs the suite through the opt-in rule V7 draft lane
+# also runs in the separate installed-draft PR job through the opt-in V7 lane
 python scripts/run_toolkit_lane.py --venv /path/to/fair-bioheaders-venv
 
 # Scheduled lane only — never part of a PR signal (network required)
@@ -242,8 +242,8 @@ Markdown link or angle autolink** (URLs that appear only as inline code, e.g.
 dialect identifiers or version templates, are not fetch targets), fetches
 each (GET, 30 s timeout, one retry after 5 s, descriptive User-Agent) and
 fails on any non-2xx/3xx answer. It runs only on the weekly schedule and on
-manual dispatch; the PR lanes never touch the network, so a transient remote
-failure cannot be the sole PR signal.
+manual dispatch; the independent PR checks do not fetch these links, so a transient remote
+failure cannot be their sole signal. Dependency installation in CI is separate.
 
 ### Exclusions
 
@@ -263,3 +263,25 @@ local runs, so the exclusion list is intentionally empty.**
   file) and new files.
 - Markdownlint deviations from the default rule set are limited to MD013 and
   MD060, each with a recorded reason in `.markdownlint-cli2.jsonc`.
+
+## Installed draft job and stream evidence (round 11)
+
+The independent `fixtures` job remains independent of the toolkit. The separate
+`installed-draft` job installs `fair-bioheaders==0.11.0` into a fresh environment
+and runs `scripts/run_toolkit_lane.py` on Linux. The package installation is not
+an editable checkout. Package version and bundled draft digests are printed;
+a mismatched bundled digest stops the run before any vectors are scored.
+
+The new stream lane sends the committed bytes of every vector to `verify -`
+(including gzip/BGZF bytes), and compares `strip - -` stdout byte-for-byte with
+the independently derived payload for every valid vector. It sends those payloads
+through `combine <metadata> - -o -`, compares the resulting payload bytes, and
+verifies the resulting stdout through stdin. Captured stderr is never joined to
+payload stdout. A 60-second per-command timeout and nonzero case-count checks
+prevent hanging or empty runs from reporting success.
+
+This is additional implementation evidence, not a shared manifest extension,
+independent expectation approval, curator acceptance, or default FHT support.
+The historical macOS run above remains a dated measurement; Linux evidence is
+provided by the new CI job when it actually executes, not by this document.
+See [the acceptance and decision packet](FHT-READINESS.md).
