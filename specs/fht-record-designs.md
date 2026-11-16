@@ -52,7 +52,7 @@ prove TSA deposit eligibility or successful checksum/parent verification.
 | Field/group | Proposed type/cardinality | Example of information to supply when actually known |
 | --- | --- | --- |
 | `transcriptomeSynonym` | Optional non-empty array of non-blank strings (legacy-compatible) | Other names actually used for the transcriptome |
-| `moleculeType` | Optional single string: `mRNA`, `rRNA`, `tRNA` or `transcribed RNA` (D1) | Producer-supported uniform class; omit for unresolved or heterogeneous content |
+| `moleculeType` | Optional single string: `mRNA`, `rRNA`, `tRNA`, `transcribed RNA` or `mixed` (D1, clarified 2026-11-16) | Producer-supported whole-set class; use mixed for known heterogeneous RNA classes, omit for unresolved content |
 | `assemblyAuthor` | Optional non-empty ordered array of shared Author objects (legacy-compatible) | People or organizations that assembled or extracted the set, distinct from `metadataAuthor` and from a deposit submitter |
 | `assemblySoftware` | Optional ordered array of shared Software objects | Software name, real version, URI and ordered option strings; extraction is a process too |
 | `sequencingRuns` | Optional non-empty array of strings matching `^(SRR\|ERR\|DRR)[0-9]+$` | Actual SRR/ERR/DRR runs; no SRS sample identifier substituted for a run |

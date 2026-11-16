@@ -98,6 +98,12 @@ FHT_RECORD = {
 EXPECTED_METADATA = {"transcriptome": TRANSCRIPTOME, "version": VERSION,
                      "assemblyType": "de novo"}
 
+# Explicit Molik draft ruling, issue #8 comment 6928571815 (2026-11-16).
+# A synthetic producer assertion, not a biological classification inferred from bytes.
+MIXED_RECORD = copy.deepcopy(FHT_RECORD)
+MIXED_RECORD.update(transcriptome=TRANSCRIPTOME + " (mixed molecules)",
+                    moleculeType="mixed")
+
 # The minimal record: exactly the nine required fields (FR-001).
 MINIMAL_RECORD = {
     "schema": RAW_MAIN,
@@ -802,6 +808,16 @@ def build_vectors():
           checksum=value,
           expected=dict(EXPECTED_METADATA, schema=RAW_MAIN, schemaVersion="1.0"))
 
+    # ---- valid: explicit known mixed molecule classification (C1) ------------
+    fht_lines_valid("fht-fasta-molecule-type-mixed", lines_of(MIXED_RECORD), ["C1"],
+                    "The producer explicitly asserts known heterogeneous biological "
+                    "RNA classes using the fifth moleculeType value mixed (Molik "
+                    "ruling, #8 comment 6928571815). Unknown remains omission; "
+                    "this syntactic fixture does not verify biological classes.",
+                    expected=dict(EXPECTED_METADATA,
+                                  transcriptome=MIXED_RECORD["transcriptome"],
+                                  moleculeType="mixed"))
+
     # ---- valid: parent links (C3) ---------------------------------------------
     genome_checksum = PARENT_LINKS["genome"]["statedChecksum"]
     minimal_checksum = PARENT_LINKS["minimal"]["statedChecksum"]
@@ -1065,6 +1081,14 @@ def build_vectors():
                        "C1", "moleculeType cDNA is not an FHT value: cDNA is a "
                        "preparation context, not a biological molecule class "
                        "(D1, FR-002).")
+    fht_invalid_record("fht-fasta-molecule-type-mixed-case",
+                       record_of(moleculeType="Mixed"), "C1",
+                       "Molecule classifications are exact controlled strings: Mixed "
+                       "is not the explicitly added lowercase mixed value.")
+    fht_invalid_record("fht-fasta-assembly-type-mixed",
+                       record_of(assemblyType="mixed"), "C1",
+                       "mixed is a moleculeType classification, not a fourth "
+                       "construction type; the three assemblyType values stay fixed.")
     fht_invalid_record("fht-fasta-empty-sample", record_of(sample=[]), "C1",
                        "An optional array written empty instead of omitted "
                        "(sample requires at least one item when present, FR-003).")
@@ -1278,7 +1302,7 @@ def build_vectors():
             "The link states the digest of parents/parent-genome.fhr.fasta while "
             "the supplied parent is parents/parent-genome-masked.fhr.fasta. The two "
             "files carry the same records and the same letters, differing only in "
-            "the case of one sequence line and in the masking value that describes "
+            "the case of one sequence line, the genome title and the masking value that describes "
             "it. R1 hashes exact bytes and C3 compares exact strings, so the "
             "verdict is checked-fail: case is not a normalization a verifier may "
             "apply, and the uppercase and masked copies of a molecule are two "
@@ -1452,6 +1476,7 @@ def example_records():
         record.update(copy.deepcopy(fields))
         records[stem] = record
     records.update(copy.deepcopy(MIRROR_RECORDS))
+    records["mixed-molecules"] = copy.deepcopy(MIXED_RECORD)
     return records
 
 
@@ -1461,6 +1486,7 @@ def owned_example_names():
         names += [f"{stem}.fht.fasta", f"{stem}.fht.json", f"{stem}.fht.yaml"]
     for stem in MIRROR_RECORDS:
         names += [f"{stem}.fht.json", f"{stem}.fht.yaml"]
+    names += [f"mixed-molecules.fht.{suffix}" for suffix in ("fasta", "json", "yaml")]
     return names
 
 
@@ -1468,9 +1494,10 @@ def example_outputs():
     """Return {name: bytes} for every example file owned here (no writing)."""
     outputs = {}
     for stem, record in example_records().items():
-        if stem in EXAMPLE_MINIMALS:
+        if stem in EXAMPLE_MINIMALS or stem == "mixed-molecules":
+            body = RNA_BODY if stem == "mixed-molecules" else EXAMPLE_FASTA_BODY
             data, value = assemble(header_of(record)
-                                   + [Line(text) for text in EXAMPLE_FASTA_BODY])
+                                   + [Line(text) for text in body])
             record["checksum"] = value
             outputs[f"{stem}.fht.fasta"] = data
         outputs[f"{stem}.fht.json"] = (json.dumps(record, indent=2,

@@ -91,6 +91,59 @@ class StreamControls(unittest.TestCase):
         self.assertNotEqual(lane.metadata_signature(nested), lane.metadata_signature(
             nested.replace(b"parent-one", b"parent-two")))
 
+    def test_mixed_capability_is_narrow_and_does_not_rewrite_expectations(self):
+        vector = next(v for v in lane.load_suite() if v["id"] == lane.MIXED_VECTOR)
+        other = next(v for v in lane.load_suite() if v["id"] == "fht-fasta-lf")
+        old = {"$defs": {"MoleculeType": {"enum": ["mRNA", "rRNA", "tRNA", "transcribed RNA"]}}}
+        compared, unsupported = lane.partition_mixed_capability([other, vector], old)
+        self.assertEqual(compared, [other])
+        self.assertEqual(unsupported, [vector])
+        self.assertEqual(vector["expected"], "valid")
+        old["$defs"]["MoleculeType"]["enum"].append("mixed")
+        self.assertEqual(lane.partition_mixed_capability([other, vector], old),
+                         ([other, vector], []))
+        malformed = dict(vector, expected="invalid")
+        with self.assertRaisesRegex(ValueError, "normative valid/mixed"):
+            lane.partition_mixed_capability([malformed], old)
+        with self.assertRaisesRegex(ValueError, "no inspectable"):
+            lane.partition_mixed_capability([vector], {})
+
+    def test_unsupported_mixed_probe_cannot_hide_an_unexpected_result(self):
+        vector = next(v for v in lane.load_suite() if v["id"] == lane.MIXED_VECTOR)
+
+        class UnexpectedAccept:
+            def run(self, *args, **kwargs):
+                return 0, "Checksum verified."
+
+        class WrongRejection:
+            def run(self, *args, **kwargs):
+                return 1, "checksum failure for moleculeType mixed"
+
+        for toolkit in (UnexpectedAccept(), WrongRejection()):
+            lane.FAILURES.clear()
+            with patch.object(lane, "place", return_value=Path("unused")), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                lane.lane_unsupported_mixed(toolkit, [vector], None)
+            self.assertIn("did not specifically reject", lane.FAILURES[0])
+
+    def test_unsupported_mixed_requires_one_enum_diagnostic(self):
+        vector = next(v for v in lane.load_suite() if v["id"] == lane.MIXED_VECTOR)
+        message = "schema validation failed at $.moleculeType: 'mixed' is not one of ['mRNA']"
+
+        class EnumRejection:
+            def run(self, *args, **kwargs):
+                return 1, message
+
+        with patch.object(lane, "place", return_value=Path("unused")), \
+                contextlib.redirect_stdout(io.StringIO()):
+            lane.lane_unsupported_mixed(EnumRejection(), [vector], None)
+        self.assertEqual(lane.FAILURES, [])
+        message += "\nschema validation failed at $.checksum: unrelated error"
+        with patch.object(lane, "place", return_value=Path("unused")), \
+                contextlib.redirect_stdout(io.StringIO()):
+            lane.lane_unsupported_mixed(EnumRejection(), [vector], None)
+        self.assertIn("did not specifically reject", lane.FAILURES[0])
+
     def test_named_toolkit_default_cannot_accept_fht(self):
         class IncorrectDefault:
             def version(self):

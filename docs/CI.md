@@ -287,3 +287,14 @@ independent expectation approval, curator acceptance, or default FHT support.
 The historical macOS run above remains a dated measurement; Linux evidence is
 provided by the new CI job when it actually executes, not by this document.
 See [the acceptance and decision packet](FHT-READINESS.md).
+
+## Current source enum versus installed draft — 2026-11-16
+
+The source suite is now 75 vectors (29 valid, 46 invalid). Installed 0.11.0
+registers a four-value enum and cannot represent the newly valid `mixed` value.
+The runner reads that installed schema, probes the exact positive case for a
+specific moleculeType rejection, then reports source acceptance, strip and combine
+NOT-RUN for that one ID. An unexpected acceptance or unrelated failure fails the
+lane. The other 74 vectors remain ordinary comparisons; all 75 run default-off.
+No manifest expectation or approved consumer pin is changed. Earlier 72-vector
+results above remain the dated pre-addition measurements.

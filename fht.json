@@ -290,7 +290,7 @@
         },
         "moleculeType": {
           "$ref": "#/$defs/MoleculeType",
-          "description": "One producer-supported biological molecule class that applies to the whole described set. Omit for unknown or heterogeneous sets; total RNA and cDNA are preparation contexts, not uniform biological classes."
+          "description": "One producer-supported biological molecule classification for the whole described set. Use mixed for a known heterogeneous set of biological RNA classes; omit when the classification is unknown. total RNA and cDNA are preparation contexts, not biological classes or evidence of a mixture."
         },
         "relatedLink": {
           "description": "Related source, project, sample, experiment or protocol URLs",
@@ -410,12 +410,13 @@
       "type": "string"
     },
     "MoleculeType": {
-      "description": "Restricted biological molecule classes for the whole described set (D1). These are not preparation methods, and matching a string does not prove per-record INSDC compliance.",
+      "description": "Biological molecule classifications for the whole described set (D1). mixed explicitly records known heterogeneous RNA classes, not uncertainty. These are not preparation methods, and matching a string does not prove per-record INSDC compliance.",
       "enum": [
         "mRNA",
         "rRNA",
         "tRNA",
-        "transcribed RNA"
+        "transcribed RNA",
+        "mixed"
       ],
       "title": "MoleculeType",
       "type": "string"
@@ -705,7 +706,7 @@
     },
     "moleculeType": {
       "$ref": "#/$defs/MoleculeType",
-      "description": "One producer-supported biological molecule class that applies to the whole described set. Omit for unknown or heterogeneous sets; total RNA and cDNA are preparation contexts, not uniform biological classes."
+      "description": "One producer-supported biological molecule classification for the whole described set. Use mixed for a known heterogeneous set of biological RNA classes; omit when the classification is unknown. total RNA and cDNA are preparation contexts, not biological classes or evidence of a mixture."
     },
     "relatedLink": {
       "description": "Related source, project, sample, experiment or protocol URLs",

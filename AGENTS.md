@@ -345,6 +345,15 @@ draft fields are iterated with curators.
 
 ### FHT legacy draft and adoption
 
+**FHT repository-local update (2026-11-16):** this tree now has a LinkML generator,
+unit tests, independent fixture checks and CI. Run `python -m unittest discover
+-s tests -v`, `python json-schema-generator.py`, `python scripts/check_fht_fixtures.py`
+and the documented checks in `docs/CI.md`. The historical paragraph below is not
+an inventory of this current tree. The Molik draft responses in FHT #8 comment
+6928571815 add the fifth molecule enum `mixed`, retain sample arrays and current
+required/taxon rules, and do not publish or repin consumers. Preserve immutable
+fixtures and distinguish old installed writer limitations from source validity.
+
 FHT-Specification currently has `fht.json` and `examples/`, without the shared
 generator/test suite. Inspect the schema's declared JSON Schema dialect and use
 a matching validator with format checks when validating its JSON/YAML examples;

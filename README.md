@@ -144,3 +144,23 @@ Machine-readable entries are maintained in
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](LICENSE)
 
 New project contributions from March 2025 onward use [MPL-2.0](LICENSE). David Molik left USDA in February 2025. Historical USDA public-domain material remains public domain within the United States; its original notice is preserved in LICENSE. Previously granted permissions and third-party terms remain intact. The project includes both historical material and subsequent MPL-2.0 contributions; file notices and history identify provenance.
+
+## Draft molecule classification update
+
+[The recorded responses and clarifications](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6928571815)
+supersede D1's initial omission of known heterogeneous sets: `mixed` is the fifth,
+case-sensitive `moleculeType` value. It denotes producer-supported biological RNA
+heterogeneity, not unknown composition, a library preparation, or the alphabet.
+This is an additive enum change in the unreleased draft `1.0`, not publication or
+joint curator adoption. Four-value readers, including the pinned 0.11.0 draft
+reader, reject this newly valid value and need an explicit future consumer update.
+The three construction values, nine required fields and existing taxon members
+are retained. The ordered `sample` array remains; BioSample URLs belong in
+`relatedLink`, following FHR. Describe protocol/kit information in `documentation`
+and put actual protocol URLs in `relatedLink`; no protocol/kit field is added,
+and `libraryStrategy` is not overloaded. Current statistics, parent behavior and
+field names remain. No new required URI, sample deprecation or mixed construction
+value is authorized. Publication and joint review remain separate gates.
+
+See [mixed-molecules](examples/mixed-molecules.fht.yaml) and the
+[prepublication evidence](docs/FHT-READINESS.md).
