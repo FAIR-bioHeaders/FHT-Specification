@@ -19,6 +19,10 @@ established by this repository state. See
 - Design and evidence: [`specs/fht-field-decisions.md`](specs/fht-field-decisions.md)
 - Minimal and rich designs: [`specs/fht-record-designs.md`](specs/fht-record-designs.md)
 - Revised spec 005 proposal: [`specs/005-rna-transcriptome-header/spec.md`](specs/005-rna-transcriptome-header/spec.md)
+- Proposed typed HTML: [`docs/FHT-MICRODATA.md`](docs/FHT-MICRODATA.md),
+  [seven readable pairs](examples/html/) and a test-only extractor/writer (#11);
+  no installed runtime support or shared publication is established.
+- Remaining review/publication docket: [`docs/FHT-DECISION-DOCKET.md`](docs/FHT-DECISION-DOCKET.md)
 - Legacy draft schema: [`legacy/fht-v0.1.json`](legacy/fht-v0.1.json)
 
 Conversion, validation and checksum computation belong to the family
