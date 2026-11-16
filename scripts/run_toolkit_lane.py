@@ -348,6 +348,9 @@ def lane_combine(toolkit, vectors, work):
             fail(f"{label}: combine exited {code}: {output.strip()[:160]!r}")
             continue
         data = out.read_bytes()
+        if strip_expectation(data) != strip_expectation(original):
+            fail(f"{label}: combine changed payload bytes "
+                 f"(identifiers, wrapping, alphabet, comments or line endings)")
         try:
             before = reader.parse_metadata(original)
             after = reader.parse_metadata(data)
