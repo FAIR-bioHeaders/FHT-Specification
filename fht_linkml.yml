@@ -40,9 +40,10 @@ slots:
     required: true
   moleculeType:
     description: >-
-      One producer-supported biological molecule class that applies to the whole
-      described set. Omit for unknown or heterogeneous sets; total RNA and cDNA
-      are preparation contexts, not uniform biological classes.
+      One producer-supported biological molecule classification for the whole
+      described set. Use mixed for a known heterogeneous set of biological RNA
+      classes; omit when the classification is unknown. total RNA and cDNA are
+      preparation contexts, not biological classes or evidence of a mixture.
     range: MoleculeType
   assemblySoftware:
     description: >-
@@ -269,7 +270,8 @@ enums:
           genome, without assembling new models from read evidence in this step.
   MoleculeType:
     description: >-
-      Restricted biological molecule classes for the whole described set (D1).
+      Biological molecule classifications for the whole described set (D1).
+      mixed explicitly records known heterogeneous RNA classes, not uncertainty.
       These are not preparation methods, and matching a string does not prove
       per-record INSDC compliance.
     permissible_values:
@@ -283,6 +285,10 @@ enums:
         description: >-
           Transcribed RNA that cannot be assigned more specifically, without
           inferring a coding or non-coding subclass
+      mixed:
+        description: >-
+          Producer-supported heterogeneous biological RNA classes in this set;
+          not a substitute for an unknown classification or a library method
   Strandedness:
     description: >-
       FHT library strandedness normalization (D3), not an ENA enum. It describes

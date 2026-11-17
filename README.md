@@ -19,6 +19,10 @@ established by this repository state. See
 - Design and evidence: [`specs/fht-field-decisions.md`](specs/fht-field-decisions.md)
 - Minimal and rich designs: [`specs/fht-record-designs.md`](specs/fht-record-designs.md)
 - Revised spec 005 proposal: [`specs/005-rna-transcriptome-header/spec.md`](specs/005-rna-transcriptome-header/spec.md)
+- Proposed typed HTML: [`docs/FHT-MICRODATA.md`](docs/FHT-MICRODATA.md),
+  [seven readable pairs](examples/html/) and a test-only extractor/writer (#11);
+  no installed runtime support or shared publication is established.
+- Remaining review/publication docket: [`docs/FHT-DECISION-DOCKET.md`](docs/FHT-DECISION-DOCKET.md)
 - Legacy draft schema: [`legacy/fht-v0.1.json`](legacy/fht-v0.1.json)
 
 Conversion, validation and checksum computation belong to the family
@@ -144,3 +148,23 @@ Machine-readable entries are maintained in
 [![License: MPL-2.0](https://img.shields.io/badge/License-MPL--2.0-blue.svg)](LICENSE)
 
 New project contributions from March 2025 onward use [MPL-2.0](LICENSE). David Molik left USDA in February 2025. Historical USDA public-domain material remains public domain within the United States; its original notice is preserved in LICENSE. Previously granted permissions and third-party terms remain intact. The project includes both historical material and subsequent MPL-2.0 contributions; file notices and history identify provenance.
+
+## Draft molecule classification update
+
+[The recorded responses and clarifications](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6928571815)
+supersede D1's initial omission of known heterogeneous sets: `mixed` is the fifth,
+case-sensitive `moleculeType` value. It denotes producer-supported biological RNA
+heterogeneity, not unknown composition, a library preparation, or the alphabet.
+This is an additive enum change in the unreleased draft `1.0`, not publication or
+joint curator adoption. Four-value readers, including the pinned 0.11.0 draft
+reader, reject this newly valid value and need an explicit future consumer update.
+The three construction values, nine required fields and existing taxon members
+are retained. The ordered `sample` array remains; BioSample URLs belong in
+`relatedLink`, following FHR. Describe protocol/kit information in `documentation`
+and put actual protocol URLs in `relatedLink`; no protocol/kit field is added,
+and `libraryStrategy` is not overloaded. Current statistics, parent behavior and
+field names remain. No new required URI, sample deprecation or mixed construction
+value is authorized. Publication and joint review remain separate gates.
+
+See [mixed-molecules](examples/mixed-molecules.fht.yaml) and the
+[prepublication evidence](docs/FHT-READINESS.md).

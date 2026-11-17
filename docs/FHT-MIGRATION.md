@@ -93,10 +93,10 @@ kept.
 ### Molecule, library and alphabet
 
 `moleculeType` is one biological class for the whole set: `mRNA`, `rRNA`,
-`tRNA` or `transcribed RNA`. It is optional. `total RNA` and `cDNA` are
+`tRNA`, `transcribed RNA` or `mixed`. It is optional. `total RNA` and `cDNA` are
 preparation contexts and are not accepted as molecule classes. Do not infer
 `mRNA` from RNA-Seq, `cDNA` from T/U bytes, or `transcribed RNA` from `ncRNA`.
-Unknown or heterogeneous sets omit the field.
+Unknown sets omit the field. Use `mixed` only for producer-supported mixtures of biological RNA classes; preparation material or uncertainty does not establish a mixture.
 
 `libraryStrategy` is one supplied strategy string, not a frozen ENA enum.
 `strandedness` is the FHT normalization `unstranded`, `forward` or `reverse`:

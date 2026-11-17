@@ -47,7 +47,27 @@ identified by access date; no unverified version or archived snapshot is implied
 The ENA XSD pin was checked through GitHub and its three vocabulary lists parsed
 as XML. This proposal uses short factual summaries, not copied source text.
 
+## Molik draft responses — 2026-11-16
+
+[The recorded responses and clarifications](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6928571815)
+supersede D1's initial omission of known heterogeneous sets: `mixed` is the fifth,
+case-sensitive `moleculeType` value. It denotes producer-supported biological RNA
+heterogeneity, not unknown composition, a library preparation, or the alphabet.
+This is an additive enum change in the unreleased draft `1.0`, not publication or
+joint curator adoption. Four-value readers, including the pinned 0.11.0 draft
+reader, reject this newly valid value and need an explicit future consumer update.
+The three construction values, nine required fields and existing taxon members
+are retained. The ordered `sample` array remains; BioSample URLs belong in
+`relatedLink`, following FHR. Describe protocol/kit information in `documentation`
+and put actual protocol URLs in `relatedLink`; no protocol/kit field is added,
+and `libraryStrategy` is not overloaded. Current statistics, parent behavior and
+field names remain. No new required URI, sample deprecation or mixed construction
+value is authorized. Publication and joint review remain separate gates.
+
 ## D1: distinguish molecule, library and alphabet
+
+The following is the original recommendation; the dated clarification above
+supersedes its heterogeneous-set omission.
 
 **Recommendation:** change draft FR-002's required `moleculeType` to optional,
 file-wide biological molecule identity. Do not adopt the current mixed enum

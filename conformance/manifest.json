@@ -522,6 +522,25 @@
       }
     },
     {
+      "id": "fht-fasta-molecule-type-mixed",
+      "file": "valid/fht-fasta-molecule-type-mixed.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "valid",
+      "rules": [
+        "C1"
+      ],
+      "description": "The producer explicitly asserts known heterogeneous biological RNA classes using the fifth moleculeType value mixed (Molik ruling, #8 comment 6928571815). Unknown remains omission; this syntactic fixture does not verify biological classes.",
+      "checksum": "HB5+nubpasPH60rGkyf8bii0ItXafNaZt2hIIqWOYDE=",
+      "selfChecksum": "matches",
+      "metadata": {
+        "transcriptome": "Synthetic FHT conformance transcript set (mixed molecules)",
+        "version": "1.0.0",
+        "assemblyType": "de novo",
+        "moleculeType": "mixed"
+      }
+    },
+    {
       "id": "fht-fasta-parent-transcribed-from",
       "file": "valid/fht-fasta-parent-transcribed-from.fht.fasta",
       "format": "fht-fasta",
@@ -1059,6 +1078,66 @@
       }
     },
     {
+      "id": "fht-fasta-molecule-type-mixed-case",
+      "file": "invalid/fht-fasta-molecule-type-mixed-case.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "invalid",
+      "rule": "C1",
+      "reason": "Molecule classifications are exact controlled strings: Mixed is not the explicitly added lowercase mixed value.",
+      "selfChecksum": "matches",
+      "metadata": {
+        "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json",
+        "schemaVersion": "1.0",
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "assemblyType": "de novo",
+        "moleculeType": "Mixed",
+        "taxon": {
+          "name": "Homo sapiens",
+          "uri": "https://identifiers.org/taxonomy:9606"
+        },
+        "version": "1.0.0",
+        "metadataAuthor": [
+          {
+            "name": "Synthetic metadata author (placeholder)"
+          }
+        ],
+        "dateCreated": "2026-11-10",
+        "documentation": "Synthetic FHT conformance vector; not a real transcriptome.",
+        "checksum": "swXSYF1+n94SzNO/7a827wmjYiRFI6R5sNq09QHwvOY="
+      }
+    },
+    {
+      "id": "fht-fasta-assembly-type-mixed",
+      "file": "invalid/fht-fasta-assembly-type-mixed.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "invalid",
+      "rule": "C1",
+      "reason": "mixed is a moleculeType classification, not a fourth construction type; the three assemblyType values stay fixed.",
+      "selfChecksum": "matches",
+      "metadata": {
+        "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json",
+        "schemaVersion": "1.0",
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "assemblyType": "mixed",
+        "moleculeType": "mRNA",
+        "taxon": {
+          "name": "Homo sapiens",
+          "uri": "https://identifiers.org/taxonomy:9606"
+        },
+        "version": "1.0.0",
+        "metadataAuthor": [
+          {
+            "name": "Synthetic metadata author (placeholder)"
+          }
+        ],
+        "dateCreated": "2026-11-10",
+        "documentation": "Synthetic FHT conformance vector; not a real transcriptome.",
+        "checksum": "Ati/N/csy6Mu3A1CdyOvWaUe27L+BCBBOHS35sEyqS4="
+      }
+    },
+    {
       "id": "fht-fasta-empty-sample",
       "file": "invalid/fht-fasta-empty-sample.fht.fasta",
       "format": "fht-fasta",
@@ -1502,7 +1581,7 @@
       "compressed": false,
       "expected": "invalid",
       "rule": "C3",
-      "reason": "The link states the digest of parents/parent-genome.fhr.fasta while the supplied parent is parents/parent-genome-masked.fhr.fasta. The two files carry the same records and the same letters, differing only in the case of one sequence line and in the masking value that describes it. R1 hashes exact bytes and C3 compares exact strings, so the verdict is checked-fail: case is not a normalization a verifier may apply, and the uppercase and masked copies of a molecule are two files with two digests (measured on real data in pilot #45).",
+      "reason": "The link states the digest of parents/parent-genome.fhr.fasta while the supplied parent is parents/parent-genome-masked.fhr.fasta. The two files carry the same records and the same letters, differing only in the case of one sequence line, the genome title and the masking value that describes it. R1 hashes exact bytes and C3 compares exact strings, so the verdict is checked-fail: case is not a normalization a verifier may apply, and the uppercase and masked copies of a molecule are two files with two digests (measured on real data in pilot #45).",
       "selfChecksum": "matches",
       "parentLink": [
         {

@@ -132,10 +132,26 @@ class FhtSchemaTests(unittest.TestCase):
 
     def test_molecule_type_is_optional_and_restricted(self):
         self.assert_valid(minimal())
-        for value in ("mRNA", "rRNA", "tRNA", "transcribed RNA"):
+        for value in ("mRNA", "rRNA", "tRNA", "transcribed RNA", "mixed"):
             self.assert_valid(self.record(moleculeType=value))
-        for value in ("total RNA", "cDNA", "ncRNA"):
+        for value in ("total RNA", "cDNA", "ncRNA", "Mixed", "unknown"):
             self.assert_invalid(self.record(moleculeType=value), "is not one of")
+
+    def test_molik_clarifications_keep_existing_field_shapes(self):
+        record = self.record(moleculeType="mixed", taxon={},
+                             sample=[{"tissue": "leaf"}, {"tissue": "root"}],
+                             strandedness="reverse",
+                             documentation="Synthetic library protocol and kit description",
+                             relatedLink=["https://example.org/protocol/synthetic-kit"])
+        self.assert_valid(record)
+        self.assertEqual(self.schema["required"], ["schema", "schemaVersion", "transcriptome",
+                         "assemblyType", "taxon", "version", "metadataAuthor",
+                         "dateCreated", "checksum"])
+        self.assert_invalid(self.record(sample="text instead of retained array"),
+                            "is not of type 'array'")
+        for key in ("libraryProtocol", "libraryKit", "assemblyProtocol"):
+            self.assert_invalid(self.record(**{key: "https://example.org/protocol"}),
+                                "does not match any of the regexes")
 
     def test_strandedness_is_optional_and_normalized(self):
         for value in ("unstranded", "forward", "reverse"):

@@ -42,8 +42,10 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
 - **FR-002:** Require one `assemblyType` string: `de novo`, `genome-guided` or
   `annotation-derived`, with the D2 construction definitions. Make `moleculeType`
   optional: one producer-justified biological class applying to the whole set,
-  selected from `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`. Omit it for unknown or
-  heterogeneous sets without a justified uniform classification. Remove the
+  selected from `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`, `mixed`. Use `mixed`
+  for producer-supported heterogeneous biological RNA classes; omit unknown
+  composition. This fifth value follows the 2026-11-16 Molik draft response
+  [in #8](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6928571815). Remove the
   old mixed molecule/material enum; no automatic value migration is authorized.
 - **FR-003:** Keep optional ordered `assemblySoftware` using shared `Software`;
   optional `sample`, `libraryStrategy`, `strandedness`, `sequencingRuns`,
@@ -67,7 +69,7 @@ The [record designs](../fht-record-designs.md) state minimal and rich cases.
   class. `libraryStrategy` is one supplied strategy string, using the producer's
   ENA term where applicable. Proposed `strandedness` enum: `unstranded`, `forward`,
   `reverse`, with D3's explicit read/read-1 orientation convention. Unknown and
-  heterogeneous library assertions are omitted, not defaulted or inferred.
+  unknown library assertions are omitted, not defaulted or inferred.
 - **FR-005:** Statistics are optional producer-reported measurements using D3's
   names, types, units and whole-file population: `vitalStats.totalTranscripts`
   (integer >= 0, FASTA records including isoforms), `N50` (integer >= 1) and
