@@ -227,7 +227,6 @@ independent #157 assessment).
 - Shared #54 (relationship vocabulary), #157 (INSDC coverage) and #170 (BUSCO
   lineage grammar).
 
-
 ## Narrow Q4/Q8 follow-up after #51 — 2026-11-17
 
 [Adam's coordination proposal](https://github.com/FAIR-bioHeaders/FHT-Specification/pull/50#issuecomment-6929925451)

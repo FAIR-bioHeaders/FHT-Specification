@@ -137,7 +137,6 @@ enum and numerical constraints, and clarifies construction semantics. Those are
 contract decisions requiring their own review, not incidental documentation fixes.
 Released FHR/FHP/FHGFF3 artifacts and the legacy FHT schema are unchanged.
 
-
 ### Approved nonempty-value follow-up (#50, 2026-11-17)
 
 Beyond the unchanged nine mandatory roots, the approved Q4 follow-up requires
