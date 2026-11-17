@@ -33,9 +33,7 @@
       "properties": {
         "name": {
           "description": "Name of the person or organization",
-          "type": "string",
-          "minLength": 1,
-          "pattern": "\\S"
+          "type": "string"
         },
         "nameType": {
           "$ref": "#/$defs/NameType",
@@ -49,10 +47,7 @@
         }
       },
       "title": "Author",
-      "type": "object",
-      "required": [
-        "name"
-      ]
+      "type": "object"
     },
     "BuscoMode": {
       "description": "BUSCO run modes",
@@ -251,7 +246,7 @@
           "pattern": "\\S"
         },
         "derivedFrom": {
-          "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were written out from the genome (for example StringTie models extracted with gffread) links that genome as an FHR transcribedFrom parent, exactly as an annotation-derived set does. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
+          "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
           "items": {
             "$ref": "#/$defs/DerivedFrom"
           },
@@ -283,10 +278,6 @@
           "minItems": 1,
           "type": "array"
         },
-        "libraryProtocol": {
-          "$ref": "#/$defs/LibraryProtocol",
-          "description": "The library preparation protocol or kit used for the whole set, by name, with an optional URI for its documentation. It is wet-lab library preparation, not a computational workflow: modelled on FHR assemblyProtocol in how it cites a protocol, but not a mapping target for it (FHT has no assemblyProtocol; such a URI goes in relatedLink). The name is required so that a kit without a citable page can still be recorded. Omit when unknown or when libraries were prepared with different protocols. It does not imply a strandedness value."
-        },
         "libraryStrategy": {
           "description": "One supplied library strategy term for the whole set, using the producer's ENA term where applicable. Omit when experiments differ or the value is unknown; this slot is not an ENA-controlled enum.",
           "pattern": "\\S",
@@ -295,14 +286,14 @@
         "metadataAuthor": {
           "description": "Authors responsible for the header assertions",
           "items": {
-            "$ref": "#/$defs/Author"
+            "$ref": "#/$defs/MetadataAuthor"
           },
           "minItems": 1,
           "type": "array"
         },
         "moleculeType": {
           "$ref": "#/$defs/MoleculeType",
-          "description": "One producer-supported biological molecule class that applies to the whole described set, or mixed when the set is known to combine more than one class. Omit when the class is unknown; never use mixed for unknown. total RNA and cDNA are preparation contexts, not biological classes, and do not by themselves establish mixed."
+          "description": "One producer-supported biological molecule classification for the whole described set. Use mixed for a known heterogeneous set of biological RNA classes; omit when the classification is unknown. total RNA and cDNA are preparation contexts, not biological classes or evidence of a mixture."
         },
         "relatedLink": {
           "description": "Related source, project, sample, experiment or protocol URLs",
@@ -317,7 +308,7 @@
           "type": "string"
         },
         "sample": {
-          "description": "Supplied biological sample context (tissue, stage, condition, strain), which FHR has no field for. Repeat the object for pooled material; each item carries only the values actually known for that source. This is not a complete BioSample record and does not establish a uniform pooled identity. As in FHR, a BioSample or other sample record is linked by its URL in relatedLink, and the physical specimen is described in voucherSpecimen; identifier and accessionID identify the transcriptome itself, never its sample.",
+          "description": "Supplied biological sample context. Repeat the object for pooled material; each item carries only the values actually known for that source. This is not a complete BioSample record and does not establish a uniform pooled identity.",
           "items": {
             "$ref": "#/$defs/Sample"
           },
@@ -353,7 +344,7 @@
         },
         "strandedness": {
           "$ref": "#/$defs/Strandedness",
-          "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded. Record the protocol or kit name separately in libraryProtocol; never infer one from the other."
+          "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded."
         },
         "taxon": {
           "$ref": "#/$defs/Taxon",
@@ -424,29 +415,35 @@
       "title": "HeaderType",
       "type": "string"
     },
-    "LibraryProtocol": {
+    "MetadataAuthor": {
       "additionalProperties": false,
-      "description": "A named library preparation protocol or kit, with an optional URI. The name is free text as the producer or manufacturer gives it; the URI follows the same rules as FHR assemblyProtocol (FORMAT.md R14).",
+      "description": "A metadata author with a supplied non-blank name, under the approved Q4 follow-up. This restriction is not applied to optional assemblyAuthor.",
       "properties": {
         "name": {
-          "description": "Name of the library preparation protocol or kit",
+          "description": "Name of the person or organization",
           "pattern": "\\S",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
+        },
+        "nameType": {
+          "$ref": "#/$defs/NameType",
+          "description": "Whether the author is a person (Personal) or an organization (Organizational), as DataCite nameType"
         },
         "uri": {
-          "description": "URI of the protocol or kit documentation",
+          "description": "ORCID URI",
           "format": "uri",
+          "pattern": "^https://orcid\\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$",
           "type": "string"
         }
       },
       "required": [
         "name"
       ],
-      "title": "LibraryProtocol",
+      "title": "MetadataAuthor",
       "type": "object"
     },
     "MoleculeType": {
-      "description": "Restricted biological molecule classes for the whole described set (D1), plus mixed for a set known to combine classes (maintainer decision on the curator review). These are not preparation methods, and matching a string does not prove per-record INSDC compliance.",
+      "description": "Biological molecule classifications for the whole described set (D1). mixed explicitly records known heterogeneous RNA classes, not uncertainty. These are not preparation methods, and matching a string does not prove per-record INSDC compliance.",
       "enum": [
         "mRNA",
         "rRNA",
@@ -698,7 +695,7 @@
       "pattern": "\\S"
     },
     "derivedFrom": {
-      "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were written out from the genome (for example StringTie models extracted with gffread) links that genome as an FHR transcribedFrom parent, exactly as an annotation-derived set does. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
+      "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
       "items": {
         "$ref": "#/$defs/DerivedFrom"
       },
@@ -730,10 +727,6 @@
       "minItems": 1,
       "type": "array"
     },
-    "libraryProtocol": {
-      "$ref": "#/$defs/LibraryProtocol",
-      "description": "The library preparation protocol or kit used for the whole set, by name, with an optional URI for its documentation. It is wet-lab library preparation, not a computational workflow: modelled on FHR assemblyProtocol in how it cites a protocol, but not a mapping target for it (FHT has no assemblyProtocol; such a URI goes in relatedLink). The name is required so that a kit without a citable page can still be recorded. Omit when unknown or when libraries were prepared with different protocols. It does not imply a strandedness value."
-    },
     "libraryStrategy": {
       "description": "One supplied library strategy term for the whole set, using the producer's ENA term where applicable. Omit when experiments differ or the value is unknown; this slot is not an ENA-controlled enum.",
       "pattern": "\\S",
@@ -742,14 +735,14 @@
     "metadataAuthor": {
       "description": "Authors responsible for the header assertions",
       "items": {
-        "$ref": "#/$defs/Author"
+        "$ref": "#/$defs/MetadataAuthor"
       },
       "minItems": 1,
       "type": "array"
     },
     "moleculeType": {
       "$ref": "#/$defs/MoleculeType",
-      "description": "One producer-supported biological molecule class that applies to the whole described set, or mixed when the set is known to combine more than one class. Omit when the class is unknown; never use mixed for unknown. total RNA and cDNA are preparation contexts, not biological classes, and do not by themselves establish mixed."
+      "description": "One producer-supported biological molecule classification for the whole described set. Use mixed for a known heterogeneous set of biological RNA classes; omit when the classification is unknown. total RNA and cDNA are preparation contexts, not biological classes or evidence of a mixture."
     },
     "relatedLink": {
       "description": "Related source, project, sample, experiment or protocol URLs",
@@ -764,7 +757,7 @@
       "type": "string"
     },
     "sample": {
-      "description": "Supplied biological sample context (tissue, stage, condition, strain), which FHR has no field for. Repeat the object for pooled material; each item carries only the values actually known for that source. This is not a complete BioSample record and does not establish a uniform pooled identity. As in FHR, a BioSample or other sample record is linked by its URL in relatedLink, and the physical specimen is described in voucherSpecimen; identifier and accessionID identify the transcriptome itself, never its sample.",
+      "description": "Supplied biological sample context. Repeat the object for pooled material; each item carries only the values actually known for that source. This is not a complete BioSample record and does not establish a uniform pooled identity.",
       "items": {
         "$ref": "#/$defs/Sample"
       },
@@ -800,7 +793,7 @@
     },
     "strandedness": {
       "$ref": "#/$defs/Strandedness",
-      "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded. Record the protocol or kit name separately in libraryProtocol; never infer one from the other."
+      "description": "Supplied library strandedness under the FHT read/read-1 convention: forward means the single read or read 1 is sense relative to the originating transcript, reverse means antisense. Unknown or mixed protocols are omitted, never defaulted to unstranded."
     },
     "taxon": {
       "$ref": "#/$defs/Taxon",

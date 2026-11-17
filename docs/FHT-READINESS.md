@@ -9,7 +9,7 @@ FHT, or establishes default toolkit support. FHT remains an unreleased draft.
 
 The seven rows below follow [#8](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8)
 and its [per-box evidence](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6904199033).
-The committed suite currently contains 72 vectors (28 valid, 44 invalid).
+The committed suite currently contains 75 vectors (29 valid, 46 invalid).
 Four carry `promotion: candidate-unreviewed`; executing them does not approve them.
 
 | #8 box | Existing evidence and this packet | Remaining gate |
@@ -22,8 +22,9 @@ Four carry `promotion: candidate-unreviewed`; executing them does not approve th
 | 6 version selection and reviewed expectations | Existing V1/V5/V7 cases and documented release-time V4 asymmetry | Independent reviewer must disposition candidates; no marker is removed here |
 | 7 named toolkit and shared checks | `run_toolkit_lane.py` against installed 0.11.0; separate Linux CI job; independent fixture/model/provenance gates retained | Shared FHT format does not exist before publication; installed 0.11.0 bundles an older draft, whose digest is printed, not silently substituted |
 
-The installed lane executes all 72 candidate-inclusive cases as **implementation
-comparisons**, not 72 independently approved acceptance cases. Its expected
+The installed lane compares 74 candidate-inclusive cases as **implementation
+comparisons**, not independently approved acceptance cases. The newly valid
+mixed case is explicitly unsupported by the old installed contract. Its expected
 outcomes remain unchanged. The printed toolkit identity and draft-byte digests
 bound the comparison: agreement with 0.11.0 is not proof about every change to the
 current draft contract. Default-path behavior is reported separately with the
@@ -71,25 +72,18 @@ A pass establishes cited file identity, not the scientific derivation claim.
 This is an independent **technical review**, not maintainer/curator acceptance.
 The existing normative promotion markers remain unchanged pending disposition.
 
-## Concrete maintainer decisions
+## Remaining review and publication gates
 
-These remain questions, taken from the
-[#10 pilot handoff](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/10#issuecomment-6897167617),
-not decisions made by this packet:
+The Molik responses below settle the questionnaire's field choices; do not ask
+those questions again. Joint curator review and case-specific candidate promotion
+remain distinct from source implementation. The [#10 release/pilot split](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/10#issuecomment-6926906659)
+keeps producer-pilot metadata and dataset decisions outside foundation publication
+acceptance. Do not infer dateCreated, software or reuse terms for that separate
+pilot, or require a new dataset program to complete this source packet.
 
-1. Does the bounded chr4 subset satisfy the public-transcriptome pilot item, or
-   is a complete producer delivery required? Keep the subset label either way.
-2. For the annotation-derived pilot, what does `dateCreated` identify, and should
-   the extraction script be represented in `assemblySoftware`? A changed value
-   changes header/checksum bytes; do not repair these by inference.
-3. What reuse wording, if any, should the pilot carry for supplied sequence data?
-   Preserve source terms and distinguish newly authored header contributions.
-4. Should real-data records remain in `pilot/` or gain an examples lane?
-5. How should #8's shared/default-path items be dispositioned for the prepublication
-   review? They depend on publication and cannot truthfully be marked delivered
-   by a draft-only run. No issue-body gate is changed here.
-6. Which shared vocabulary will express reader-lane-dependent expectations and
-   promotion state at absorption? This packet adds no manifest fields.
+Shared absorption, reader-lane vocabulary/default-path evidence and release acts
+remain publication work. Existing draft comparisons do not deliver released
+contracts or default consumer support, and this packet changes no issue gate.
 
 ## Verification recorded for this packet
 
@@ -123,4 +117,33 @@ runtime support or refreshing consumer release pins. Shared absorption must
 preserve the recorded V4/V5 selection asymmetry. FHT HTML drafting (#11) can
 proceed independently, but no decision here invents it as a new release gate.
 
-No schema, vector, example, pilot or published artifact bytes change in this packet.
+The historical round11 readiness-only packet changed no schema, vector, example,
+pilot or published artifact bytes. The subsequent mixed draft addition below
+changes the owning model/schema and adds three vectors and one example stem.
+
+## Molik draft responses — 2026-11-16
+
+[The recorded responses and clarifications](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6928571815)
+supersede D1's initial omission of known heterogeneous sets: `mixed` is the fifth,
+case-sensitive `moleculeType` value. It denotes producer-supported biological RNA
+heterogeneity, not unknown composition, a library preparation, or the alphabet.
+This is an additive enum change in the unreleased draft `1.0`, not publication or
+joint curator adoption. Four-value readers, including the pinned 0.11.0 draft
+reader, reject this newly valid value and need an explicit future consumer update.
+The three construction values, nine required fields and existing taxon members
+are retained. The ordered `sample` array remains; BioSample URLs belong in
+`relatedLink`, following FHR. Describe protocol/kit information in `documentation`
+and put actual protocol URLs in `relatedLink`; no protocol/kit field is added,
+and `libraryStrategy` is not overloaded. Current statistics, parent behavior and
+field names remain. No new required URI, sample deprecation or mixed construction
+value is authorized. Publication and joint review remain separate gates.
+
+The new source-contract tests accept `mixed` and reject `Mixed` and construction
+`mixed`. The installed 0.11.0 lane specifically measures rejection of the newly
+valid value, reports acceptance/strip/combine NOT-RUN for it, and executes all
+other vectors. This consumer gap is not a normative invalid outcome. Native's
+independent 2026-11-16 four-candidate review confirmed C1/self-checksums and C3's
+two matches/two mismatches. All four children are unrelated synthetic RNA, so no
+subset extraction or biological derivation is proven. The case-folded parents
+also differ in genome title; all candidates have dateCreated 2026-11-10. Existing
+promotion markers remain unchanged; this is technical review, not curator approval.

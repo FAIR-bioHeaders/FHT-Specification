@@ -27,10 +27,9 @@ record satisfies every applicable minimum. #157 therefore remains open.
 | taxon.name / taxon.uri | Organism/taxonomy | Actual identity and required rank must be checked; URI syntax alone does not establish rank or sequence origin |
 | metadataAuthor | Header-author attribution | Not automatically deposit submitter, sequence producer, owner or institutional affiliation |
 | assemblySoftware | Method, version and options | Shared Software has a real version member. Retain ordered options; do not claim missing version data is present |
-| moleculeType | Per-record biological molecule type | Proposed optional file-wide class is not per-record evidence; do not translate total RNA, cDNA or ncRNA mechanically. `mixed` has no single `/mol_type` value: each record needs its own |
+| moleculeType | Per-record biological molecule type | Proposed optional file-wide class is not per-record evidence; do not translate total RNA, cDNA or ncRNA mechanically |
 | libraryStrategy | Experiment library strategy | Use supplied experiment values, such as RNA-Seq; do not put selection or source values in this field |
 | strandedness | Experiment/protocol description | Requires an explicit read/read-1 convention; proposed FHT normalized terms are not an ENA-controlled enum |
-| libraryProtocol | Experiment library construction protocol | A supplied protocol or kit name and optional URI; it does not supply library source, selection or strandedness |
 | sequencingRuns | Input run links | Actual SRR/ERR/DRR accessions and their associations must be checked. SRS is a sample class, not a run |
 | relatedLink | BioProject, study, BioSample, experiment/run or other source URLs | Preserve actual URLs; this is not an exporter that resolves categories automatically |
 | identifier / accessionID | Transcriptome's own identifier/accession | Do not replace with study/sample identifiers or assume GCA_/GCF_ genome accessions identify a transcriptome |

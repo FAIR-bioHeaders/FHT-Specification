@@ -24,9 +24,8 @@ and [revised spec 005](005-rna-transcriptome-header/spec.md) together.
 | `checksum` | One shared SHA-512/256 scalar | Detect file-byte changes | Tool-computed exact-file checksum using adopted exclusion rules |
 | `assemblyType` | One proposed enum string | Choose how to interpret construction/source claims | Known workflow history using D2's definitions |
 
-Requiredness applies to the slot, and a required slot must carry a value: since
-the November 2026 curator review, every author needs a non-blank `name`, as
-FHR plans for its next major. `taxon` keeps the shared rules unchanged. The generated schema states array and
+Requiredness applies to the slot; the contract does not independently tighten
+optional nested Taxon/Author members. The generated schema states array and
 nested constraints explicitly: optional arrays need at least one item when
 present, and empty strings or `null` are not unknown-value sentinels. Missing a required value cannot be
 repaired with `null`, `unknown`, a guessed person or a dummy checksum.
@@ -53,20 +52,19 @@ prove TSA deposit eligibility or successful checksum/parent verification.
 | Field/group | Proposed type/cardinality | Example of information to supply when actually known |
 | --- | --- | --- |
 | `transcriptomeSynonym` | Optional non-empty array of non-blank strings (legacy-compatible) | Other names actually used for the transcriptome |
-| `moleculeType` | Optional single string: `mRNA`, `rRNA`, `tRNA`, `transcribed RNA` or `mixed` (D1, curator review) | Producer-supported uniform class, or `mixed` for content known to combine classes; omit when unknown |
+| `moleculeType` | Optional single string: `mRNA`, `rRNA`, `tRNA`, `transcribed RNA` or `mixed` (D1, clarified 2026-11-16) | Producer-supported whole-set class; use mixed for known heterogeneous RNA classes, omit for unresolved content |
 | `assemblyAuthor` | Optional non-empty ordered array of shared Author objects (legacy-compatible) | People or organizations that assembled or extracted the set, distinct from `metadataAuthor` and from a deposit submitter |
 | `assemblySoftware` | Optional ordered array of shared Software objects | Software name, real version, URI and ordered option strings; extraction is a process too |
 | `sequencingRuns` | Optional non-empty array of strings matching `^(SRR\|ERR\|DRR)[0-9]+$` | Actual SRR/ERR/DRR runs; no SRS sample identifier substituted for a run |
 | `instrument` | Optional non-empty array of non-blank free-text names (legacy-compatible) | Instrument names actually supplied; prefer `sequencingRuns` when run accessions exist, and do not infer an instrument from a run or software name |
 | `libraryStrategy` | Optional single strategy string | Actual ENA strategy, when one applies to the whole set |
 | `strandedness` | Optional single enum: `unstranded`, `forward` or `reverse` | Actual library read/read-1 orientation using D3's convention |
-| `libraryProtocol` | Optional object: required non-blank `name`, optional `uri` | The library preparation protocol or kit used for the whole set; omit when libraries differ |
 | `sample` | Optional non-empty array of Sample objects, each with at least one of `tissue`, `tissueIdentifier` (CURIE), `developmentalStage`, `condition`, `strain` | Actual biological context; pooled material as repeated entries, never a fabricated pooled identity or complete BioSample record |
 | `vitalStats` | Optional object with independently optional numerical properties | totalTranscripts (integer >= 0), N50 (integer >= 1, nucleotide length), averageTranscriptLength (number >= 0 of nucleotide symbols) |
 | `completeness` | Optional shared count object; `lineageDataset` must match `_odb` plus one or more dot-separated numeric version components (widened by shared #170, pinned at v0.6.0), so `odb12.2` is representable while malformed forms stay rejected | Actual BUSCO run, software/dataset version, transcriptome mode and counts summing to total; a measured lineage is never renamed or coerced |
 | `derivedFrom` | Optional non-empty ordered array of shared DerivedFrom objects; only `FHT` + `filteredFrom` or `FHR` + `transcribedFrom`, each with the parent checksum (`accessionID` is additional, not a substitute) | Actual family parent identities and only relationships the workflow justifies |
 | `identifier` / `accessionID` | Shared optional self-identifiers | Transcriptome's own accession, not its project/sample accession |
-| `relatedLink` / `documentation` | Shared optional URL array / string | Source records (BioSample, BioProject, study, as in FHR), experiment metadata, protocol and derivation explanation |
+| `relatedLink` / `documentation` | Shared optional URL array / string | Source records, experiment metadata, protocol and derivation explanation |
 | `reuseConditions`, `scholarlyArticle`, `funding`, `voucherSpecimen` | Shared optional fields | Supplied reuse terms, article DOI, funding and specimen context |
 
 For the rich M3 case, intentionally leave read/library/sample groups absent if

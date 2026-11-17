@@ -4,9 +4,7 @@ The model imports the pinned shared core and shared objects under ``schemas/``.
 ``fht.json`` is generated, never hand-edited. The generator also applies the
 FHT-specific parent rule that LinkML cannot express: a derivedFrom item must be
 a reviewed FHT/FHR relationship. The shared DerivedFrom object already requires
-the parent checksum; an accessionID is additional, never a substitute. It also
-rejects empty values for the required fields (curator review Q4), which the
-pinned shared core cannot express without changing FHR.
+the parent checksum; an accessionID is additional, never a substitute.
 """
 
 import argparse
@@ -71,16 +69,12 @@ def apply_common_rules(generated):
     return generated
 
 
-# Required values are non-empty (curator review Q4; the FHR next-major rule in
-# FAIR-bioHeaders-Specification docs/SCHEMA-VERSIONS.md "Required values are
-# non-empty", GAP-1). ``required`` makes a key present; these give it a value.
-# FHT is unreleased, so the draft adopts them now rather than at a major.
 REQUIRED_STRINGS = ("transcriptome", "version", "dateCreated")
 NON_BLANK = {"minLength": 1, "pattern": "\\S"}
 
 
 def apply_required_value_rules(generated):
-    """Reject empty required strings, author lists and nameless authors."""
+    """Reject empty required strings and empty/nameless metadata authors only."""
     roots = [generated]
     if isinstance(generated.get("$defs", {}).get("FHT"), dict):
         roots.append(generated["$defs"]["FHT"])
@@ -90,15 +84,15 @@ def apply_required_value_rules(generated):
             properties[name]["minLength"] = 1
             properties[name].setdefault("pattern", "\\S")
         properties["metadataAuthor"]["minItems"] = 1
+        properties["metadataAuthor"]["items"] = {"$ref": "#/$defs/MetadataAuthor"}
     defs = generated["$defs"]
-    author = defs["Author"]
+    author = defs["MetadataAuthor"]
     author["required"] = sorted(set(author.get("required", [])) | {"name"})
     author["properties"]["name"].update(NON_BLANK)
     # Taxon is deliberately left as the pinned core defines it: the maintainers
     # chose to keep the current taxon rules (name and uri both optional) for
     # this draft (FHT-Specification#8, 2026-11-16).
     return generated
-
 
 def apply_sample_rules(generated):
     """Require each Sample entry to carry at least one supplied value."""
@@ -157,8 +151,7 @@ def apply_fht_parent_rules(generated):
             "description": (
                 "Permitted FHT parent relationship: another FHT file filtered "
                 "into this set, or an FHR genome whose bases were extracted "
-                "(annotation-derived, or genome-guided models written out from "
-                "the genome). Genome guidance alone is not a "
+                "(annotation-derived, or genome-guided models written out from the genome). Genome guidance alone is not a "
                 "transcribedFrom link. The shared object already requires the "
                 "parent checksum; accessionID is additional, not a substitute."
             ),

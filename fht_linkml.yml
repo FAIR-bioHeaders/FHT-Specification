@@ -33,21 +33,17 @@ slots:
     pattern: '\S'
   assemblyType:
     description: >-
-      How the transcript sequences or models were constructed: exactly one of
-      the three D2 values, a controlled vocabulary confirmed by the
-      maintainers on curator review. There is no mixed or unknown value. A
-      composite or uncertain history must not be guessed; because the field is
-      required, the record stays incomplete until the case is reviewed, as FHR
-      treats any required value that is unavailable.
+      How the transcript sequences or models were constructed, using the D2
+      definitions. A composite or uncertain history must not be guessed; the
+      record remains incomplete until the case is reviewed.
     range: AssemblyType
     required: true
   moleculeType:
     description: >-
-      One producer-supported biological molecule class that applies to the whole
-      described set, or mixed when the set is known to combine more than one
-      class. Omit when the class is unknown; never use mixed for unknown. total
-      RNA and cDNA are preparation contexts, not biological classes, and do not
-      by themselves establish mixed.
+      One producer-supported biological molecule classification for the whole
+      described set. Use mixed for a known heterogeneous set of biological RNA
+      classes; omit when the classification is unknown. total RNA and cDNA are
+      preparation contexts, not biological classes or evidence of a mixture.
     range: MoleculeType
   assemblySoftware:
     description: >-
@@ -59,14 +55,10 @@ slots:
     minimum_cardinality: 1
   sample:
     description: >-
-      Supplied biological sample context (tissue, stage, condition, strain),
-      which FHR has no field for. Repeat the object for pooled material; each
-      item carries only the values actually known for that source. This is not
-      a complete BioSample record and does not establish a uniform pooled
-      identity. As in FHR, a BioSample or other sample record is linked by its
-      URL in relatedLink, and the physical specimen is described in
-      voucherSpecimen; identifier and accessionID identify the transcriptome
-      itself, never its sample.
+      Supplied biological sample context. Repeat the object for pooled material;
+      each item carries only the values actually known for that source. This is
+      not a complete BioSample record and does not establish a uniform pooled
+      identity.
     range: Sample
     multivalued: true
     inlined_as_list: true
@@ -82,21 +74,8 @@ slots:
       Supplied library strandedness under the FHT read/read-1 convention:
       forward means the single read or read 1 is sense relative to the
       originating transcript, reverse means antisense. Unknown or mixed
-      protocols are omitted, never defaulted to unstranded. Record the protocol
-      or kit name separately in libraryProtocol; never infer one from the other.
+      protocols are omitted, never defaulted to unstranded.
     range: Strandedness
-  libraryProtocol:
-    description: >-
-      The library preparation protocol or kit used for the whole set, by name,
-      with an optional URI for its documentation. It is wet-lab library
-      preparation, not a computational workflow: modelled on FHR
-      assemblyProtocol in how it cites a protocol, but not a mapping target for
-      it (FHT has no assemblyProtocol; such a URI goes in relatedLink). The
-      name is required so that a kit without a citable page can still be
-      recorded. Omit when unknown or when libraries were prepared with
-      different protocols. It does not imply a strandedness value.
-    range: LibraryProtocol
-    inlined: true
   sequencingRuns:
     description: >-
       Actual SRA/ENA/DDBJ run accessions supporting the set. An SRS sample
@@ -130,11 +109,11 @@ slots:
       alone never justifies transcribedFrom. Annotation coordinates and other
       sources stay in relatedLink/documentation until the shared relationship
       vocabulary is decided (#54). A genome-guided set whose final sequences
-      were written out from the genome (for example StringTie models extracted
-      with gffread) links that genome as an FHR transcribedFrom parent, exactly
-      as an annotation-derived set does. The shared DerivedFrom object requires
-      the parent's FHR-family checksum; an accession alone is not a verified
-      family link.
+      were actually extracted from that genome also uses FHR transcribedFrom;
+      construction history alone does not establish the source of its bases.
+      The shared DerivedFrom object requires the
+      parent's FHR-family checksum; an accession alone is not a verified family
+      link.
     range: DerivedFrom
     multivalued: true
     inlined_as_list: true
@@ -179,7 +158,6 @@ classes:
     - sample
     - libraryStrategy
     - strandedness
-    - libraryProtocol
     - sequencingRuns
     - instrument
     - vitalStats
@@ -215,6 +193,7 @@ classes:
         pattern: '\S'
       metadataAuthor:
         description: Authors responsible for the header assertions
+        range: MetadataAuthor
         minimum_cardinality: 1
       assemblyAuthor:
         description: Attributions for the assembly or extraction, when supplied
@@ -257,22 +236,15 @@ classes:
       strain:
         description: Supplied strain, breed or cultivar
         pattern: '\S'
-  LibraryProtocol:
+  MetadataAuthor:
     description: >-
-      A named library preparation protocol or kit, with an optional URI. The
-      name is free text as the producer or manufacturer gives it; the URI
-      follows the same rules as FHR assemblyProtocol (FORMAT.md R14).
-    class_uri: fhr:LibraryProtocol
-    attributes:
+      A metadata author with a supplied non-blank name, under the approved Q4
+      follow-up. This restriction is not applied to optional assemblyAuthor.
+    is_a: Author
+    slot_usage:
       name:
-        description: Name of the library preparation protocol or kit
-        slot_uri: sdo:name
         required: true
         pattern: '\S'
-      uri:
-        description: URI of the protocol or kit documentation
-        slot_uri: sdo:url
-        range: uri
   VitalStats:
     description: Optional producer-reported statistics for the whole file
     class_uri: fhr:VitalStats
@@ -313,10 +285,10 @@ enums:
           genome, without assembling new models from read evidence in this step.
   MoleculeType:
     description: >-
-      Restricted biological molecule classes for the whole described set (D1),
-      plus mixed for a set known to combine classes (maintainer decision on the
-      curator review). These are not preparation methods, and matching a string
-      does not prove per-record INSDC compliance.
+      Biological molecule classifications for the whole described set (D1).
+      mixed explicitly records known heterogeneous RNA classes, not uncertainty.
+      These are not preparation methods, and matching a string does not prove
+      per-record INSDC compliance.
     permissible_values:
       mRNA:
         description: Messenger RNA transcripts
@@ -330,13 +302,8 @@ enums:
           inferring a coding or non-coding subclass
       mixed:
         description: >-
-          The set is known to contain sequences of more than one biological
-          molecule class (for example mRNA together with rRNA or long
-          non-coding RNA), so no single class applies to the whole file. When
-          the classes are known and differ, use mixed rather than transcribed
-          RNA, which is for RNA that cannot be assigned more specifically. Not
-          a value for an unknown class, which is omitted. It has no single INSDC
-          /mol_type equivalent; per-record values are needed for deposit.
+          Producer-supported heterogeneous biological RNA classes in this set;
+          not a substitute for an unknown classification or a library method
   Strandedness:
     description: >-
       FHT library strandedness normalization (D3), not an ENA enum. It describes

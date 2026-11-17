@@ -32,7 +32,7 @@ Local usage:
     python scripts/make_fht_fixtures.py
 
 writes conformance/ (valid/, invalid/, parents/, manifest.json) and the
-example files this generator owns under examples/ (see owned_example_names()).
+example files this generator owns under examples/ (see OWNED_EXAMPLES).
 """
 
 import argparse
@@ -97,6 +97,12 @@ FHT_RECORD = {
 }
 EXPECTED_METADATA = {"transcriptome": TRANSCRIPTOME, "version": VERSION,
                      "assemblyType": "de novo"}
+
+# Explicit Molik draft ruling, issue #8 comment 6928571815 (2026-11-16).
+# A synthetic producer assertion, not a biological classification inferred from bytes.
+MIXED_RECORD = copy.deepcopy(FHT_RECORD)
+MIXED_RECORD.update(transcriptome=TRANSCRIPTOME + " (mixed molecules)",
+                    moleculeType="mixed")
 
 # The minimal record: exactly the nine required fields (FR-001).
 MINIMAL_RECORD = {
@@ -802,6 +808,16 @@ def build_vectors():
           checksum=value,
           expected=dict(EXPECTED_METADATA, schema=RAW_MAIN, schemaVersion="1.0"))
 
+    # ---- valid: explicit known mixed molecule classification (C1) ------------
+    fht_lines_valid("fht-fasta-molecule-type-mixed", lines_of(MIXED_RECORD), ["C1"],
+                    "The producer explicitly asserts known heterogeneous biological "
+                    "RNA classes using the fifth moleculeType value mixed (Molik "
+                    "ruling, #8 comment 6928571815). Unknown remains omission; "
+                    "this syntactic fixture does not verify biological classes.",
+                    expected=dict(EXPECTED_METADATA,
+                                  transcriptome=MIXED_RECORD["transcriptome"],
+                                  moleculeType="mixed"))
+
     # ---- valid: parent links (C3) ---------------------------------------------
     genome_checksum = PARENT_LINKS["genome"]["statedChecksum"]
     minimal_checksum = PARENT_LINKS["minimal"]["statedChecksum"]
@@ -1065,6 +1081,14 @@ def build_vectors():
                        "C1", "moleculeType cDNA is not an FHT value: cDNA is a "
                        "preparation context, not a biological molecule class "
                        "(D1, FR-002).")
+    fht_invalid_record("fht-fasta-molecule-type-mixed-case",
+                       record_of(moleculeType="Mixed"), "C1",
+                       "Molecule classifications are exact controlled strings: Mixed "
+                       "is not the explicitly added lowercase mixed value.")
+    fht_invalid_record("fht-fasta-assembly-type-mixed",
+                       record_of(assemblyType="mixed"), "C1",
+                       "mixed is a moleculeType classification, not a fourth "
+                       "construction type; the three assemblyType values stay fixed.")
     fht_invalid_record("fht-fasta-empty-sample", record_of(sample=[]), "C1",
                        "An optional array written empty instead of omitted "
                        "(sample requires at least one item when present, FR-003).")
@@ -1278,7 +1302,7 @@ def build_vectors():
             "The link states the digest of parents/parent-genome.fhr.fasta while "
             "the supplied parent is parents/parent-genome-masked.fhr.fasta. The two "
             "files carry the same records and the same letters, differing only in "
-            "the case of one sequence line and in the masking value that describes "
+            "the case of one sequence line, the genome title and the masking value that describes "
             "it. R1 hashes exact bytes and C3 compares exact strings, so the "
             "verdict is checked-fail: case is not a normalization a verifier may "
             "apply, and the uppercase and masked copies of a molecule are two "
@@ -1323,60 +1347,19 @@ def fht_lines_valid(name, lines, rules, description, expected=EXPECTED_METADATA,
 
 # -------------------------------------------------------------- examples ----
 # The generator owns these example bytes: three minimal records (JSON, YAML
-# and embedded FASTA), the two rich examples whose contents changed with the
-# curator-review decisions (de-novo and genome-guided: FASTA, JSON and YAML,
-# checksum computed here), and the JSON/YAML mirrors of the annotation-derived
-# FASTA added by #23, whose reviewed FASTA bytes stay untouched.
+# and embedded FASTA) and the JSON/YAML mirrors of the two FASTA-only examples
+# added by #23. The pre-existing de-novo.fht.* files and the genome-guided /
+# annotation-derived FASTA originals keep their reviewed bytes untouched;
 # check_fht_fixtures.py proves every mirror parses to exactly the record its
 # FASTA header carries.
-SYNTHETIC_NOTE = ("Synthetic example for the FHT development contract: names, "
-                  "statistics and sequence bytes are invented; taxon and ontology "
-                  "identifiers and kit names are real.")
-RICH_RECORDS = {
-    "de-novo": {
-        "schema": RAW_MAIN,
-        "schemaVersion": "1.0",
-        "transcriptome": "Bombus impatiens worker brain transcriptome "
-                         "(synthetic example)",
-        "assemblyType": "de novo",
-        "moleculeType": "mRNA",
-        "taxon": {"name": "Bombus impatiens",
-                  "uri": "https://identifiers.org/taxonomy:132113"},
-        "version": "1.0",
-        "metadataAuthor": [{"name": "Example Pollinator Genomics Lab",
-                            "nameType": "Organizational"}],
-        "assemblyAuthor": [{"name": "R. Example", "nameType": "Personal"}],
-        "dateCreated": "2026-09-15",
-        "assemblySoftware": [
-            {"name": "Trinity", "version": "2.15.2",
-             "uri": "https://github.com/trinityrnaseq/trinityrnaseq",
-             "commandLineOption": ["--SS_lib_type", "RF"]},
-        ],
-        "sample": [
-            {"tissue": "brain", "tissueIdentifier": "UBERON:0000955",
-             "developmentalStage": "adult worker"},
-        ],
-        "libraryStrategy": "RNA-Seq",
-        "strandedness": "reverse",
-        "libraryProtocol": {"name": "Illumina TruSeq Stranded mRNA"},
-        "vitalStats": {"totalTranscripts": 84211, "N50": 1874,
-                       "averageTranscriptLength": 1032.6},
-        "completeness": {"lineageDataset": "hymenoptera_odb10",
-                         "buscoVersion": "6.1.0", "mode": "transcriptome",
-                         "completeSingle": 5012, "completeDuplicated": 712,
-                         "fragmented": 98, "missing": 169, "total": 5991},
-        "documentation": "dUTP stranded poly(A) library: Trinity RF, recorded as "
-                         "strandedness reverse, with the kit named in "
-                         "libraryProtocol. " + SYNTHETIC_NOTE,
-        "reuseConditions": "CC-BY-4.0",
-    },
+MIRROR_RECORDS = {
     "genome-guided": {
-        "schema": RAW_MAIN,
+        "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/"
+                  "FHT-Specification/main/fht.json",
         "schemaVersion": "1.0",
         "transcriptome": "Zea mays B73 leaf drought-response transcriptome "
                          "(synthetic example)",
         "assemblyType": "genome-guided",
-        "moleculeType": "mixed",
         "taxon": {"name": "Zea mays", "uri": "https://identifiers.org/taxonomy:4577"},
         "version": "2.1",
         "metadataAuthor": [{"name": "M. Example", "nameType": "Personal"}],
@@ -1395,34 +1378,20 @@ RICH_RECORDS = {
         ],
         "libraryStrategy": "RNA-Seq",
         "strandedness": "reverse",
-        "libraryProtocol": {"name": "Illumina Stranded Total RNA Prep, Ligation "
-                                    "with Ribo-Zero Plus"},
         "vitalStats": {"totalTranscripts": 61530, "N50": 2236,
                        "averageTranscriptLength": 1587.4},
         "relatedLink": [
             "https://www.maizegdb.org/genome/assembly/Zm-B73-REFERENCE-NAM-5.0"],
         "documentation": "Reads aligned to Zm-B73-REFERENCE-NAM-5.0; models "
-                         "assembled with StringTie and written out from the "
-                         "genome with gffread. rRNA-depleted total RNA libraries; "
-                         "the models include protein-coding and long non-coding "
-                         "transcripts, so moleculeType is mixed. Because the final "
-                         "sequences were extracted from the genome, a real record "
-                         "links that genome as an FHR transcribedFrom parent with "
-                         "its checksum; none is given here because no FHR-headed "
-                         "genome file is cited. " + SYNTHETIC_NOTE,
+                         "assembled with StringTie and written out with gffread. "
+                         "rRNA-depleted total RNA libraries, so no single molecule "
+                         "type is claimed. Genome guidance alone is not a "
+                         "transcribedFrom parent link. Synthetic example for the "
+                         "FHT development contract: names, statistics and sequence "
+                         "bytes are invented; taxon and ontology identifiers are "
+                         "real.",
+        "checksum": "hjf2YDKlF+uTf8bv+aPHgaJKrTk1Q5M92qyE6jmA6tw=",
     },
-}
-RICH_FASTA_BODIES = {
-    "de-novo": [
-        b">synthetic_transcript_1",
-        b"ATGGCGTCTAAAGGTGAAGAACTGTTCACCGGTGTTGTTCCGATCCTGGTTGAACTGGATGGTGATGTTAACGGTCACAAATTC",
-    ],
-    "genome-guided": [
-        b">synthetic_transcript_1",
-        b"ATGGAGGCGCTCCTCGTCGCCGCCGCCGTCCTCCTCGCCGCGGCCGTGGCGGCGGCGCAGGCGGAGGCGCAGCAGTAC",
-    ],
-}
-MIRROR_RECORDS = {
     "annotation-derived": {
         "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/"
                   "FHT-Specification/main/fht.json",
@@ -1506,35 +1475,29 @@ def example_records():
         record = {"schema": RAW_MAIN, "schemaVersion": "1.0"}
         record.update(copy.deepcopy(fields))
         records[stem] = record
-    records.update(copy.deepcopy(RICH_RECORDS))
     records.update(copy.deepcopy(MIRROR_RECORDS))
+    records["mixed-molecules"] = copy.deepcopy(MIXED_RECORD)
     return records
-
-
-def example_bodies():
-    """FASTA record lines for every example whose FASTA bytes are owned here."""
-    bodies = {stem: EXAMPLE_FASTA_BODY for stem in EXAMPLE_MINIMALS}
-    bodies.update(RICH_FASTA_BODIES)
-    return bodies
 
 
 def owned_example_names():
     names = []
-    for stem in list(EXAMPLE_MINIMALS) + list(RICH_RECORDS):
+    for stem in EXAMPLE_MINIMALS:
         names += [f"{stem}.fht.fasta", f"{stem}.fht.json", f"{stem}.fht.yaml"]
     for stem in MIRROR_RECORDS:
         names += [f"{stem}.fht.json", f"{stem}.fht.yaml"]
+    names += [f"mixed-molecules.fht.{suffix}" for suffix in ("fasta", "json", "yaml")]
     return names
 
 
 def example_outputs():
     """Return {name: bytes} for every example file owned here (no writing)."""
     outputs = {}
-    bodies = example_bodies()
     for stem, record in example_records().items():
-        if stem in bodies:
+        if stem in EXAMPLE_MINIMALS or stem == "mixed-molecules":
+            body = RNA_BODY if stem == "mixed-molecules" else EXAMPLE_FASTA_BODY
             data, value = assemble(header_of(record)
-                                   + [Line(text) for text in bodies[stem]])
+                                   + [Line(text) for text in body])
             record["checksum"] = value
             outputs[f"{stem}.fht.fasta"] = data
         outputs[f"{stem}.fht.json"] = (json.dumps(record, indent=2,

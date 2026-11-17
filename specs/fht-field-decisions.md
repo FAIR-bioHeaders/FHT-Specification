@@ -47,7 +47,27 @@ identified by access date; no unverified version or archived snapshot is implied
 The ENA XSD pin was checked through GitHub and its three vocabulary lists parsed
 as XML. This proposal uses short factual summaries, not copied source text.
 
+## Molik draft responses — 2026-11-16
+
+[The recorded responses and clarifications](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6928571815)
+supersede D1's initial omission of known heterogeneous sets: `mixed` is the fifth,
+case-sensitive `moleculeType` value. It denotes producer-supported biological RNA
+heterogeneity, not unknown composition, a library preparation, or the alphabet.
+This is an additive enum change in the unreleased draft `1.0`, not publication or
+joint curator adoption. Four-value readers, including the pinned 0.11.0 draft
+reader, reject this newly valid value and need an explicit future consumer update.
+The three construction values, nine required fields and existing taxon members
+are retained. The ordered `sample` array remains; BioSample URLs belong in
+`relatedLink`, following FHR. Describe protocol/kit information in `documentation`
+and put actual protocol URLs in `relatedLink`; no protocol/kit field is added,
+and `libraryStrategy` is not overloaded. Current statistics, parent behavior and
+field names remain. No new required URI, sample deprecation or mixed construction
+value is authorized. Publication and joint review remain separate gates.
+
 ## D1: distinguish molecule, library and alphabet
+
+The following is the original recommendation; the dated clarification above
+supersedes its heterogeneous-set omission.
 
 **Recommendation:** change draft FR-002's required `moleculeType` to optional,
 file-wide biological molecule identity. Do not adopt the current mixed enum
@@ -169,49 +189,6 @@ genome-only `masking` from the new draft without deleting historical records.
 Legacy expression/completeness strings must not be guessed into typed numerical
 objects. #7 owns the reviewed migration and generated schema, and #8 the actual
 byte-backed fixtures. No new FHT version or persistent identifier is assigned here.
-
-## Curator-review decisions (November 2026)
-
-The November 2026 curator-review packet asked nine questions about this
-design. David Molik answered them, and Adam Wright relayed the answers. David's
-general rule: "with the non-FHR [types] try to follow FHR logic". The record
-above stays as written; where it differs, these decisions supersede it.
-
-- **Q1, construction types.** "de novo, genome-guided and annotation-derived are
-  a good start, we should implement the controlled vocabulary for this now."
-  D2's three values are the controlled vocabulary, as already implemented. A
-  composite history still gets no fourth value: `assemblyType` is required, so
-  the record stays incomplete until the case is reviewed, which is how FHR
-  treats any unavailable required value.
-- **Q2, molecule type.** "mixed is acceptable, so it should be five values:
-  mRNA, rRNA, tRNA, transcribed RNA, mixed." This amends D1: `mixed` is added
-  for a set known to combine classes. An unknown class is still omitted, and
-  `total RNA`, `cDNA` and `ncRNA` stay rejected.
-- **Q3, strand.** "forward and reverse is worth preserving, but protocol name or
-  kit should have a way to be recorded as well." D3's `strandedness` is kept. A
-  new optional `libraryProtocol` object (required `name`, optional `uri`)
-  records the wet-lab library protocol or kit, modelled on how FHR's
-  `assemblyProtocol` cites a protocol but not a mapping target for it.
-- **Q4, required fields.** "these are absolutely required, everytime, no
-  exceptions." The nine stay required, and the empty forms (empty strings,
-  `metadataAuthor: []`, a nameless author) are rejected, as FHR plans for its
-  next major (shared GAP-1). David also asked to keep the current taxon rules
-  (recorded on #8): `name` and `uri` stay optional and no taxonomy identifier
-  is required; the #189 rule stays scoped to the next FHR, FHP and FHGFF3
-  majors.
-- **Q5 and Q6.** Nothing to add; the statistics and units stay as they are.
-- **Q7, sample.** "check what FHR does for this, do that." FHR links a BioSample
-  record by URL in `relatedLink` and describes the specimen in
-  `voucherSpecimen`; FHT does the same and adds no sample-accession field.
-  `sample` keeps the tissue, stage, condition and strain context that FHR has no
-  field for.
-- **Q8, parent links.** The drafted `derivedFrom` rules stay. A genome-guided set
-  whose final sequences were written out from the genome links that genome as an
-  `FHR` + `transcribedFrom` parent with its checksum.
-- **Q9, names.** The field names stay.
-
-[`docs/FHT-MIGRATION.md`](../docs/FHT-MIGRATION.md#curator-review-decisions-november-2026)
-records the contract changes and their compatibility impact.
 
 ## Acceptance disposition and owned follow-up work
 

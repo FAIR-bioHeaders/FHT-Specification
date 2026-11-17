@@ -66,7 +66,7 @@ rule text, derived from the merged contract, is:
   required fields (`schema`, `schemaVersion` `"1.0"`, `transcriptome`,
   `assemblyType`, `taxon`, `version`, `metadataAuthor`, `dateCreated`,
   `checksum`) present and non-empty; enums (`de novo`, `genome-guided`,
-  `annotation-derived`; `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`, `mixed`;
+  `annotation-derived`; `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`;
   `unstranded`, `forward`, `reverse`); patterns (checksums, run accessions,
   taxon URI, DOI); nested cardinality (`sample` items need one value,
   optional arrays non-empty when present); the closed top level plus the
@@ -107,10 +107,10 @@ real-data pilot: see "Promotion candidates from the pilot" below.
 
 `selfChecksum` names, per vector, the state of the file's own root checksum
 line under the R1-R5 recomputation, and is recorded on **every** vector
-(72/72):
+(75/75):
 
 - `matches` — the stated value equals the recomputed value over the covered
-  bytes. The positive class: all 28 valid vectors carry it, and so do the
+  bytes. The positive class: all 29 valid vectors carry it, and so do the
   invalid vectors whose single defect lies elsewhere (the anti-accident rule:
   an implementation must not pass a vector by failing the comparison by
   accident).
@@ -196,12 +196,12 @@ cited at its recomputed value by the checked-pass vectors.
 | Header text (R6-R8, R10, R12/R13) | ordinary comments/blank lines incl. `;~#` and a post-record `;` comment, raw UTF-8 value; rejections: U+2028 (R6), BOM (R7), duplicate key and anchor/alias (R8), `;~` after record and concatenation (R10), `011` (R12), `.inf` (R13) |
 | Writer recommendations | escaped `\x3E`/`\x40` (R11), `javascript:` relatedLink kept valid with `warnings: ["R14"]` |
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
-| Contract (C1) | minimal (nine required fields only), rich (every optional field of the contract before the November 2026 curator review; `libraryProtocol`, `moleculeType: mixed` and the non-empty required-value rules are covered by `tests/test_fht_schema.py` until the toolkit's draft pin moves, #9), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
+| Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
 | Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
 | Parent links (C3) | checked-pass ×5 (the two-link rich record, `-parent-transcribed-from`, `-parent-filtered-from`, and the two pilot candidates `-parent-subset-citing-whole` and `-parent-masked-exact`), unchecked ×1, checked-fail ×3 (`-parent-mismatched`, and the pilot candidates `-parent-real-digest-wrong-file` and `-parent-case-folded-digest`, whose stated value is a genuine digest of a *different* shipped file), mixed verdicts ×1 (checked-pass + checked-fail in one record; #37) |
 
-Counts: 28 valid, 44 invalid, 3 parent fixtures; every vector carries a
-finalized `selfChecksum` (28 matches-invalid + 28 matches-valid = 56, 7
+Counts: 29 valid, 46 invalid, 3 parent fixtures; every vector carries a
+finalized `selfChecksum` (30 matches-invalid + 29 matches-valid = 59, 7
 broken, 9 unreachable) and the ten C3 link vectors carry `parentLink`
 entries. Rule coverage self-check:
 every registered rule except the recommendation/warning/outcome-only/lane
@@ -366,10 +366,14 @@ PR's author and need a second reader — all four, specifically:**
    confirm it, because the pilot's real parent is exactly this shape (27.8 %
    lowercase, with NCBI's uppercase component file beside it).
 
-No candidate depends on `dateCreated`, `assemblySoftware` or `reuseConditions`:
-those are open curator questions and each changes bytes, so all three stay absent
-from the candidate records, and the candidates carry the same `dateCreated` as
-the rest of the synthetic set (no derivation reads it).
+All candidates include `dateCreated: 2026-11-10`; no checksum derivation interprets
+that date. `assemblySoftware` and `reuseConditions` are absent. Their children are
+synthetic RNA bodies, not demonstrated extractions from the synthetic ctgA parent.
+The checks prove file identity and schema/checksum behavior only. The uppercase
+and masked parent also differ in their genome title and masking metadata; this is
+not an isolated sequence-case experiment. Independent technical review on
+2026-11-16 confirmed all four exact-byte outcomes, without promoting their
+`candidate-unreviewed` markers or granting curator acceptance.
 
 **Accepting a candidate** is a one-line change: drop its id from
 `PROMOTION_CANDIDATES` in `scripts/make_fht_fixtures.py` and regenerate. The
@@ -494,3 +498,15 @@ Until then, `python scripts/check_fht_fixtures.py` (pinned jsonschema
 4.26.0 + PyYAML 6.0.3, see [`../docs/CI.md`](../docs/CI.md)) is the
 verification, and its failure classes are the acceptance list for #9's
 toolkit implementation.
+
+## Current mixed-molecule source coverage — 2026-11-16
+
+The owning suite now has **75 vectors: 29 valid and 46 invalid**. The new valid
+`fht-fasta-molecule-type-mixed` has an independently generated matching checksum;
+`fht-fasta-molecule-type-mixed-case` rejects `Mixed` and
+`fht-fasta-assembly-type-mixed` rejects a mixed construction type. All previous
+72 vector bytes and outcomes remain unchanged. The installed 0.11.0 four-value
+draft reader cannot accept the new positive vector: acceptance, strip and combine
+for that vector are explicitly NOT-RUN, following a specific rejection probe.
+All other comparisons and default-off checks still execute. The older counts
+above describe their original measurement, not new reader coverage.

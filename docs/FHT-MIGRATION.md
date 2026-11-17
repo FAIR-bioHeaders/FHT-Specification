@@ -1,10 +1,9 @@
 # FHT 1.0 development contract and legacy migration
 
-Status: **development contract for review under #7**, October 24, 2026,
-revised for the [curator-review decisions](#curator-review-decisions-november-2026)
-of November 2026. This is the model implemented from the design approved
-on #6 / PR #20. It is not a published release, not adopted community
-guidance, and not supported by the family toolkit. Publication, release tags, immutable URLs and version
+Status: **development contract for review under #7**, October 24, 2026. This is
+the model implemented from the design approved on #6 / PR #20. It is not a
+published release, not adopted community guidance, and not supported by the
+family toolkit. Publication, release tags, immutable URLs and version
 confirmation remain joint maintainer actions.
 
 The generated JSON Schema is [`fht.json`](../fht.json); its source is
@@ -62,8 +61,7 @@ with maintainers before citing them.
 
 ## Required fields
 
-Exactly these nine fields are required, every time, with no exceptions; each has
-a real supplied value:
+Exactly these nine fields are required; each has a real supplied value:
 
 | Field | Contract |
 | --- | --- |
@@ -80,22 +78,10 @@ a real supplied value:
 Missing required values cannot be repaired with `null`, `unknown`, a guessed
 person or a placeholder checksum. The record is incomplete.
 
-A required key must also carry a value. The schema rejects the empty forms that
-FHR 2.0 still accepts and plans to reject in its next major (shared
-`docs/SCHEMA-VERSIONS.md`, "Required values are non-empty", GAP-1):
-
-| Field | Rule |
-| --- | --- |
-| `transcriptome`, `version` | `minLength: 1` and at least one non-whitespace character |
-| `dateCreated` | `minLength: 1` and a non-whitespace character, plus the `date` format |
-| `metadataAuthor` | `minItems: 1`; every author requires a non-blank `name` (the shared `Author` object, so `assemblyAuthor` items too) |
-| `taxon` | Unchanged by maintainer decision (#8, 2026-11-16): `name` and `uri` stay optional members, and no taxonomy identifier is required. The next FHR, FHP and FHGFF3 majors will require an NCBI Taxonomy or ITIS `uri` (shared #189); that is not imported into FHT |
-| `schema`, `schemaVersion`, `assemblyType`, `checksum` | Already non-empty through their pattern, enum or exact length |
-
 ## Optional fields
 
 `moleculeType`, `assemblySoftware`, `sample`, `libraryStrategy`,
-`strandedness`, `libraryProtocol`, `sequencingRuns`, `vitalStats`, `completeness`, `derivedFrom`,
+`strandedness`, `sequencingRuns`, `vitalStats`, `completeness`, `derivedFrom`,
 `identifier`, `accessionID`, `scholarlyArticle`, `documentation`,
 `relatedLink`, `funding`, `reuseConditions`, `voucherSpecimen`, plus the
 legacy-compatible `transcriptomeSynonym`, `assemblyAuthor` and `instrument`.
@@ -107,16 +93,10 @@ kept.
 ### Molecule, library and alphabet
 
 `moleculeType` is one biological class for the whole set: `mRNA`, `rRNA`,
-`tRNA` or `transcribed RNA`, or `mixed` when the set is known to contain more
-than one class (for example mRNA with rRNA or long non-coding RNA). It is
-optional. `mixed` is a statement about known content, not a value for unknown:
-a set whose class is unknown omits the field. When the classes are known and
-differ, use `mixed`, not `transcribed RNA`, which is for RNA that cannot be
-assigned more specifically. `total RNA` and `cDNA` are
-preparation contexts and are not accepted as molecule classes, and neither one
-establishes `mixed` by itself. Do not infer `mRNA` from RNA-Seq, `cDNA` from T/U
-bytes, or `transcribed RNA` from `ncRNA`. `mixed` has no single INSDC
-`/mol_type` equivalent; a deposit needs per-record values.
+`tRNA`, `transcribed RNA` or `mixed`. It is optional. `total RNA` and `cDNA` are
+preparation contexts and are not accepted as molecule classes. Do not infer
+`mRNA` from RNA-Seq, `cDNA` from T/U bytes, or `transcribed RNA` from `ncRNA`.
+Unknown sets omit the field. Use `mixed` only for producer-supported mixtures of biological RNA classes; preparation material or uncertainty does not establish a mixture.
 
 `libraryStrategy` is one supplied strategy string, not a frozen ENA enum.
 `strandedness` is the FHT normalization `unstranded`, `forward` or `reverse`:
@@ -124,58 +104,18 @@ forward means the single read or read 1 is sense relative to the originating
 transcript; reverse means antisense. It is not an ENA enum and does not
 describe genomic plus/minus orientation. Unknown or mixed protocols are omitted.
 
-`libraryProtocol` records the library preparation protocol or kit by name, with
-an optional URI:
-
-```yaml
-libraryProtocol:
-  name: Illumina TruSeq Stranded mRNA
-  uri: https://example.org/protocol   # optional
-```
-
-It is one object for the whole set. It is modelled on FHR's `assemblyProtocol`
-in how it cites a protocol, but it describes wet-lab library preparation, not a
-computational workflow, so an FHR `assemblyProtocol` URI never maps into it (FHT
-has no `assemblyProtocol`; put such a URI in `relatedLink`). FHR's field is a
-URI only; here `name` is required and
-non-blank so that a kit without a citable page can still be recorded, and `uri`
-follows the same rules as `assemblyProtocol` (`format: uri`, FORMAT.md R14).
-Omit it when unknown or when libraries were prepared with different protocols.
-It does not replace `strandedness`: record both when both are known, and do not
-infer either from the other. A protocol URL can still also be listed in
-`relatedLink`; free-text detail beyond the name belongs in `documentation`.
-
 FASTA parsing and checksums are alphabet-independent. T/U conversion is an
 explicit derivative with a new checksum, never a header-parser fix.
 
 ### Sample and pooled material
 
-`sample` is an optional **array** of `Sample` objects. It holds the biological
-context that FHR has no field for; everything else about the source follows FHR
-(see the table below). Each object has optional
+`sample` is an optional **array** of `Sample` objects. Each object has optional
 `tissue`, `tissueIdentifier`, `developmentalStage`, `condition` and `strain`.
 `tissueIdentifier` is a CURIE (for example `UBERON:0000473`); the pattern checks
 form, not resolution. Each entry must carry at least one supplied field, and its
 text fields must be non-empty. Pooled material is represented by repeated
 entries, each with only its own supplied values. Do not collapse a pool into one
 fabricated uniform sample or treat a header entry as a complete BioSample record.
-
-How FHT records the source material, compared with FHR (`fhr.json` at shared
-`v0.6.0`, shared `docs/TERMS.md` and `docs/MAPPINGS.md` "Identifier
-Conventions"):
-
-| Source information | FHR | FHT |
-| --- | --- | --- |
-| Organism | `taxon` | `taxon`, the same shared object |
-| Physical specimen or voucher | `voucherSpecimen` (free text; structured vouchers are shared #139) | `voucherSpecimen`, the same shared slot; it follows #139 when that is decided |
-| BioSample or other sample record | URL in `relatedLink` (for example `https://www.ncbi.nlm.nih.gov/biosample/SAMN…`) | The same: URL in `relatedLink`. No separate sample-accession field |
-| BioProject, study, experiment | URL in `relatedLink` | The same |
-| The data's own identifiers | `identifier`, `accessionID` (never a sample) | The same |
-| Tissue, developmental stage, condition, strain | No field | `sample` items (`tissue`, `tissueIdentifier`, `developmentalStage`, `condition`, `strain`), FHT-specific |
-| Pooled sources | No field (one specimen description) | Repeated `sample` items |
-
-`tissueIdentifier` keeps its preference for UBERON, PO and CL; FHR has no
-ontology-term field to align it with.
 
 ### Construction cases and parents
 
@@ -187,27 +127,15 @@ ontology-term field to align it with.
 | `genome-guided` | Read evidence plus a reference constructed models or grouped reads; bases may come from reads or a later extraction | Genome guidance alone never justifies `transcribedFrom` |
 | `annotation-derived` | Sequences extracted from existing annotation coordinates and the matching genome, without new read assembly in this step | Identify both sources when known; link the genome by `transcribedFrom` only when bases were extracted from it |
 
-These three values are the whole controlled vocabulary. A composite or
-uncertain history (for example a de novo assembly merged with genome-guided
-models, or a reference annotation extended with new models) has no `mixed` or
-`unknown` value. Do not guess or pick the dominant step. Because `assemblyType`
-is required, such a record is incomplete, as FHR treats any required value that
-is unavailable: describe the history in `documentation` and raise the case for
-maintainer review. A new construction value would be a contract change.
-
-A genome-guided set whose final sequences were written out from the genome, for
-example StringTie models extracted with gffread, takes its bases from that
-genome. It therefore links the genome as an `FHR` + `transcribedFrom` parent with
-the genome file's FHR checksum, exactly as an annotation-derived extraction does.
-A genome-guided set whose bases come from the reads (for example genome-guided
-Trinity) does not. The `assemblyType` stays `genome-guided` either way.
+A composite or uncertain history has no `mixed` or `unknown` enum value. Do
+not guess. Leave the record incomplete until the case is reviewed.
 
 `derivedFrom` accepts only these reviewed pairs:
 
 | Parent `headerType` | Allowed `relationship` | Condition |
 | --- | --- | --- |
 | `FHT` | `filteredFrom` | This set is a subset or filtered copy of another FHT file |
-| `FHR` | `transcribedFrom` | Transcript bases were extracted from that genome, not merely guided by it; this includes a genome-guided set written out from the genome |
+| `FHR` | `transcribedFrom` | Transcript bases were extracted from that genome, not merely guided by it |
 
 The shared `DerivedFrom` object requires `headerType`, `relationship` and the
 parent's FHR-family `checksum`; `accessionID` is additional, not a substitute
@@ -240,35 +168,6 @@ version components such as `odb12.2`. A measured lineage is **not renamed or
 coerced** to fit the pattern; malformed forms (`odb12.`, `odb.12`, `odb12..2`,
 `odb12.2b`) stay rejected. If a measured value cannot be represented in the
 typed object, keep it in `documentation` rather than falsifying the lineage.
-
-## Curator-review decisions (November 2026)
-
-David Molik answered the nine questions of the curator-review packet. His
-general rule was to follow FHR's logic for the fields that are not FHR's. These
-are changes to the unreleased draft contract; `schemaVersion` stays `"1.0"`
-because nothing has been released.
-
-| Question | Decision | Contract change |
-| --- | --- | --- |
-| Q1 construction types | "de novo, genome-guided and annotation-derived are a good start, we should implement the controlled vocabulary for this now" | None: `assemblyType` was already exactly these three values. Mixed histories stay incomplete until reviewed (above); edge-case tests added |
-| Q2 molecule type | "mixed is acceptable, so it should be five values" | `mixed` added to `moleculeType` |
-| Q3 strand | Keep forward/reverse; "protocol name or kit should have a way to be recorded as well" | `strandedness` unchanged; new optional `libraryProtocol` object |
-| Q4 required fields | "absolutely required, everytime, no exceptions"; current taxon rules kept | The nine stay required; empty strings, empty author lists and nameless authors are rejected. `taxon` is unchanged |
-| Q5 missing fields | Nothing to add | None |
-| Q6 measurements | Statistics and units stay | None |
-| Q7 sample | "check what FHR does for this, do that" | Description only: sample records and specimens follow FHR (table above); `sample` keeps the FHT-specific context |
-| Q8 parent links | Keep the drafted behaviour | Description only: a genome-guided set written out from the genome links it by `transcribedFrom` |
-| Q9 names | Names stay | None |
-
-Compatibility within the draft: every existing example, conformance vector and
-the real-data pilot header still validates. A record is newly rejected only if
-it has an empty required string, an empty author list or an author without a
-name. The `de-novo` and `genome-guided`
-examples gained `libraryProtocol` (and `moleculeType: mixed` for genome-guided)
-and were regenerated with new checksums. The conformance vectors do not use
-`libraryProtocol` or `mixed` yet: the released toolkit's draft lane is pinned to
-the previous `fht.json` and would reject them, so these values are covered by
-unit tests until #9 moves that pin.
 
 ## Legacy migration (fht.json v0.1 → FHT 1.0)
 
@@ -327,3 +226,39 @@ independent #157 assessment).
   `specs/005-rna-transcriptome-header/spec.md`.
 - Shared #54 (relationship vocabulary), #157 (INSDC coverage) and #170 (BUSCO
   lineage grammar).
+
+
+## Narrow Q4/Q8 follow-up after #51 — 2026-11-17
+
+[Adam's coordination proposal](https://github.com/FAIR-bioHeaders/FHT-Specification/pull/50#issuecomment-6929925451)
+and [David's explicit approval](https://github.com/FAIR-bioHeaders/FHT-Specification/pull/50#issuecomment-6950266684)
+authorize the remaining nonempty-value follow-up, distinct from the nine-root
+presence decision. `transcriptome`, `version` and `dateCreated` must be nonblank;
+`metadataAuthor` has at least one item and each metadata author has a nonblank
+`name`. The local `MetadataAuthor` specialization implements that constraint
+without changing the pinned shared `Author` object or the optional
+`assemblyAuthor` name rules. Taxon members retain their current optionality,
+including the already permitted empty taxon object; the FHT sample array stays.
+No new taxonomy decision is opened here.
+
+These are explicit rejection-boundary changes to the unreleased draft, not a
+spelling correction: older readers may accept newly invalid empty metadata.
+The proposed first-release version, nine required root names and every existing
+75 conformance fixture byte/outcome/promotion marker remain unchanged. Direct
+schema tests cover the new boundaries; new normative rejection vectors and their
+consumer coverage remain part of #8/#9 coordination rather than being claimed
+as already exercised by the older installed reader. No toolkit/native consumer
+pin or released contract changes. The existing HTML reference must use the
+updated owning contract with a verified local provenance anchor; its field
+identities, seven canonical records and round-trip assertions stay intact.
+
+The optional `libraryProtocol` proposal is withdrawn. Record an actual kit or
+protocol name in `documentation` and an actual protocol URL in `relatedLink`;
+this does not infer `strandedness`. A genome-guided workflow that actually
+extracts its final transcript bases from a genome can cite that exact FHR parent
+with `transcribedFrom` and its family checksum. Genome guidance alone proves no
+such extraction; a genome accession or annotation URL is not a parent checksum.
+The Q8 clarification changes no relationship pair or verification algorithm and
+does not certify the biological truth of a schema-valid claim.
+
+Refs #8 and #11: both remain open for acceptance and publication/runtime handoffs.

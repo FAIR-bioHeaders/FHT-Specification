@@ -19,6 +19,10 @@ What it checks, and the difference between a failure and a finding:
   quoting and line ordering the writer emits, or which schema copy the draft
   lane is pinned to. Findings are reported for issue #9 and change nothing.
 
+The newly valid mixed-molecule case is explicitly unsupported by the installed
+four-value schema: a specific rejection probe precedes its reported NOT-RUN
+acceptance/writer checks. Every other case remains fully compared.
+
 Lanes:
 
 1. Identity. The installed distribution's version, the draft registry entry it
@@ -194,6 +198,46 @@ def place(entry, work, name=None):
     target = Path(work) / (name or Path(entry["file"]).name)
     target.write_bytes((ROOT / "conformance" / entry["file"]).read_bytes())
     return target
+
+
+MIXED_VECTOR = "fht-fasta-molecule-type-mixed"
+
+
+def partition_mixed_capability(vectors, installed_schema):
+    """Only the explicitly added mixed positive may lack old-reader coverage.
+
+    No expected outcome is changed. A new reader whose enum includes mixed must
+    run the ordinary acceptance comparison; no unexpected failure is excused.
+    """
+    definitions = installed_schema.get("$defs", installed_schema.get("definitions", {}))
+    choices = definitions.get("MoleculeType", {}).get("enum")
+    if not isinstance(choices, list):
+        raise ValueError("installed FHT contract has no inspectable MoleculeType enum")
+    compared, unsupported = [], []
+    for vector in vectors:
+        if vector["id"] == MIXED_VECTOR:
+            if vector["expected"] != "valid" or vector.get("metadata", {}).get("moleculeType") != "mixed":
+                raise ValueError("mixed capability control must retain its normative valid/mixed expectation")
+            if "mixed" not in choices:
+                unsupported.append(vector)
+                continue
+        compared.append(vector)
+    return compared, unsupported
+
+
+def lane_unsupported_mixed(toolkit, vectors, work):
+    """Probe old-writer rejection without counting it as normative agreement."""
+    for vector in vectors:
+        code, output = toolkit.run("verify", place(vector, work))
+        diagnostic = "schema validation failed at $.moleculeType: 'mixed' is not one of "
+        failures = [line for line in output.splitlines() if "validation failed" in line]
+        checksum_failed = "checksum verification failed" in output.casefold()
+        if (code != 1 or len(failures) != 1 or diagnostic not in failures[0]
+                or checksum_failed):
+            fail(f"{vector['id']}: old-schema unsupported probe did not specifically reject moleculeType mixed")
+        finding(f"{vector['id']}: current-contract acceptance/strip/combine NOT-RUN: "
+                "the installed pinned MoleculeType enum lacks mixed; its rejection "
+                "is a consumer coverage gap, not a normative invalid outcome")
 
 
 def lane_verify(toolkit, vectors, work):
@@ -489,12 +533,18 @@ def main(argv=None):
     vectors = load_suite()
     work = Path(tempfile.mkdtemp(prefix="fht-toolkit-lane-"))
     try:
-        lane_verify(toolkit, vectors, work)
-        lane_links(toolkit, vectors, work)
+        installed_schema = json.loads((toolkit.site_packages() / "bioheaders" / entry["file"]).read_bytes())
+        compared, unsupported = partition_mixed_capability(vectors, installed_schema)
+        lane_unsupported_mixed(toolkit, unsupported, work)
+        if FAILURES:
+            print("Unsupported-value preflight failed: NOTHING SCORED")
+            return 1
+        lane_verify(toolkit, compared, work)
+        lane_links(toolkit, compared, work)
         lane_default_path(toolkit, vectors, work)
-        lane_strip(toolkit, vectors, work)
-        lane_combine(toolkit, vectors, work)
-        lane_streams(toolkit, vectors, work)
+        lane_strip(toolkit, compared, work)
+        lane_combine(toolkit, compared, work)
+        lane_streams(toolkit, compared, work)
     finally:
         if args.keep:
             print(f"scratch: {work}")
@@ -510,7 +560,9 @@ def main(argv=None):
               f"the rule text. Expectations are NOT adjusted here; conformance/"
               f"README.md records them and issue #9 owns the implementation.")
         return 1
-    print(f"\nOK: the installed reader agrees with every rule-derived expectation "
+    print(f"implementation comparisons: {len(compared)}; current-contract unsupported/not-run: {len(unsupported)}")
+    print(f"\nOK: the installed reader agrees with the compared subset; unsupported "
+          f"current-contract values are not acceptance passes "
           f"({len(FINDINGS)} finding(s) reported for #9)")
     return 0
 

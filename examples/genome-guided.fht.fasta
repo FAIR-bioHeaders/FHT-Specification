@@ -2,7 +2,6 @@
 ;~schemaVersion: '1.0'
 ;~transcriptome: Zea mays B73 leaf drought-response transcriptome (synthetic example)
 ;~assemblyType: genome-guided
-;~moleculeType: mixed
 ;~taxon:
 ;~  name: Zea mays
 ;~  uri: https://identifiers.org/taxonomy:4577
@@ -13,33 +12,34 @@
 ;~dateCreated: '2026-07-02'
 ;~assemblySoftware:
 ;~- name: HISAT2
-;~  version: '2.2.3'
+;~  version: 2.2.3
 ;~- name: StringTie
-;~  version: '3.0.3'
+;~  version: 3.0.3
 ;~  commandLineOption:
-;~  - '--rf'
+;~  - --rf
 ;~- name: gffread
-;~  version: '0.12.9'
+;~  version: 0.12.9
 ;~sample:
 ;~- tissue: leaf
-;~  tissueIdentifier: 'PO:0025034'
+;~  tissueIdentifier: PO:0025034
 ;~  condition: well-watered control
 ;~  strain: B73
 ;~- tissue: leaf
-;~  tissueIdentifier: 'PO:0025034'
-;~  condition: '7 days water withheld'
+;~  tissueIdentifier: PO:0025034
+;~  condition: 7 days water withheld
 ;~  strain: B73
 ;~libraryStrategy: RNA-Seq
 ;~strandedness: reverse
-;~libraryProtocol:
-;~  name: Illumina Stranded Total RNA Prep, Ligation with Ribo-Zero Plus
 ;~vitalStats:
 ;~  totalTranscripts: 61530
 ;~  N50: 2236
 ;~  averageTranscriptLength: 1587.4
 ;~relatedLink:
 ;~- https://www.maizegdb.org/genome/assembly/Zm-B73-REFERENCE-NAM-5.0
-;~documentation: 'Reads aligned to Zm-B73-REFERENCE-NAM-5.0; models assembled with StringTie and written out from the genome with gffread. rRNA-depleted total RNA libraries; the models include protein-coding and long non-coding transcripts, so moleculeType is mixed. Because the final sequences were extracted from the genome, a real record links that genome as an FHR transcribedFrom parent with its checksum; none is given here because no FHR-headed genome file is cited. Synthetic example for the FHT development contract: names, statistics and sequence bytes are invented; taxon and ontology identifiers and kit names are real.'
-;~checksum: oG5luYSdsT2PPd3+O8545ub9UGwJjkVOiSyKtDNSIEc=
+;~documentation: 'Reads aligned to Zm-B73-REFERENCE-NAM-5.0; models assembled with
+;~  StringTie and written out with gffread. rRNA-depleted total RNA libraries, so no
+;~  single molecule type is claimed. Genome guidance alone is not a transcribedFrom
+;~  parent link. Synthetic example for the FHT development contract: names, statistics and sequence bytes are invented; taxon and ontology identifiers are real.'
+;~checksum: hjf2YDKlF+uTf8bv+aPHgaJKrTk1Q5M92qyE6jmA6tw=
 >synthetic_transcript_1
 ATGGAGGCGCTCCTCGTCGCCGCCGCCGTCCTCCTCGCCGCGGCCGTGGCGGCGGCGCAGGCGGAGGCGCAGCAGTAC
