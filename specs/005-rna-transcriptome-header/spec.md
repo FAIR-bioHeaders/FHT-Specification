@@ -136,3 +136,15 @@ This changes proposed requiredness and meaning for moleculeType, proposes a stra
 enum and numerical constraints, and clarifies construction semantics. Those are
 contract decisions requiring their own review, not incidental documentation fixes.
 Released FHR/FHP/FHGFF3 artifacts and the legacy FHT schema are unchanged.
+
+### Approved nonempty-value follow-up (#50, 2026-11-17)
+
+Beyond the unchanged nine mandatory roots, the approved Q4 follow-up requires
+nonblank transcriptome, version and dateCreated, and at least one metadataAuthor
+whose name is nonblank. It does not impose a name on optional assemblyAuthor,
+change taxon member optionality or remove sample. See the
+[compatibility and approval record](../../docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17).
+Q8 is about actual sequence origin: genome-guided construction followed by
+extraction can cite the exact genome through FHR/transcribedFrom/checksum;
+guidance alone cannot establish that relationship. No libraryProtocol field is
+adopted; protocol text and URLs use documentation and relatedLink.

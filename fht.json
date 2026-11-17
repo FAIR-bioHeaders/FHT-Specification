@@ -165,7 +165,7 @@
       "type": "object",
       "allOf": [
         {
-          "description": "Permitted FHT parent relationship: another FHT file filtered into this set, or an FHR genome whose bases were extracted (annotation-derived). Genome guidance alone is not a transcribedFrom link. The shared object already requires the parent checksum; accessionID is additional, not a substitute.",
+          "description": "Permitted FHT parent relationship: another FHT file filtered into this set, or an FHR genome whose bases were extracted (annotation-derived, or genome-guided models written out from the genome). Genome guidance alone is not a transcribedFrom link. The shared object already requires the parent checksum; accessionID is additional, not a substitute.",
           "anyOf": [
             {
               "properties": {
@@ -241,10 +241,12 @@
         "dateCreated": {
           "description": "Date the transcriptome resource was created, not the sample collection date",
           "format": "date",
-          "type": "string"
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
         },
         "derivedFrom": {
-          "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
+          "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
           "items": {
             "$ref": "#/$defs/DerivedFrom"
           },
@@ -284,8 +286,9 @@
         "metadataAuthor": {
           "description": "Authors responsible for the header assertions",
           "items": {
-            "$ref": "#/$defs/Author"
+            "$ref": "#/$defs/MetadataAuthor"
           },
+          "minItems": 1,
           "type": "array"
         },
         "moleculeType": {
@@ -350,7 +353,8 @@
         "transcriptome": {
           "description": "Name of the transcriptome resource described by the file",
           "pattern": "\\S",
-          "type": "string"
+          "type": "string",
+          "minLength": 1
         },
         "transcriptomeSynonym": {
           "description": "Other supplied names for the transcriptome",
@@ -363,7 +367,9 @@
         },
         "version": {
           "description": "Version of the transcriptome resource",
-          "type": "string"
+          "pattern": "\\S",
+          "type": "string",
+          "minLength": 1
         },
         "vitalStats": {
           "$ref": "#/$defs/VitalStats",
@@ -408,6 +414,33 @@
       ],
       "title": "HeaderType",
       "type": "string"
+    },
+    "MetadataAuthor": {
+      "additionalProperties": false,
+      "description": "A metadata author with a supplied non-blank name, under the approved Q4 follow-up. This restriction is not applied to optional assemblyAuthor.",
+      "properties": {
+        "name": {
+          "description": "Name of the person or organization",
+          "pattern": "\\S",
+          "type": "string",
+          "minLength": 1
+        },
+        "nameType": {
+          "$ref": "#/$defs/NameType",
+          "description": "Whether the author is a person (Personal) or an organization (Organizational), as DataCite nameType"
+        },
+        "uri": {
+          "description": "ORCID URI",
+          "format": "uri",
+          "pattern": "^https://orcid\\.org/[0-9]{4}-[0-9]{4}-[0-9]{4}-[0-9]{3}[0-9X]$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "title": "MetadataAuthor",
+      "type": "object"
     },
     "MoleculeType": {
       "description": "Biological molecule classifications for the whole described set (D1). mixed explicitly records known heterogeneous RNA classes, not uncertainty. These are not preparation methods, and matching a string does not prove per-record INSDC compliance.",
@@ -657,10 +690,12 @@
     "dateCreated": {
       "description": "Date the transcriptome resource was created, not the sample collection date",
       "format": "date",
-      "type": "string"
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
     },
     "derivedFrom": {
-      "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
+      "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
       "items": {
         "$ref": "#/$defs/DerivedFrom"
       },
@@ -700,8 +735,9 @@
     "metadataAuthor": {
       "description": "Authors responsible for the header assertions",
       "items": {
-        "$ref": "#/$defs/Author"
+        "$ref": "#/$defs/MetadataAuthor"
       },
+      "minItems": 1,
       "type": "array"
     },
     "moleculeType": {
@@ -766,7 +802,8 @@
     "transcriptome": {
       "description": "Name of the transcriptome resource described by the file",
       "pattern": "\\S",
-      "type": "string"
+      "type": "string",
+      "minLength": 1
     },
     "transcriptomeSynonym": {
       "description": "Other supplied names for the transcriptome",
@@ -779,7 +816,9 @@
     },
     "version": {
       "description": "Version of the transcriptome resource",
-      "type": "string"
+      "pattern": "\\S",
+      "type": "string",
+      "minLength": 1
     },
     "vitalStats": {
       "$ref": "#/$defs/VitalStats",

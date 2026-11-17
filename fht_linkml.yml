@@ -108,7 +108,10 @@ slots:
       the transcript bases were extracted from that genome; genome guidance
       alone never justifies transcribedFrom. Annotation coordinates and other
       sources stay in relatedLink/documentation until the shared relationship
-      vocabulary is decided (#54). The shared DerivedFrom object requires the
+      vocabulary is decided (#54). A genome-guided set whose final sequences
+      were actually extracted from that genome also uses FHR transcribedFrom;
+      construction history alone does not establish the source of its bases.
+      The shared DerivedFrom object requires the
       parent's FHR-family checksum; an accession alone is not a verified family
       link.
     range: DerivedFrom
@@ -187,8 +190,11 @@ classes:
         description: Biological scope supplied by the producer
       version:
         description: Version of the transcriptome resource
+        pattern: '\S'
       metadataAuthor:
         description: Authors responsible for the header assertions
+        range: MetadataAuthor
+        minimum_cardinality: 1
       assemblyAuthor:
         description: Attributions for the assembly or extraction, when supplied
       dateCreated:
@@ -229,6 +235,15 @@ classes:
         pattern: '\S'
       strain:
         description: Supplied strain, breed or cultivar
+        pattern: '\S'
+  MetadataAuthor:
+    description: >-
+      A metadata author with a supplied non-blank name, under the approved Q4
+      follow-up. This restriction is not applied to optional assemblyAuthor.
+    is_a: Author
+    slot_usage:
+      name:
+        required: true
         pattern: '\S'
   VitalStats:
     description: Optional producer-reported statistics for the whole file

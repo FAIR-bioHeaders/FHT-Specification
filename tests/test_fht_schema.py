@@ -58,6 +58,39 @@ class FhtSchemaTests(unittest.TestCase):
             [error.message for error in errors],
         )
 
+    def test_approved_q4_required_values_are_nonempty(self):
+        for field in ("transcriptome", "version", "dateCreated"):
+            for value in ("", " ", "\t\n"):
+                with self.subTest(field=field, value=value):
+                    record = self.record(**{field: value})
+                    self.assertTrue(list(self.validator.iter_errors(record)))
+                    # The explicit nonblank rule also works without format assertion.
+                    self.assertTrue(list(Draft202012Validator(self.schema).iter_errors(record)))
+        self.assert_invalid(self.record(metadataAuthor=[]), "non-empty")
+        for author in ({}, {"uri": "https://orcid.org/0000-0002-1825-0097"},
+                       {"name": ""}, {"name": " ", "nameType": "Organizational"}):
+            with self.subTest(author=author):
+                self.assertTrue(list(self.validator.iter_errors(self.record(metadataAuthor=[author]))))
+        self.assert_valid(self.record(metadataAuthor=[{"name": "Named metadata author"}]))
+
+    def test_q4_does_not_tighten_optional_assembly_author_or_taxon(self):
+        self.assert_valid(self.record(taxon={}, assemblyAuthor=[{}]))
+        self.assert_valid(self.record(assemblyAuthor=[{"uri": "https://orcid.org/0000-0002-1825-0097"}]))
+        self.assert_invalid(self.record(assemblyAuthor=[]), "non-empty")
+        self.assertNotIn("required", self.schema["$defs"]["Author"])
+        self.assertNotIn("minLength", self.schema["$defs"]["Author"]["properties"]["name"])
+        self.assertEqual(self.schema["properties"]["metadataAuthor"]["minItems"], 1)
+        self.assertEqual(self.schema["properties"]["metadataAuthor"]["items"],
+                         {"$ref": "#/$defs/MetadataAuthor"})
+
+    def test_q8_extraction_parent_is_independent_of_construction_method(self):
+        parent = {"headerType": "FHR", "relationship": "transcribedFrom", "checksum": CHECKSUM}
+        self.assert_valid(self.record(assemblyType="genome-guided", derivedFrom=[parent]))
+        self.assert_valid(self.record(assemblyType="genome-guided"))
+        self.assert_invalid(self.record(derivedFrom=[{"headerType": "FHR", "relationship": "transcribedFrom"}]),
+                            "checksum")
+        # Shape validation does not certify actual extraction from supplied bytes.
+
     def test_schema_is_a_valid_draft_2020_12_schema(self):
         Draft202012Validator.check_schema(self.schema)
         self.assertEqual(

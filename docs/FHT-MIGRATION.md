@@ -226,3 +226,38 @@ independent #157 assessment).
   `specs/005-rna-transcriptome-header/spec.md`.
 - Shared #54 (relationship vocabulary), #157 (INSDC coverage) and #170 (BUSCO
   lineage grammar).
+
+## Narrow Q4/Q8 follow-up after #51 — 2026-11-17
+
+[Adam's coordination proposal](https://github.com/FAIR-bioHeaders/FHT-Specification/pull/50#issuecomment-6929925451)
+and [David's explicit approval](https://github.com/FAIR-bioHeaders/FHT-Specification/pull/50#issuecomment-6950266684)
+authorize the remaining nonempty-value follow-up, distinct from the nine-root
+presence decision. `transcriptome`, `version` and `dateCreated` must be nonblank;
+`metadataAuthor` has at least one item and each metadata author has a nonblank
+`name`. The local `MetadataAuthor` specialization implements that constraint
+without changing the pinned shared `Author` object or the optional
+`assemblyAuthor` name rules. Taxon members retain their current optionality,
+including the already permitted empty taxon object; the FHT sample array stays.
+No new taxonomy decision is opened here.
+
+These are explicit rejection-boundary changes to the unreleased draft, not a
+spelling correction: older readers may accept newly invalid empty metadata.
+The proposed first-release version, nine required root names and every existing
+75 conformance fixture byte/outcome/promotion marker remain unchanged. Direct
+schema tests cover the new boundaries; new normative rejection vectors and their
+consumer coverage remain part of #8/#9 coordination rather than being claimed
+as already exercised by the older installed reader. No toolkit/native consumer
+pin or released contract changes. The existing HTML reference must use the
+updated owning contract with a verified local provenance anchor; its field
+identities, seven canonical records and round-trip assertions stay intact.
+
+The optional `libraryProtocol` proposal is withdrawn. Record an actual kit or
+protocol name in `documentation` and an actual protocol URL in `relatedLink`;
+this does not infer `strandedness`. A genome-guided workflow that actually
+extracts its final transcript bases from a genome can cite that exact FHR parent
+with `transcribedFrom` and its family checksum. Genome guidance alone proves no
+such extraction; a genome accession or annotation URL is not a parent checksum.
+The Q8 clarification changes no relationship pair or verification algorithm and
+does not certify the biological truth of a schema-valid claim.
+
+Refs #8 and #11: both remain open for acceptance and publication/runtime handoffs.

@@ -69,6 +69,31 @@ def apply_common_rules(generated):
     return generated
 
 
+REQUIRED_STRINGS = ("transcriptome", "version", "dateCreated")
+NON_BLANK = {"minLength": 1, "pattern": "\\S"}
+
+
+def apply_required_value_rules(generated):
+    """Reject empty required strings and empty/nameless metadata authors only."""
+    roots = [generated]
+    if isinstance(generated.get("$defs", {}).get("FHT"), dict):
+        roots.append(generated["$defs"]["FHT"])
+    for node in roots:
+        properties = node["properties"]
+        for name in REQUIRED_STRINGS:
+            properties[name]["minLength"] = 1
+            properties[name].setdefault("pattern", "\\S")
+        properties["metadataAuthor"]["minItems"] = 1
+        properties["metadataAuthor"]["items"] = {"$ref": "#/$defs/MetadataAuthor"}
+    defs = generated["$defs"]
+    author = defs["MetadataAuthor"]
+    author["required"] = sorted(set(author.get("required", [])) | {"name"})
+    author["properties"]["name"].update(NON_BLANK)
+    # Taxon is deliberately left as the pinned core defines it: the maintainers
+    # chose to keep the current taxon rules (name and uri both optional) for
+    # this draft (FHT-Specification#8, 2026-11-16).
+    return generated
+
 def apply_sample_rules(generated):
     """Require each Sample entry to carry at least one supplied value."""
     sample = generated.get("$defs", {}).get("Sample")
@@ -126,7 +151,7 @@ def apply_fht_parent_rules(generated):
             "description": (
                 "Permitted FHT parent relationship: another FHT file filtered "
                 "into this set, or an FHR genome whose bases were extracted "
-                "(annotation-derived). Genome guidance alone is not a "
+                "(annotation-derived, or genome-guided models written out from the genome). Genome guidance alone is not a "
                 "transcribedFrom link. The shared object already requires the "
                 "parent checksum; accessionID is additional, not a substitute."
             ),
@@ -150,6 +175,7 @@ def generate():
     generated["title"] = "FHT"
     for key in ("metamodel_version", "version"):
         generated.pop(key, None)
+    generated = apply_required_value_rules(generated)
     generated = apply_sample_rules(generated)
     generated = apply_fht_parent_rules(generated)
     return apply_extension_rules(generated)
