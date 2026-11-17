@@ -69,7 +69,7 @@ from this table. Each nested object uses the same object/array rules recursively
 | Field | Contract shape | Required | Binding |
 | --- | --- | --- | --- |
 | `accessionID` | AccessionID object | no | typed object scope |
-| `assemblyAuthor` | array of Author | no | ordered typed container |
+| `assemblyAuthor` | array of AssemblyAuthor | no | ordered typed container |
 | `assemblySoftware` | array of Software | no | ordered typed container |
 | `assemblyType` | enum string | yes | typed scalar |
 | `checksum` | string | yes | typed scalar |

@@ -14,7 +14,7 @@ contract through the opt-in rule V7 lane; this is draft recognition. No release 
 established by this repository state. See
 [the contract and migration record](docs/FHT-MIGRATION.md).
 
-- Approved Q4/Q8 follow-up: [nonempty metadata values and actual genome extraction](docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17); optional assemblyAuthor/taxon rules stay unchanged.
+- Approved Q4/Q8 follow-up: [nonempty metadata values and actual genome extraction](docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17); taxon rules stay unchanged; supplied `assemblyAuthor` items need a nonblank `name` (proposed after #50).
 - Schema source: [`fht_linkml.yml`](fht_linkml.yml)
 - Generated contract: [`fht.json`](fht.json)
 - Design and evidence: [`specs/fht-field-decisions.md`](specs/fht-field-decisions.md)
