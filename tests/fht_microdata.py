@@ -470,7 +470,7 @@ def _draft_schema(allow_draft, schema):
     )
     if (provenance.get("fhtSchemaSha256") != hashlib.sha256(raw).hexdigest()
             or provenance.get("owningSourceCommit") !=
-            "8b178a02b01876953d0360bc9f46bd11a609b3c6"):
+            "91fdc1f35ab73db99c5342f00fe689c50dd51574"):
         raise MicrodataError("draft binding provenance does not match owning source")
     if schema is not None and schema != local:
         raise MicrodataError("custom schema must match the pinned owning draft")

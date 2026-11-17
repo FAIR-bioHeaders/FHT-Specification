@@ -19,9 +19,10 @@ Under the existing V7 draft lane, the reference accepts only that owning raw-mai
 selector and the current string `schemaVersion: "1.0"`. This is a development
 value, not a released version. The exact local schema bytes are recorded in
 [`provenance.json`](../tests/fixtures/microdata/provenance.json), SHA-256
-`91a890e2976373eb739574d3c3f24a55a2ee779131d24b55dfa4bb2f7accde8d`.
-The Q4 follow-up deliberately re-anchors this test-only binding to owning
-schema commit `8b178a02b01876953d0360bc9f46bd11a609b3c6`; optional assembly author rules remain unchanged.
+`2c437f60468fe939bad299522d5033e01e08f60974aec872ca0b5e50628d173b`.
+The Q4 follow-ups deliberately re-anchor this test-only binding to owning
+schema commit `91fdc1f35ab73db99c5342f00fe689c50dd51574`, which also requires a nonblank
+name on supplied assembly authors.
 No FHT release or fixed alias currently exists. Every release-tag/w3id selector,
 unknown selector, wrong family and unavailable version is rejected; nothing is
 substituted or fetched. This is rejection by an explicitly FHT-only draft
