@@ -172,6 +172,22 @@ class FHTMicrodataTests(unittest.TestCase):
         page = base.replace("<h1>", '<div hidden>unrelated</div><h1>')
         read_page(page, allow_draft=True, warn=lambda message: None)
 
+    def test_concealed_scalar_descendants_are_rejected(self):
+        record = json.loads((ROOT / "examples/minimal-de-novo.fht.json").read_text())
+        base = write_page(record, allow_draft=True)
+        name = record["metadataAuthor"][0]["name"]
+        for attrs in ('hidden', 'style="display:none"', 'style="visibility:hidden"'):
+            with self.subTest(attrs=attrs):
+                page = base.replace(name, f'Visible<span {attrs}><b>Hidden</b></span>')
+                with self.assertRaisesRegex(MicrodataError, "not visible"):
+                    read_page(page, allow_draft=True, warn=lambda message: None)
+        # Visible descendants contribute text; unrelated concealed siblings do not.
+        page = base.replace(name, 'Visible<span><b>Nested</b></span>')
+        self.assertEqual(read_page(page, allow_draft=True, warn=lambda message: None)
+                         ["metadataAuthor"][0]["name"], "VisibleNested")
+        page = base.replace("<h1>", '<div hidden>unrelated</div><h1>')
+        read_page(page, allow_draft=True, warn=lambda message: None)
+
     def test_old_html_parser_is_refused(self):
         import fht_microdata
         base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
