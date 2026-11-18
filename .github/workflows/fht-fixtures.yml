@@ -81,3 +81,11 @@ jobs:
           "$RUNNER_TEMP/toolkit/bin/python" -m pip install "fair-bioheaders==0.11.0"
       - name: Installed artifact and byte-exact stream evidence (V7, not released FHT support)
         run: python scripts/run_toolkit_lane.py --venv "$RUNNER_TEMP/toolkit"
+      - name: Install the same toolkit into a second throwaway environment
+        run: |
+          python -m venv "$RUNNER_TEMP/toolkit-checkout"
+          "$RUNNER_TEMP/toolkit-checkout/bin/python" -m pip install "fair-bioheaders==0.11.0"
+      - name: Same reader against this checkout's fht.json (overlay; every vector compared, findings fail)
+        run: |
+          python scripts/run_toolkit_lane.py --venv "$RUNNER_TEMP/toolkit-checkout" \
+            --checkout-contract --strict

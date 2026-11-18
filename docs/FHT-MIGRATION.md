@@ -54,10 +54,23 @@ The proposed contract version is `schemaVersion: "1.0"` (a string, MAJOR.MINOR),
 separate from the transcriptome `version`, a repository release tag and the
 file checksum. The generated schema keeps the development `$id`
 `https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json`.
-The accepted `schema` value may be that raw-main URL, a future raw tag URL, or a
-versioned `https://w3id.org/fair-bioheaders/fht/vX.Y.Z` URL. **No w3id alias or
-release tag is published by this change.** Confirm the release line and alias
-with maintainers before citing them.
+While FHT is a draft the only accepted `schema` value is that raw-main URL
+(shared rule V7: a draft is cited by its owning repository's raw-main URL and
+never takes a release form). The released forms, the shared repository's raw
+tag URL and `https://w3id.org/fair-bioheaders/fht/vX.Y.Z`, are added to the
+contract when FHT is published (issue #10). **No w3id alias or release tag is
+published by this change.**
+
+`fht.json` is the normative contract. `fht_linkml.yml` is its source, but
+`json-schema-generator.py` adds rules LinkML cannot express: the permitted
+`derivedFrom` parent pairs, at least one value per `sample` item, top-level
+`x-` extension keys, exact checksum and SeqCol lengths, `minItems` on optional
+arrays, non-blank required strings and named metadata authors, and the
+`schemaVersion` enum. `linkml-validate` against the YAML model therefore
+accepts some records that `fht.json` rejects (an FHP parent, an empty `sample`
+item) and rejects valid `x-` extension fields. Validate records with
+`fht.json` (JSON Schema 2020-12 with format assertion), not with
+`linkml-validate`.
 
 ## Required fields
 
