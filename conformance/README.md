@@ -107,17 +107,19 @@ real-data pilot: see "Promotion candidates from the pilot" below.
 
 `selfChecksum` names, per vector, the state of the file's own root checksum
 line under the R1-R5 recomputation, and is recorded on **every** vector
-(75/75):
+(77/77):
 
 - `matches` — the stated value equals the recomputed value over the covered
-  bytes. The positive class: all 29 valid vectors carry it, and so do the
+  bytes. The positive class: all 30 valid vectors carry it, and so do the
   invalid vectors whose single defect lies elsewhere (the anti-accident rule:
   an implementation must not pass a vector by failing the comparison by
   accident).
 - `broken` — the root checksum line parses but recomputes differently
   (negative fixture, 7 vectors).
 - `unreachable` — the root checksum line cannot be located or compared at all
-  (negative fixture, 9 vectors; the R2/R5 line-shape families).
+  (negative fixture, 10 vectors; the R2/R5 line-shape families, the
+  non-canonical R4 value and the truncated gzip stream, which has no
+  decompressed bytes to hash).
 
 `parentLink` is an array of per-link entries
 `{file, statedChecksum, result}` recorded exactly on the vectors that
@@ -166,10 +168,26 @@ also wired into `tests/test_fixtures.py`) runs three proofs:
 2. the same regeneration into a scratch directory outside the tree;
 3. every vector re-read and re-classified by the independent runner
    (valid: recomputed checksum equals the manifest and the record passes
-   `fht.json` with `FormatChecker`; invalid: rejected at exactly the
-   declared failure class, with the `selfChecksum` anti-accident rule —
+   `fht.json` with `FormatChecker`; invalid: rejected **for the rule its
+   entry declares**, with the `selfChecksum` anti-accident rule —
    non-checksum defects carry consistent checksums so an implementation
-   cannot pass by failing the comparison by accident).
+   cannot pass by failing the comparison by accident). The runner reads the
+   bytes in rule order (R7, R10, R2/R5/R4, R6/R8/R12/R13, then the R3
+   comparison) and every error it raises names its rule, so a byte-rule
+   vector passes only when the declared rule is the one that rejects it. A
+   contract vector (C1, C2, V1, R15) passes only when its `fht.json` errors
+   equal the per-vector expectation recorded in the runner
+   (`EXPECTED_SCHEMA_ERRORS`: keyword, JSON path and offending value, with
+   no missing and no extra error). The two V5 vectors are routed to the
+   reader's current FHR schema and validated there: the pinned copy of
+   released `fhr.json` in [`../schemas/fhr-v0.6.0.json`](../schemas/fhr-v0.6.0.json)
+   must raise exactly the five errors listed under "What these vectors do
+   **not** yet prove" below.
+   A C3 vector passes only when its parent link is actually recomputed as
+   `checked-fail`. Compressed vectors are read by the runner's own RFC 1952
+   reader, which requires every member to be complete (deflate end of
+   stream plus a matching CRC-32/ISIZE trailer) and rejects bytes after the
+   last member, including NUL padding.
 
 ### Synthetic content policy
 
@@ -191,18 +209,18 @@ cited at its recomputed value by the checked-pass vectors.
 
 | Group | Vectors |
 | --- | --- |
-| Byte coverage (R1-R4) | RNA `lf`/`crlf`/`cr`/`mixed-endings`/`no-final-newline`, cDNA `T` variant, `gzip` (one member), `bgzf` (multi-block), `gzip-multimember` (two members split inside the checksum line); rejections: CRLF-normalized, U→T-normalized and case-normalized checksums (R1), sequence tamper and its compressed copy `gzip-sequence-tampered` (R3), SHA-256, truncated SHA-512 and non-canonical base64 (R4) |
+| Byte coverage (R1-R4) | RNA `lf`/`crlf`/`cr`/`mixed-endings`/`no-final-newline`, cDNA `T` variant, `gzip` (one member), `bgzf` (multi-block), `gzip-multimember` (two members split inside the checksum line); rejections: a gzip stream truncated inside its trailer (`gzip-truncated`, R1: no decompressed bytes exist), CRLF-normalized, U→T-normalized and case-normalized checksums (R1), sequence tamper and its compressed copy `gzip-sequence-tampered` (R3), SHA-256, truncated SHA-512 and non-canonical base64 (R4) |
 | Checksum line shape (R2/R5) | root-indented, space-before-colon, quoted value, checksum-first, trailing spaces, nested (derivedFrom) parent checksum; rejections: missing, doubled, nested-only (R2), block literal, continuation, trailing comment (R5) |
-| Header text (R6-R8, R10, R12/R13) | ordinary comments/blank lines incl. `;~#` and a post-record `;` comment, raw UTF-8 value; rejections: U+2028 (R6), BOM (R7), duplicate key and anchor/alias (R8), `;~` after record and concatenation (R10), `011` (R12), `.inf` (R13) |
+| Header text (R6-R8, R10, R12/R13) | ordinary comments/blank lines incl. `;~#` and a post-record `;` comment, raw UTF-8 value, plain (unquoted) `dateCreated` read as the string written (`yaml-plain-date`, R12); rejections: U+2028 (R6), BOM (R7), duplicate key and anchor/alias (R8), `;~` after record and concatenation (R10), `011` (R12), `.inf` (R13) |
 | Writer recommendations | escaped `\x3E`/`\x40` (R11), `javascript:` relatedLink kept valid with `warnings: ["R14"]` |
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
 | Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
 | Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
 | Parent links (C3) | checked-pass ×5 (the two-link rich record, `-parent-transcribed-from`, `-parent-filtered-from`, and the two pilot candidates `-parent-subset-citing-whole` and `-parent-masked-exact`), unchecked ×1, checked-fail ×3 (`-parent-mismatched`, and the pilot candidates `-parent-real-digest-wrong-file` and `-parent-case-folded-digest`, whose stated value is a genuine digest of a *different* shipped file), mixed verdicts ×1 (checked-pass + checked-fail in one record; #37) |
 
-Counts: 29 valid, 46 invalid, 3 parent fixtures; every vector carries a
-finalized `selfChecksum` (30 matches-invalid + 29 matches-valid = 59, 7
-broken, 9 unreachable) and the ten C3 link vectors carry `parentLink`
+Counts: 30 valid, 47 invalid, 3 parent fixtures; every vector carries a
+finalized `selfChecksum` (30 matches-invalid + 30 matches-valid = 60, 7
+broken, 10 unreachable) and the ten C3 link vectors carry `parentLink`
 entries. Rule coverage self-check:
 every registered rule except the recommendation/warning/outcome-only/lane
 rules (R9, R11, R14, V5, V7 — each with a recorded `notApplicable` note in the
@@ -220,7 +238,7 @@ both sides nor a recorded reason.
 
 | Rule | Valid vector | Invalid vector | Where |
 | --- | --- | --- | --- |
-| R1 exact bytes, decompressed | `fht-fasta-lf` (+ `crlf`, `cr`, `mixed-endings`, `no-final-newline`, `cdna`, `gzip`, `bgzf`, `gzip-multimember`) | `fht-fasta-crlf-normalized-checksum`, `-u-normalized-checksum`, `-case-normalized-checksum` | FORMAT.md |
+| R1 exact bytes, decompressed | `fht-fasta-lf` (+ `crlf`, `cr`, `mixed-endings`, `no-final-newline`, `cdna`, `gzip`, `bgzf`, `gzip-multimember`) | `fht-fasta-crlf-normalized-checksum`, `-u-normalized-checksum`, `-case-normalized-checksum`, `-gzip-truncated` | FORMAT.md |
 | R2 one root checksum line | `-root-indented`, `-space-before-colon`, `-quoted-value`, `-nested-checksum` | `-missing-checksum`, `-two-checksum-lines`, `-only-nested-checksum` | FORMAT.md |
 | R3 exclude that line, hash the rest | `-checksum-first`, `-checksum-trailing-spaces`, `-comments-and-blank-lines` (the excluded line is located, not guessed) | `-sequence-tampered`, `-gzip-sequence-tampered` | FORMAT.md |
 | R4 SHA-512/256 canonical base64 | `-lf` (44-char canonical value) | `-checksum-sha256`, `-checksum-truncated-sha512`, `-checksum-non-canonical` | FORMAT.md |
@@ -231,7 +249,7 @@ both sides nor a recorded reason.
 | R9 microdata token lists | — | — | **not applicable to `fht-fasta`**: a microdata-only rule, and no FHT microdata reader or writer exists (box 2 keeps unimplemented serializations out of the suite; the typed-HTML lane is issue #11). Registered with this `notApplicable` note so the R1-R15 audit accounts for it. |
 | R10 leading header block | `-comments-and-blank-lines` | `-header-after-record`, `-concatenated` | FORMAT.md |
 | R11 escaped `>`/`@` (writer advice) | `-escaped-record-markers` | — (recommendation; `notApplicable`) | FORMAT.md |
-| R12 YAML 1.1/1.2 agreement | `-lf` (all plain scalars agree) | `-yaml-leading-zero` | FORMAT.md |
+| R12 YAML 1.1/1.2 agreement | `-lf` (all plain scalars agree), `-yaml-plain-date` (a plain date is the string written) | `-yaml-leading-zero` | FORMAT.md |
 | R13 finite numbers | `-rich` | `-inf-vital-stats` | FORMAT.md |
 | R14 link schemes (warn only) | `-link-scheme-warning` (`warnings: ["R14"]`) | — (never a rejection; `notApplicable`) | FORMAT.md |
 | R15 `x-` extensions | `-extension-fields`, `-rich` | `-extension-nested-key`, `-extension-uppercase-key` | FORMAT.md (via FR-010) |
@@ -448,7 +466,10 @@ the shared retirement rule: retire the id, never rewrite its expectation.
   property or the `x-` pattern), reproduced on 2026-11-13 with jsonschema
   4.26.0 and confirmed by the released reader `bioheaders verify` from
   fair-bioheaders 0.10.0, which reports the V5 warning and the schemaVersion
-  rejection for each file. **No implementation under test produced any
+  rejection for each file. Since 2026-11-18 CI computes this outcome on every
+  run: the runner validates both records against the pinned copy of release
+  v0.6.0's `fhr.json` (same bytes and digest as v0.5.0, recorded in
+  `schemas/provenance.json`) and requires exactly those five errors. **No implementation under test produced any
   expectation in this
   directory** — there is no FHT implementation. The generator's own
   reference reader and the runner's independently written reader agreeing
@@ -510,3 +531,26 @@ draft reader cannot accept the new positive vector: acceptance, strip and combin
 for that vector are explicitly NOT-RUN, following a specific rejection probe.
 All other comparisons and default-off checks still execute. The older counts
 above describe their original measurement, not new reader coverage.
+
+## Reader assertions, plain dates and truncated streams — 2026-11-18
+
+The suite now has **77 vectors: 30 valid and 47 invalid**. Two vectors were
+added and no existing vector's bytes or expected outcome changed:
+
+- `fht-fasta-yaml-plain-date` (valid, R12): `dateCreated: 2026-11-10` written
+  plain. FORMAT.md R12 says a plain scalar that looks like a date or time is a
+  string, exactly as written; the shared suite's valid
+  `fasta-yaml-portable-types` vector relies on the same reading. The runner
+  previously rejected it as "must be quoted", which contradicted the rule.
+  Writers still quote such values.
+- `fht-fasta-gzip-truncated` (invalid, R1, `selfChecksum: unreachable`):
+  `fht-fasta-lf` as one gzip member cut six bytes before its end, inside the
+  CRC-32/ISIZE trailer. Every deflate byte is present, so a lenient
+  decompressor returns the whole file, but the stream is incomplete and R1 has
+  no decompressed bytes to hash.
+
+A gzip stream followed by NUL padding or other trailing bytes is also rejected
+by the runner's reader (unit tests in `tests/test_fixture_reader.py`), but no
+vector asserts it: FORMAT.md does not decide padding, and the released
+`fair-bioheaders` 0.11.0 reader accepts trailing NUL bytes (measured
+2026-11-18), so that is reader policy here, not a rule-text outcome.

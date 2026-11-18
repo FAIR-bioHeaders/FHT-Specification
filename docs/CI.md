@@ -12,7 +12,7 @@ amends any schema.
 | Workflow | Trigger | Covers |
 | --- | --- | --- |
 | [`validate-specification.yml`](../.github/workflows/validate-specification.yml) | push/PR | The **current FHT 1.0 development contract**: unit tests over the generated `fht.json` (positive/rejection fixtures in `tests/test_fht_schema.py`, synthetic examples in `examples/`, byte-backed conformance vectors via `tests/test_fixtures.py`), LinkML regeneration drift and the pinned shared-import provenance. Pre-existing; extended by #8. |
-| [`fht-fixtures.yml`](../.github/workflows/fht-fixtures.yml) | push/PR | The issue **#8** byte-backed fixtures via `scripts/check_fht_fixtures.py`: regeneration determinism (in-process rerun compared byte-for-byte with `conformance/` and the owned `examples/` files), an independently written R1-R5 reader recomputing every vector checksum, strict R6-R8/R10/R12/R13 header checks, `fht.json` contract validation with `FormatChecker`, V1/V5 schema selection (with the V7 draft-lane note), C3 parent-link outcomes with parent paths confined to the distributed tree, manifest accountability for every lettered FORMAT.md rule (R1-R15 registered, each with both sides or a recorded `notApplicable` reason), and the examples recomputation. The independent job invokes no toolkit. A separate installed-draft job runs the named toolkit under V7; see below. |
+| [`fht-fixtures.yml`](../.github/workflows/fht-fixtures.yml) | push/PR | The issue **#8** byte-backed fixtures via `scripts/check_fht_fixtures.py`: regeneration determinism (in-process rerun compared byte-for-byte with `conformance/` and the owned `examples/` files), an independently written R1-R5 reader recomputing every vector checksum, strict R6-R8/R10/R12/R13 header checks (each invalid vector must be rejected by the rule its manifest entry declares; contract vectors must raise exactly their recorded `fht.json` errors), an independent RFC 1952 reader that requires complete gzip members, `fht.json` contract validation with `FormatChecker`, V1/V5 schema selection (with the V7 draft-lane note; the V5 rejection is computed against the pinned released `schemas/fhr-v0.6.0.json`), C3 parent-link outcomes with parent paths confined to the distributed tree, manifest accountability for every lettered FORMAT.md rule (R1-R15 registered, each with both sides or a recorded `notApplicable` reason), and the examples recomputation. The independent job invokes no toolkit. A separate installed-draft job runs the named toolkit under V7; see below. |
 | [`docs-checks.yml`](../.github/workflows/docs-checks.yml) | push/PR | Owned documentation signals: Markdownlint with the reviewed local config `.markdownlint-cli2.jsonc` (pinned `markdownlint-cli2@0.24.0`, rule set 0.42.0), plus `scripts/check_docs.py` for local relative links/anchors, whitespace (trailing spaces, CR bytes, final newline) and git conflict markers. Fails the job only on real findings; no network access. |
 | [`legacy-draft-checks.yml`](../.github/workflows/legacy-draft-checks.yml) | push/PR | Schema health of the preserved legacy draft `legacy/fht-v0.1.json` (`scripts/check_legacy_schema.py`) and the classified example/fixture suite (`scripts/check_legacy_examples.py`). |
 | [`external-links.yml`](../.github/workflows/external-links.yml) | schedule (Mondays) + `workflow_dispatch` | Every http(s) URL cited by repository Markdown, one retry each. Never a PR signal: transient remote failures must not gate unrelated work. |
@@ -298,3 +298,23 @@ NOT-RUN for that one ID. An unexpected acceptance or unrelated failure fails the
 lane. The other 74 vectors remain ordinary comparisons; all 75 run default-off.
 No manifest expectation or approved consumer pin is changed. Earlier 72-vector
 results above remain the dated pre-addition measurements.
+
+## Reader assertions and a Linux toolkit run — 2026-11-18
+
+`scripts/check_fht_fixtures.py` now asserts, per invalid vector, the rule that
+rejects it (byte rules by the rule id the reader raises; contract rules by the
+exact `fht.json` errors recorded per vector; V5 by validating against the pinned
+released FHR schema; C3 by recomputing the link as `checked-fail`). The suite is
+77 vectors (30 valid, 47 invalid) after adding `fht-fasta-yaml-plain-date` and
+`fht-fasta-gzip-truncated`; see
+[the conformance README](../conformance/README.md#reader-assertions-plain-dates-and-truncated-streams--2026-11-18).
+
+Measured 2026-11-18 on Linux (Python 3.13.14) with `fair-bioheaders==0.11.0`
+from PyPI in a fresh environment, `python scripts/run_toolkit_lane.py`: lane ON,
+29 valid accepted and 47 invalid rejected with no disagreement; 10 `parentLink`
+vectors with the three verdicts distinguishable; 29 strips and 29 combines
+round-tripped; streams `verify` 76, `strip` 29, `combine` 29. The `mixed`
+positive stays NOT-RUN against the installed four-value enum, as above. Both new
+vectors agree with the installed reader: it accepts the plain date and rejects
+the truncated stream ("Compressed file ended before the end-of-stream marker was
+reached").

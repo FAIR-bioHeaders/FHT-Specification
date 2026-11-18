@@ -18,9 +18,11 @@ Lanes:
    same-file helper) splits lines per R1, locates the single root checksum
    line per R2, applies the R5 value grammar, excludes exactly that line
    (R3) and recomputes SHA-512/256 base64 (R4, canonical charset). Gzip and
-   BGZF vectors are decompressed first (R1). Valid vectors must reproduce the
-   manifest checksum exactly; invalid vectors must fail in the way their
-   ``selfChecksum`` class declares.
+   BGZF vectors are decompressed first (R1) by this file's own RFC 1952
+   reader, which requires every member to be complete and rejects trailing
+   bytes. Valid vectors must reproduce the manifest checksum exactly; invalid
+   vectors must fail in the way their ``selfChecksum`` class declares, and
+   for the rule their entry declares (every raised error names its rule).
 3. Header text rules. R6 (UTF-8, no U+0085/U+2028/U+2029), R7 (no BOM),
    R8 (no duplicate keys, anchors, aliases, merge keys or explicit tags),
    R10 (leading block), R12 (YAML 1.1/1.2-ambiguous plain scalars) and R13
@@ -32,7 +34,10 @@ Lanes:
    raw-main URL selects a contract, and while no release registers FHT every
    release-form FHT URL is "any other value" under V5 — read as FHR, never
    the draft and not unsupported-version (V4 begins when FHT enters
-   schemas/versions.json). C3 parent links are verified by
+   schemas/versions.json). That FHR reading is computed, against the pinned
+   copy of released fhr.json v0.6.0 (schemas/fhr-v0.6.0.json). Contract
+   vectors must raise exactly the fht.json errors recorded for them in
+   EXPECTED_SCHEMA_ERRORS. C3 parent links are verified by
    recomputing the parent file's checksum with this same reader and
    comparing as exact strings (checked-pass / checked-fail / unchecked).
    Checked parent paths are confined to the distributed conformance/
@@ -116,13 +121,78 @@ def split_lines(data):
     return lines
 
 
+class CompressionError(ValueError):
+    """The input is not a complete gzip/BGZF stream (R1 has no bytes to hash)."""
+
+
+GZIP_MAGIC = b"\x1f\x8b"
+FTEXT, FHCRC, FEXTRA, FNAME, FCOMMENT = 0x01, 0x02, 0x04, 0x08, 0x10
+
+
+def _member_header_end(data, start):
+    """Parse one RFC 1952 member header at ``start``; return the deflate offset."""
+    if data[start:start + 2] != GZIP_MAGIC:
+        raise CompressionError(f"R1: bytes at offset {start} are not a gzip member "
+                               f"(trailing data or padding after the last member)")
+    if len(data) - start < 10:
+        raise CompressionError(f"R1: gzip member at byte {start} has a truncated header")
+    if data[start + 2] != 8:
+        raise CompressionError(f"R1: gzip member at byte {start} is not deflate")
+    flags = data[start + 3]
+    if flags & 0xE0:
+        raise CompressionError(f"R1: gzip member at byte {start} sets reserved flags")
+    position = start + 10
+    if flags & FEXTRA:
+        if len(data) < position + 2:
+            raise CompressionError("R1: truncated gzip extra field")
+        position += 2 + int.from_bytes(data[position:position + 2], "little")
+    for flag in (FNAME, FCOMMENT):
+        if flags & flag:
+            end = data.find(b"\x00", position)
+            if end < 0:
+                raise CompressionError("R1: unterminated gzip name/comment field")
+            position = end + 1
+    if flags & FHCRC:
+        position += 2
+    if position > len(data):
+        raise CompressionError("R1: truncated gzip member header")
+    return position
+
+
 def decompress(data):
-    out = b""
-    while data:
-        engine = zlib.decompressobj(31)
-        out += engine.decompress(data) + engine.flush()
-        data = engine.unused_data
-    return out
+    """Independent RFC 1952 reader: every member must be complete.
+
+    Written separately from the generator's helper. Each member's header is
+    parsed here, its raw deflate stream must reach its end-of-stream marker
+    (``eof``), and its CRC-32/ISIZE trailer must be present and match. Bytes
+    after the last member, including NUL padding, are rejected rather than
+    ignored: R1 hashes the decompressed bytes, so an incomplete or padded
+    stream has no defined content."""
+    if not data:
+        raise CompressionError("R1: empty compressed input")
+    out, position = [], 0
+    while position < len(data):
+        body = _member_header_end(data, position)
+        engine = zlib.decompressobj(-zlib.MAX_WBITS)
+        try:
+            member = engine.decompress(data[body:]) + engine.flush()
+        except zlib.error as error:
+            raise CompressionError(f"R1: corrupt deflate data: {error}") from error
+        if not engine.eof:
+            raise CompressionError("R1: gzip member ends before its deflate "
+                                   "end-of-stream marker (truncated stream)")
+        trailer_at = len(data) - len(engine.unused_data)
+        trailer = data[trailer_at:trailer_at + 8]
+        if len(trailer) != 8:
+            raise CompressionError("R1: gzip member is missing its CRC-32/ISIZE "
+                                   "trailer (truncated stream)")
+        crc, size = int.from_bytes(trailer[:4], "little"), int.from_bytes(trailer[4:], "little")
+        if crc != zlib.crc32(member) or size != len(member) & 0xFFFFFFFF:
+            raise CompressionError("R1: gzip member CRC-32 or ISIZE does not match "
+                                   "its decompressed bytes")
+        out.append(member)
+        position = trailer_at + 8
+    return b"".join(out)
 
 
 def header_lines(data):
@@ -140,19 +210,27 @@ def header_lines(data):
     return block
 
 
-B64 = rb"[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]="
-VALUE_RE = re.compile(rb"^ +(?:(" + B64 + rb")|'(" + B64 + rb")'|\"(" + B64
-                      + rb")\") *$")
+# R5 fixes the line's shape (one 44-character base64 value, plain or quoted);
+# R4 additionally fixes the encoding (canonical: the unused low bits of the last
+# payload character are zero). They are checked in that order so a rejection
+# names the rule it actually breaks.
+B64_SHAPE = rb"[A-Za-z0-9+/]{43}="
+VALUE_RE = re.compile(rb"^ +(?:(" + B64_SHAPE + rb")|'(" + B64_SHAPE + rb")'|\"("
+                      + B64_SHAPE + rb")\") *$")
+CANONICAL_RE = re.compile(r"^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$")
 KEY_RE = re.compile(rb"^([ \t]*)checksum( *):(.*)$", re.S)
 
 
 def locate_checksum(data):
-    """R2/R5: the single root-level checksum line; returns (stated, position,
-    length). Raises ValueError when the shape is invalid."""
+    """R2/R5/R4: the single root-level checksum line; returns (stated, position,
+    length). Raises ValueError, prefixed with the rule broken, when the shape
+    is invalid."""
     lines = split_lines(data)
     blocks = header_lines(data)
     indents = [len(t) - len(t.lstrip(b" \t")) for t in blocks
                if t.strip() and not t.lstrip().startswith(b"#")]
+    if not indents:
+        raise ValueError("R2: the header block has no mapping lines")
     root_indent = min(indents)
     root = []
     for index, (content, term) in enumerate(lines):
@@ -168,6 +246,10 @@ def locate_checksum(data):
     if not grammar:
         raise ValueError("R5: the checksum line holds more than the checksum value")
     stated = (grammar.group(1) or grammar.group(2) or grammar.group(3)).decode()
+    if not CANONICAL_RE.match(stated):
+        raise ValueError("R4: the checksum value is not canonical base64 of a "
+                         "32-byte digest (its final payload character has "
+                         "nonzero unused bits)")
     position = data.find(whole)
     if position < 0 or data.count(whole) != 1:
         raise ValueError("R2: the checksum line is not uniquely locatable")
@@ -196,7 +278,21 @@ class StrictError(ValueError):
 
 
 class StrictLoader(yaml.SafeLoader):
-    """SafeLoader plus R8: duplicate keys, anchors/aliases, merge keys."""
+    """SafeLoader plus R8 (duplicate keys, anchors/aliases, merge keys) and the
+    R12 reading of date-like plain scalars.
+
+    R12 (FORMAT.md v0.6.0): "Plain scalars that look like dates or times are
+    strings, exactly as written." PyYAML's SafeLoader resolves them to
+    ``datetime.date``/``datetime`` objects, so the timestamp resolver is
+    removed here and such a scalar stays the string it was written as (the
+    shared valid vector fasta-yaml-portable-types relies on this)."""
+
+
+StrictLoader.yaml_implicit_resolvers = {
+    first: [(tag, regexp) for tag, regexp in resolvers
+            if tag != "tag:yaml.org,2002:timestamp"]
+    for first, resolvers in yaml.SafeLoader.yaml_implicit_resolvers.items()
+}
 
 
 def _strict_mapping(loader, node, deep=False):
@@ -224,8 +320,9 @@ R12_PLAIN = [
      "YAML 1.1 boolean word"),
     (re.compile(r"^[0-9]+([eE][-+]?[0-9]+)$"), "exponent without decimal point"),
     (re.compile(r"^[0-9]+\.[0-9]*[eE][0-9]+$"), "unsigned exponent"),
-    (re.compile(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}$"), "plain date (must be quoted)"),
 ]
+# Plain dates are deliberately absent: R12 reads them as strings, exactly as
+# written (StrictLoader above), and the shared suite has a valid vector for it.
 
 
 def parse_metadata(data):
@@ -235,6 +332,8 @@ def parse_metadata(data):
     blocks = header_lines(data)
     indents = [len(t) - len(t.lstrip(b" \t")) for t in blocks
                if t.strip() and not t.lstrip().startswith(b"#")]
+    if not indents:
+        raise StrictError("R10: the header block has no mapping lines")
     root_indent = min(indents)
     texts = []
     for text in blocks:
@@ -247,6 +346,14 @@ def parse_metadata(data):
             raise StrictError("R6: header line contains U+0085, U+2028 or U+2029")
         texts.append(decoded)
     block = "\n".join(texts)
+    try:
+        return _strict_yaml(block)
+    except yaml.YAMLError as error:
+        raise StrictError(f"YAML: the header block does not parse: "
+                          f"{str(error).splitlines()[0]}") from error
+
+
+def _strict_yaml(block):
     for event in yaml.parse(block):
         if type(event).__name__ == "AliasEvent":
             raise StrictError("R8: YAML alias")
@@ -255,7 +362,7 @@ def parse_metadata(data):
             raise StrictError(f"R8: YAML anchor {anchor!r}")
         tag = getattr(event, "tag", None)
         if tag is not None and tag != "!":
-            raise StrictError(f"R8: explicit tag {tag!r}")
+            raise StrictError(f"R12: explicit tag {tag!r}")
         if type(event).__name__ == "ScalarEvent" and event.style in (None, ""):
             for pattern, why in R12_PLAIN:
                 if pattern.match(event.value or ""):
@@ -284,8 +391,27 @@ SCHEMA = json.loads((ROOT / "fht.json").read_text(encoding="utf-8"))
 VALIDATOR = jsonschema.Draft202012Validator(SCHEMA,
                                             format_checker=jsonschema.FormatChecker())
 RAW_MAIN = generator.RAW_MAIN
-RAW_TAG = re.compile(re.escape(generator.RAW_FHT) + r"v\d+\.\d+\.\d+/fht\.json$")
-W3ID_TAG = re.compile(re.escape(generator.W3ID) + r"fht/v\d+\.\d+\.\d+/?$")
+# Release-form FHT URLs: a raw tag of this development repository, the V2 raw
+# tag form of the shared publication repository (under either of its names)
+# and the V3 w3id form. No release registers FHT, so each is "any other value"
+# under V5 (as limited by V7). fullmatch: Python's "$" would also match before
+# a final line feed.
+RELEASE_FORMS = [
+    re.compile(re.escape(generator.RAW_FHT) + r"v[0-9]+\.[0-9]+\.[0-9]+/fht\.json"),
+    re.compile(r"https://raw\.githubusercontent\.com/FAIR-bioHeaders/"
+               r"(FAIR-bioHeaders-Specification|FHR-Specification)/"
+               r"v[0-9]+\.[0-9]+\.[0-9]+/fht\.json"),
+    re.compile(re.escape(generator.W3ID) + r"fht/v[0-9]+\.[0-9]+\.[0-9]+/?"),
+]
+
+# The reader's current FHR schema, which V5 routes "any other value" to:
+# fhr.json of shared release v0.6.0 (FHR 2.1), copied verbatim and pinned in
+# schemas/provenance.json (scripts/check_provenance.py checks the digest). A
+# released contract resolves at its release tag, never at main.
+FHR_SCHEMA_FILE = ROOT / "schemas" / "fhr-v0.6.0.json"
+FHR_VALIDATOR = jsonschema.Draft202012Validator(
+    json.loads(FHR_SCHEMA_FILE.read_text(encoding="utf-8")),
+    format_checker=jsonschema.FormatChecker())
 
 
 def schema_selection(record):
@@ -300,13 +426,47 @@ def schema_selection(record):
     value = record.get("schema") if isinstance(record, dict) else None
     if value == RAW_MAIN:
         return "current"
-    if RAW_TAG.match(value or "") or W3ID_TAG.match(value or ""):
+    if isinstance(value, str) and any(form.fullmatch(value) for form in RELEASE_FORMS):
         return "near-miss-fhr"
     return "other-fhr"
 
 
 def schema_errors(record):
     return sorted(error.message for error in VALIDATOR.iter_errors(record))
+
+
+def error_triples(validator, record):
+    """(keyword, JSON path, message) for every error, in a stable order."""
+    return sorted((error.validator, error.json_path, error.message)
+                  for error in validator.iter_errors(record))
+
+
+RULE_PREFIX = re.compile(r"^(R[0-9]+|YAML):")
+
+
+def first_rejection(data):
+    """Read the bytes as a conforming reader does and stop at the first defect.
+
+    Byte and text rules run before any comparison, in the order the rule text
+    implies: R7 (BOM), R10 (leading block), R2/R5/R4 (the root checksum line),
+    then R6/R8/R12/R13 (header text and YAML), then the R3 comparison.
+    Returns (stage, rule, detail, record): stage 'shape' with the rule id that
+    raised, 'checksum' when the stated value differs from the recomputed one,
+    or None with the parsed record when the bytes read cleanly. Contract
+    stages (fht.json, V5 routing, C3) are decided by the caller."""
+    try:
+        if data.startswith(b"\xef\xbb\xbf"):
+            raise StrictError("R7: file begins with a UTF-8 BOM")
+        header_lines(data)
+        stated, _, _ = locate_checksum(data)
+        record = parse_metadata(data)
+    except ValueError as error:
+        found = RULE_PREFIX.match(str(error))
+        return "shape", found.group(1) if found else None, str(error), None
+    computed = recomputed(data)
+    if stated != computed:
+        return "checksum", None, f"stated {stated} != recomputed {computed}", record
+    return None, None, None, record
 
 
 def read_record(data):
@@ -335,40 +495,78 @@ def checked_parent_path(file_value):
     return candidate
 
 
+def parent_checksum(link, label):
+    """Recompute a checked link's parent checksum, or fail cleanly and return
+    None (bad path, missing file, a directory, unreadable or inconsistent)."""
+    file_value = link.get("file")
+    expected = link.get("result")
+    if not isinstance(file_value, str) or not file_value:
+        fail(f"{label}: {expected} parentLink must name a parent file")
+        return None
+    parent_path = checked_parent_path(file_value)
+    if parent_path is None:
+        fail(f"{label}: {expected} parentLink file {file_value!r} must "
+             f"resolve inside conformance/; absolute and ../ paths are "
+             f"rejected")
+        return None
+    if not parent_path.is_file():
+        fail(f"{label}: parent {file_value} is not a regular file inside "
+             f"conformance/ (missing or a directory)")
+        return None
+    try:
+        return verify_stated(parent_path.read_bytes())
+    except OSError as error:
+        fail(f"{label}: parent {file_value} cannot be read: {error}")
+    except ValueError as error:
+        fail(f"{label}: parent {file_value} is not self-consistent: {error}")
+    return None
+
+
 def check_parent_links(data, record, links, label):
-    """C3: verify each parentLink entry against the supplied bytes."""
+    """C3: verify each parentLink entry against the supplied bytes.
+
+    Returns the verdicts actually computed, one per entry ('checked-pass',
+    'checked-fail', 'unchecked', or None when the entry could not be
+    evaluated, which is always also reported as a failure)."""
     derived = record.get("derivedFrom") or []
+    verdicts = []
     for link in links:
-        expected = link["result"]
-        cited = link["statedChecksum"]
-        matches = [entry for entry in derived if entry.get("checksum") == cited]
+        if not isinstance(link, dict):
+            fail(f"{label}: parentLink entry {link!r} is not an object")
+            verdicts.append(None)
+            continue
+        expected = link.get("result")
+        cited = link.get("statedChecksum")
+        if not isinstance(cited, str) or not cited:
+            fail(f"{label}: parentLink entry has no statedChecksum")
+            verdicts.append(None)
+            continue
+        matches = [entry for entry in derived
+                   if isinstance(entry, dict) and entry.get("checksum") == cited]
         if not matches:
             fail(f"{label}: parentLink cites {cited!r}, not present in derivedFrom")
+            verdicts.append(None)
             continue
         if expected == "unchecked":
             if link.get("file") is not None:
                 fail(f"{label}: unchecked link must name no file")
+            verdicts.append("unchecked")
             continue
-        parent_path = checked_parent_path(link["file"])
-        if parent_path is None:
-            fail(f"{label}: {expected} parentLink file {link['file']!r} must "
-                 f"resolve inside conformance/; absolute and ../ paths are "
-                 f"rejected")
+        if expected not in ("checked-pass", "checked-fail"):
+            fail(f"{label}: parentLink result {expected!r} is not "
+                 f"checked-pass/checked-fail/unchecked")
+            verdicts.append(None)
             continue
-        if not parent_path.exists():
-            fail(f"{label}: parent file {link['file']} missing")
+        recomputed_parent = parent_checksum(link, label)
+        if recomputed_parent is None:
+            verdicts.append(None)
             continue
-        try:
-            parent_checksum = verify_stated(parent_path.read_bytes())
-        except ValueError as error:
-            fail(f"{label}: parent {link['file']} is not self-consistent: {error}")
-            continue
-        if expected == "checked-pass" and parent_checksum != cited:
-            fail(f"{label}: expected checked-pass, parent recomputes to "
-                 f"{parent_checksum!r} != cited {cited!r}")
-        if expected == "checked-fail" and parent_checksum == cited:
-            fail(f"{label}: expected checked-fail, but the parent actually "
-                 f"matches the cited checksum")
+        verdict = "checked-pass" if recomputed_parent == cited else "checked-fail"
+        verdicts.append(verdict)
+        if verdict != expected:
+            fail(f"{label}: expected {expected}, but the parent recomputes to "
+                 f"{recomputed_parent!r} against the cited {cited!r}")
+    return verdicts
 
 
 # -------------------------------------------------------------- the lanes --
@@ -399,7 +597,44 @@ def lane_determinism():
          f"{len(owned)} owned example files regenerate byte-identically")
 
 
+REQUIRED_ENTRY_FIELDS = {
+    "valid": ("id", "file", "format", "expected", "rules", "checksum",
+              "selfChecksum", "metadata"),
+    "invalid": ("id", "file", "format", "expected", "rule", "reason",
+                "selfChecksum"),
+}
+
+
+def well_formed(manifest):
+    """Drop (and report) entries the later lanes cannot read, so a malformed
+    manifest yields failures instead of a KeyError/TypeError traceback."""
+    kept = []
+    for index, entry in enumerate(manifest.get("vectors") or []):
+        label = entry.get("id", f"vectors[{index}]") if isinstance(entry, dict) \
+            else f"vectors[{index}]"
+        if not isinstance(entry, dict):
+            fail(f"{label}: a manifest vector must be an object")
+            continue
+        fields = REQUIRED_ENTRY_FIELDS.get(entry.get("expected"))
+        if fields is None:
+            fail(f"{label}: expected must be 'valid' or 'invalid', got "
+                 f"{entry.get('expected')!r}")
+            continue
+        missing = [field for field in fields if field not in entry]
+        if missing:
+            fail(f"{label}: manifest entry lacks {missing}")
+            continue
+        links = entry.get("parentLink")
+        if links is not None and (not isinstance(links, list) or not all(
+                isinstance(link, dict) for link in links)):
+            fail(f"{label}: parentLink must be a list of objects")
+            continue
+        kept.append(entry)
+    return {**manifest, "vectors": kept}
+
+
 def lane_manifest(manifest):
+    manifest = well_formed(manifest)
     ids = [entry["id"] for entry in manifest["vectors"]]
     if len(ids) != len(set(ids)):
         fail("manifest: duplicate vector ids")
@@ -525,28 +760,40 @@ def read_vector(entry):
 
 
 def lane_vectors(vectors):
-    counts = {"valid": 0, "invalid": 0, "rejected-by-shape": 0,
-              "rejected-by-schema": 0, "rejected-by-fhr": 0,
-              "rejected-by-link": 0}
+    counts = {"valid": 0, "invalid": 0}
     for entry in vectors:
         label = entry["id"]
-        data = read_vector(entry)
+        try:
+            data = read_vector(entry)
+        except CompressionError as error:
+            data, compression_error = None, error
+        except OSError as error:
+            fail(f"{label}: cannot read {entry['file']}: {error}")
+            continue
+        else:
+            compression_error = None
+        counts[entry["expected"]] += 1
         if entry["expected"] == "valid":
-            counts["valid"] += 1
+            if compression_error is not None:
+                fail(f"{label}: a valid vector must decompress cleanly: "
+                     f"{compression_error}")
+                continue
             check_expected_valid(entry, data, label)
         else:
-            counts["invalid"] += 1
-            check_expected_invalid(entry, data, label, counts)
+            outcome = check_expected_invalid(entry, data, label,
+                                             compression_error)
+            if outcome:
+                key = f"rejected-by-{outcome}"
+                counts[key] = counts.get(key, 0) + 1
     return counts
 
 
 def check_expected_valid(entry, data, label):
-    try:
-        record = parse_metadata(data)
-        stated = verify_stated(data)
-    except ValueError as error:
-        fail(f"{label}: a valid vector must read cleanly: {error}")
+    stage, rule, detail, record = first_rejection(data)
+    if stage is not None:
+        fail(f"{label}: a valid vector must read cleanly: {detail}")
         return
+    stated = locate_checksum(data)[0]
     if stated != entry["checksum"]:
         fail(f"{label}: recomputed {stated!r} != manifest {entry['checksum']!r}")
     selection = schema_selection(record)
@@ -558,7 +805,7 @@ def check_expected_valid(entry, data, label):
         fail(f"{label}: valid vector must pass fht.json: {errors[:3]}")
     for key, want in entry["metadata"].items():
         got = record.get(key)
-        if got != want:
+        if got != want or type(got) is not type(want):
             fail(f"{label}: metadata pin {key}: {got!r} != {want!r}")
     if entry.get("warnings") and "R14" in entry["warnings"]:
         schemes = [link.split(":", 1)[0].lower() for link in
@@ -568,22 +815,161 @@ def check_expected_valid(entry, data, label):
             fail(f"{label}: declares an R14 warning but every link scheme "
                  f"is accepted")
     if entry.get("parentLink"):
-        check_parent_links(data, record, entry["parentLink"], label)
+        verdicts = check_parent_links(data, record, entry["parentLink"], label)
+        if "checked-fail" in verdicts:
+            fail(f"{label}: a valid vector cannot carry a checked-fail link")
 
 
-def check_expected_invalid(entry, data, label, counts):
+# Rules this reader decides from the bytes before any schema is consulted. The
+# raised error names its rule (first_rejection), and that rule must be the one
+# the manifest declares — a vector that is rejected for some other defect is a
+# fixture bug, not a pass.
+SHAPE_RULES = {"R1", "R2", "R4", "R5", "R6", "R7", "R8", "R10", "R12", "R13"}
+CHECKSUM_RULES = {"R1", "R3", "R4"}
+CONTRACT_RULES = {"C1", "C2", "V1", "R15"}
+
+# Per-vector contract expectation, written here independently of the
+# generator: every fht.json error a rejected record must raise, as
+# (keyword, JSON path, text the message must contain). The actual errors must
+# match this set exactly — no missing and no extra error — so a vector that
+# fails for a different reason than its description fails the lane.
+EXPECTED_SCHEMA_ERRORS = {
+    "fht-fasta-extension-nested-key": {("additionalProperties", "$.taxon", "'x-note'")},
+    "fht-fasta-extension-uppercase-key": {("additionalProperties", "$", "'X-Wrongcase'")},
+    "fht-fasta-missing-assembly-type": {("required", "$", "'assemblyType'")},
+    "fht-fasta-bad-assembly-type": {("enum", "$.assemblyType", "'hybrid'")},
+    "fht-fasta-molecule-type-cdna": {("enum", "$.moleculeType", "'cDNA'")},
+    "fht-fasta-molecule-type-mixed-case": {("enum", "$.moleculeType", "'Mixed'")},
+    "fht-fasta-assembly-type-mixed": {("enum", "$.assemblyType", "'mixed'")},
+    "fht-fasta-empty-sample": {("minItems", "$.sample", "[]")},
+    "fht-fasta-fhr-key-genome": {("additionalProperties", "$", "'genome'")},
+    "fht-fasta-legacy-key-masking": {("additionalProperties", "$", "'masking'")},
+    "fht-fasta-bad-run-accession": {("pattern", "$.sequencingRuns[0]", "'SRS1234567'")},
+    "fht-fasta-derived-from-no-checksum": {("required", "$.derivedFrom[0]", "'checksum'")},
+    "fht-fasta-derived-from-fhp-parent": {("anyOf", "$.derivedFrom[0]", "'FHP'")},
+    "fht-fasta-derived-from-bad-relationship": {("anyOf", "$.derivedFrom[0]", "'annotates'")},
+    "fht-fasta-cites-fhr-schema": {("pattern", "$.schema", "FHR-Specification")},
+    "fht-fasta-cites-arbitrary-url": {("pattern", "$.schema", "example.org")},
+    "fht-fasta-version-2-0-via-raw-main": {("enum", "$.schemaVersion", "'2.0'")},
+    "fht-fasta-schemaversion-number": {("enum", "$.schemaVersion", "1.0"),
+                                       ("type", "$.schemaVersion", "'string'")},
+}
+# V5 routes a release-form FHT URL to the reader's current FHR schema; the
+# rejection there is computed from the record's bytes (conformance/README.md
+# pins the same five errors).
+EXPECTED_FHR_ERRORS = {
+    ("enum", "$.schemaVersion", "'1.0'"),
+    ("required", "$", "'genome'"),
+    ("required", "$", "'assemblyAuthor'"),
+    ("required", "$", "'masking'"),
+    ("additionalProperties", "$", "'transcriptome'"),
+}
+
+
+def compare_errors(label, what, actual, expected):
+    """Fail unless the (keyword, path, message) errors match ``expected``."""
+    unmatched = [error for error in actual
+                 if not any(error[0] == keyword and error[1] == path
+                            and needle in error[2]
+                            for keyword, path, needle in expected)]
+    missing = [want for want in expected
+               if not any(error[0] == want[0] and error[1] == want[1]
+                          and want[2] in error[2] for error in actual)]
+    if unmatched or missing:
+        fail(f"{label}: {what} errors differ from the expectation for this "
+             f"vector: missing {sorted(missing)}, unexpected "
+             f"{[error[:2] for error in unmatched]}")
+        return False
+    return True
+
+
+def check_expected_invalid(entry, data, label, compression_error=None):
+    """Assert that an invalid vector is rejected for the rule it declares.
+
+    Returns the rejection class for the summary ('shape', 'checksum',
+    'schema', 'fhr', 'link'), or None after reporting a failure."""
     rule = entry["rule"]
-    outcome = reject_reason(entry, data)
-    if outcome is None:
+    outcome = None
+    if compression_error is not None:
+        if rule != "R1":
+            fail(f"{label}: declared {rule}, but the stream does not "
+                 f"decompress ({compression_error})")
+            return None
+        stage, raised, detail, record = "shape", "R1", str(compression_error), None
+    else:
+        stage, raised, detail, record = first_rejection(data)
+    if rule in SHAPE_RULES and stage == "shape":
+        if raised != rule:
+            fail(f"{label}: declared {rule}, but this reader rejects it "
+                 f"under {raised}: {detail}")
+            return None
+        outcome = "shape"
+    elif rule in CHECKSUM_RULES and stage == "checksum":
+        outcome = "checksum"
+    elif stage is not None:
+        fail(f"{label}: declared {rule}, but this reader rejects it at the "
+             f"{stage} stage ({raised or 'no rule id'}): {detail}")
+        return None
+    elif rule in CONTRACT_RULES:
+        expected = EXPECTED_SCHEMA_ERRORS.get(entry["id"])
+        if expected is None:
+            fail(f"{label}: no recorded fht.json expectation for this {rule} "
+                 f"vector (add it to EXPECTED_SCHEMA_ERRORS)")
+            return None
+        if not compare_errors(label, "fht.json",
+                              error_triples(VALIDATOR, record), expected):
+            return None
+        if rule == "C2" and not error_triples(FHR_VALIDATOR, record):
+            fail(f"{label}: a C2 record must also fail the current FHR schema "
+                 f"(a reader that routed it to FHR would otherwise accept it)")
+            return None
+        outcome = "schema"
+    elif entry.get("result") == "invalid-as-fhr":
+        # V5 under the V7 note: a release-form FHT URL selects nothing FHT and
+        # is read against the reader's current FHR schema. Both halves are
+        # computed here: the routing, and the FHR rejection itself.
+        if rule != "V5":
+            fail(f"{label}: result invalid-as-fhr belongs to rule V5, not {rule}")
+            return None
+        selection = schema_selection(record)
+        if selection != "near-miss-fhr":
+            fail(f"{label}: expected V5 near-miss routing to FHR, got {selection}")
+            return None
+        if not compare_errors(label, "current FHR schema",
+                              error_triples(FHR_VALIDATOR, record),
+                              EXPECTED_FHR_ERRORS):
+            return None
+        outcome = "fhr"
+    elif rule == "C3":
+        if schema_selection(record) != "current" or schema_errors(record):
+            fail(f"{label}: a C3 vector's only defect must be its parent link")
+            return None
+        verdicts = check_parent_links(data, record, entry.get("parentLink") or [],
+                                      label)
+        if "checked-fail" not in verdicts:
+            fail(f"{label}: expected a checked-fail parent link, computed "
+                 f"{verdicts}")
+            return None
+        outcome = "link"
+    else:
         fail(f"{label}: expected rejection under {rule}, but this reader "
              f"accepts it")
-        return
-    counts[f"rejected-by-{outcome}"] = counts.get(f"rejected-by-{outcome}", 0) + 1
-    # selfChecksum classification (the shared suite's anti-accident rule):
+        return None
+    check_self_checksum(entry, data, label)
+    return outcome
+
+
+def check_self_checksum(entry, data, label):
+    """The selfChecksum class (the shared suite's anti-accident rule)."""
     classification = entry["selfChecksum"]
+    if data is None:
+        if classification != "unreachable":
+            fail(f"{label}: an undecompressable stream can only be "
+                 f"selfChecksum unreachable, not {classification!r}")
+        return
     if classification == "matches":
         try:
-            stated = verify_stated(data)
+            verify_stated(data)
         except ValueError as error:
             fail(f"{label}: declares consistent bytes but reading fails: {error}")
     elif classification == "broken":
@@ -605,71 +991,16 @@ def check_expected_invalid(entry, data, label, counts):
                  f"line is comparable")
     else:
         fail(f"{label}: unknown selfChecksum class {classification!r}")
-    if entry.get("parentLink"):
-        try:
-            record = parse_metadata(data)
-        except ValueError as error:
-            fail(f"{label}: C3 vectors need readable metadata: {error}")
-            return
-        check_parent_links(data, record, entry["parentLink"], label)
 
 
-def reject_reason(entry, data):
-    """Where this reader rejects an invalid vector, per its declared rule.
-
-    Returns 'shape' (header/checksum-text rules), 'schema' (fht.json),
-    'fhr' (V5: routed to the current FHR schema, where the record's bytes
-    are rejected — never the draft and not V4, per the V7 note), 'link' (C3)
-    — or None when the vector is accepted, which is a manifest/fixture bug
-    for anything but the C3 case handled in check_expected_invalid."""
-    rule = entry["rule"]
-    try:
-        record = parse_metadata(data)
-    except StrictError:
-        return "shape" if rule in {"R2", "R5", "R6", "R7", "R8", "R10", "R12",
-                                   "R13"} else None
-    except ValueError:
-        return "shape" if rule in {"R2", "R5", "R10"} else None
-    try:
-        locate_checksum(data)
-    except ValueError:
-        return "shape" if rule in {"R2", "R4", "R5"} else None
-    if rule in {"R1", "R3", "R4"}:
-        try:
-            stated = locate_checksum(data)[0]
-        except ValueError:
-            return "shape"
-        return "shape" if stated != recomputed(data) else None
-    if rule == "R10":
-        return "shape"
-    selection = schema_selection(record)
-    if entry.get("result") == "invalid-as-fhr":
-        # V5 routing under the V7 note: the release-form URL selects nothing
-        # FHT — the record is read against the reader's current FHR schema
-        # and rejected there by its own bytes (conformance/README.md pins
-        # the exact fhr.json and the rejections measured from it). This
-        # reader proves the routing side: the value must be the FHT near-
-        # miss, and the FHT contract itself must not reject the record, so
-        # only the FHR reading can.
-        if selection != "near-miss-fhr":
-            return None
-        return "fhr" if not schema_errors(record) else None
-    if rule in {"C1", "C2", "V1", "R15"}:
-        return "schema" if schema_errors(record) else None
-    if rule == "C3":
-        links = entry.get("parentLink") or []
-        for link in links:
-            if link["result"] != "checked-fail":
-                continue
-            parent = checked_parent_path(link["file"])
-            if parent is None:
-                # A checked parent outside the distributed tree cannot
-                # establish the link: rejected on confinement alone.
-                return "link"
-            if parent.exists() and verify_stated(parent.read_bytes()) != link["statedChecksum"]:
-                return "link"
-        return None
-    return None
+def lane_expectation_table(vectors):
+    """Every contract vector has a recorded expectation and vice versa."""
+    contract = {entry["id"] for entry in vectors
+                if entry["expected"] == "invalid" and entry["rule"] in CONTRACT_RULES}
+    stale = sorted(set(EXPECTED_SCHEMA_ERRORS) - contract)
+    if stale:
+        fail(f"EXPECTED_SCHEMA_ERRORS names no {sorted(CONTRACT_RULES)} "
+             f"invalid vector: {stale}")
 
 
 def lane_examples():
@@ -718,10 +1049,13 @@ def main(argv=None):
     lane_determinism()
     manifest = json.loads((CONFORMANCE / "manifest.json").read_text("utf-8"))
     vectors = lane_manifest(manifest)
+    lane_expectation_table(vectors)
     counts = lane_vectors(vectors)
     lane_examples()
     print(f"\nchecked {counts['valid']} valid and {counts['invalid']} invalid "
-          f"vectors; rejections: {counts.get('rejected-by-shape', 0)} shape, "
+          f"vectors; rejections, each at its declared rule: "
+          f"{counts.get('rejected-by-shape', 0)} shape, "
+          f"{counts.get('rejected-by-checksum', 0)} checksum mismatch, "
           f"{counts.get('rejected-by-schema', 0)} schema, "
           f"{counts.get('rejected-by-fhr', 0)} fhr-routed (V5), "
           f"{counts.get('rejected-by-link', 0)} parent-link")
