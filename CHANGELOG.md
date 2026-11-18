@@ -12,7 +12,9 @@
   binding resolves its owning commit from git history and verifies the stored
   bytes, instead of comparing a hard-coded commit. The installed-draft CI job
   also runs the toolkit against this checkout's `fht.json` and fails on
-  findings.
+  findings. Rebased over #52: the `AssemblyAuthor` name uses the
+  same portable non-blank class, and the binding digest is re-pinned to the
+  regenerated `fht.json`.
 
 - Fixture runner: assert per invalid vector the rule that rejects it (rule ids
   raised by the byte/text reader, exact `fht.json` errors per contract vector,
