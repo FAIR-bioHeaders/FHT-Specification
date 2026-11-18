@@ -61,6 +61,8 @@ RAW_MAIN = ("https://raw.githubusercontent.com/"
             "FAIR-bioHeaders/FHT-Specification/main/fht.json")
 RAW_FHT = "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/"
 W3ID = "https://w3id.org/fair-bioheaders/"
+SHARED_RAW = ("https://raw.githubusercontent.com/FAIR-bioHeaders/"
+              "FAIR-bioHeaders-Specification/")
 # The FHR raw-main schema URL (as the shared suite's vectors use it); an FHT
 # record citing it must fail selection/pattern rules (C2).
 FHR_RAW_MAIN = ("https://raw.githubusercontent.com/"
@@ -223,9 +225,10 @@ RULES = {
           "patterns, nested cardinality and the closed top level (plus R15 "
           "extension keys).",
     "C2": "FHT development contract (text in conformance/README.md): a record's schema value "
-          "must be a URL the FHT contract accepts (raw main, an FHT release tag or "
-          "an FHT w3id URL). Another type's schema or an arbitrary URL fails "
-          "fht.json; it never silently selects the FHT schema.",
+          "must be the one URL the FHT draft accepts, this repository's raw-main "
+          "fht.json (rule V7: a draft never takes a release form; release forms "
+          "are added at publication). Another type's schema, a release-form or "
+          "arbitrary URL fails fht.json; it never silently selects the FHT schema.",
     "C3": "FHT development contract (text in conformance/README.md): a derivedFrom parent "
           "checksum must equal the checksum recomputed over the supplied parent file's "
           "bytes, per link; a mismatch is an invalid link (checked-fail), and a parent "
@@ -275,6 +278,26 @@ YAML_WORDS = {"y", "yes", "n", "no", "true", "false", "on", "off", "null"}
 DATE_LIKE = re.compile(r"^[0-9-]+$|^[0-9:.+]+$")
 
 
+# Characters a single-quoted YAML scalar cannot carry literally (line breaks,
+# C0/C1 controls, U+2028/U+2029 and U+FEFF): such values are written as
+# double-quoted scalars with escapes, which read back as the same characters.
+NEEDS_ESCAPE = re.compile("[\x00-\x1f\x7f-\x9f\u2028\u2029\ufeff]")
+
+
+def _double_quoted(value):
+    out = []
+    for char in value:
+        if char in "\\\"":
+            out.append("\\" + char)
+        elif NEEDS_ESCAPE.match(char):
+            code = ord(char)
+            out.append({"\n": "\\n", "\t": "\\t"}.get(
+                char, f"\\x{code:02x}" if code < 0x100 else f"\\u{code:04x}"))
+        else:
+            out.append(char)
+    return '"' + "".join(out) + '"'
+
+
 def yaml_scalar(value):
     """A YAML scalar that reads back as ``value`` under YAML 1.1 and 1.2 (R12)."""
     if isinstance(value, bool):
@@ -285,6 +308,8 @@ def yaml_scalar(value):
         return json.dumps(value)
     if value is None:
         return "null"
+    if NEEDS_ESCAPE.search(value):
+        return _double_quoted(value)
     if (PLAIN_TEXT.fullmatch(value) and value.lower() not in YAML_WORDS
             and not DATE_LIKE.match(value) and not value.endswith((" ", "."))):
         return value
@@ -1165,15 +1190,45 @@ def build_vectors():
     # ---- invalid: schema selection (C2, V1, V5) -----------------------------------
     fht_invalid_record("fht-fasta-cites-fhr-schema", record_of(schema=FHR_RAW_MAIN),
                        "C2", "Citing the FHR raw-main schema URL: the FHT "
-                       "contract's schema pattern rejects it, and a reader that "
+                       "contract's schema value rejects it, and a reader that "
                        "selected FHR from the URL instead would still reject "
                        "FHT-only keys — the record never silently validates.")
     fht_invalid_record("fht-fasta-cites-arbitrary-url",
                        record_of(schema="https://example.org/schemas/my-fht-profile.json"),
-                       "C2", "A schema value outside the closed FHT URL pattern: "
+                       "C2", "A schema value other than the FHT draft's URL: "
                        "unlike released FHR, whose schema field is unconstrained "
                        "(V5), the FHT development contract accepts only its own "
-                       "raw-main, tag and w3id URLs.")
+                       "raw-main URL.")
+    fht_invalid_record("fht-fasta-schema-trailing-line-feed",
+                       record_of(schema=RAW_MAIN + "\n"), "C2",
+                       "The raw-main URL followed by a line feed (a double-quoted "
+                       "\\n escape): not the URL. The contract compares the whole "
+                       "value, so a regular expression whose '$' also matches "
+                       "before a final line feed (Python's re) cannot accept it "
+                       "where ECMA-262 rejects it.")
+
+    # ---- invalid: values blank or padded in only one regex dialect (C1) -------
+    # FHT's own patterns are written so Python's re (jsonschema) and ECMA-262
+    # (ajv, browsers) agree: a run accession must end at the end of the value,
+    # and "non-blank" excludes the union of both dialects' whitespace.
+    fht_invalid_record("fht-fasta-run-accession-trailing-line-feed",
+                       record_of(sequencingRuns=["SRR9990001\n"]), "C1",
+                       "A run accession followed by a line feed. Python's '$' "
+                       "matches before a final line feed, so an anchored "
+                       "^...$ pattern accepted it there while ECMA-262 "
+                       "rejected it; the pattern now ends with (?![\\s\\S]).")
+    fht_invalid_record("fht-fasta-blank-transcriptome-bom",
+                       record_of(transcriptome="\ufeff"), "C1",
+                       "transcriptome is a lone U+FEFF (zero width no-break "
+                       "space), written as a \\ufeff escape: blank. ECMA-262 "
+                       "counts it as whitespace and Python's \\S did not, so the "
+                       "old pattern accepted it in Python only.")
+    fht_invalid_record("fht-fasta-blank-version-separator",
+                       record_of(version="\x1c"), "C1",
+                       "version is a lone U+001C (file separator), written as a "
+                       "\\x1c escape: blank. Python counts U+001C-U+001F and "
+                       "U+0085 as whitespace and ECMA-262 does not, so the old "
+                       "pattern accepted it in ajv and browsers only.")
     fht_invalid_record("fht-fasta-version-2-0-via-raw-main",
                        record_of(schemaVersion="2.0"), "V1",
                        "Raw main selects the reader's current FHT contract (1.0); "
@@ -1215,10 +1270,21 @@ def build_vectors():
                        "(Tools#125), not V4 unsupported-version (FAIR-bioHeaders-"
                        "Specification#221 ruling, 2026-11-13). It carries the "
                        "same record bytes as fht-fasta-schema-w3id-release-"
-                       "without-fht and meets the same FHR-invalid outcome; the "
-                       "URL matching the FHT schema pattern no longer buys a "
-                       "selection result (conformance/README.md pins the checked "
-                       "FHR schema bytes).")
+                       "without-fht and meets the same FHR-invalid outcome "
+                       "(conformance/README.md pins the checked FHR schema "
+                       "bytes). The FHT development contract rejects the URL "
+                       "too: it accepts only its raw-main URL.")
+    INVALID[-1]["result"] = "invalid-as-fhr"
+    fht_invalid_record("fht-fasta-schema-shared-raw-tag",
+                       record_of(schema=SHARED_RAW + "v0.6.0/fht.json"), "V5",
+                       "The V2 raw-tag form of the shared publication "
+                       "repository for an fht.json no release carries. V7: a "
+                       "raw tag URL naming a release for a type that no "
+                       "release registers stays 'any other value' under V5, "
+                       "so it is read as FHR (near-miss warning included) and "
+                       "rejected there by the same FHR errors as the other V5 "
+                       "vectors. The FHT development contract rejects it too: "
+                       "a draft never takes a release form.")
     INVALID[-1]["result"] = "invalid-as-fhr"
 
     # ---- invalid: parent link mismatch (C3) ----------------------------------------

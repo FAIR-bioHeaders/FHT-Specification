@@ -163,6 +163,33 @@ class StreamControls(unittest.TestCase):
                     lane.lane_unsupported_mixed(CombinedRejection(), [vector], None)
                 self.assertIn("did not specifically reject", lane.FAILURES[0])
 
+    def test_installed_contract_partition_only_splits_contract_differences(self):
+        import json
+        suite = {v["id"]: v for v in lane.load_suite()}
+        current = json.loads((Path(lane.ROOT) / "fht.json").read_text())
+        picked = [suite["fht-fasta-lf"], suite["fht-fasta-blank-version-separator"],
+                  suite["fht-fasta-utf8-bom"]]
+        self.assertEqual(lane.partition_installed_contract(picked, current), (picked, []))
+        older = json.loads(json.dumps(current))
+        for root in (older, older["$defs"]["FHT"]):
+            root["properties"]["version"].pop("pattern")
+        compared, dependent = lane.partition_installed_contract(picked, older)
+        self.assertEqual([v["id"] for v in compared], ["fht-fasta-lf", "fht-fasta-utf8-bom"])
+        self.assertEqual(dependent, [(suite["fht-fasta-blank-version-separator"], True)])
+
+    def test_installed_contract_probe_requires_agreement_with_installed_bytes(self):
+        vector = next(v for v in lane.load_suite()
+                      if v["id"] == "fht-fasta-blank-version-separator")
+
+        class Rejects:
+            def run(self, *args, **kwargs):
+                return 1, "schema validation failed"
+
+        with patch.object(lane, "place", return_value=Path("unused")), \
+                contextlib.redirect_stdout(io.StringIO()):
+            lane.lane_installed_contract(Rejects(), [(vector, True)], None)
+        self.assertIn("installed draft bytes accept", lane.FAILURES[0])
+
     def test_named_toolkit_default_cannot_accept_fht(self):
         class IncorrectDefault:
             def version(self):

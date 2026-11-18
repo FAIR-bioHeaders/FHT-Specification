@@ -152,8 +152,22 @@ class FhtSchemaTests(unittest.TestCase):
         self.assert_invalid(author, "Additional properties")
 
     def test_schema_url_and_version(self):
-        self.assert_valid(self.record(schema="https://w3id.org/fair-bioheaders/fht/v0.4.0"))
-        self.assert_invalid(self.record(schema="https://example.org/fht.json"), "does not match")
+        raw_main = minimal()["schema"]
+        self.assert_valid(self.record(schema=raw_main))
+        # Rule V7: a draft is cited only by its owning repository's raw-main
+        # URL and never takes a release form; a reader routes release forms to
+        # FHR under V5. The release forms are added when FHT is published.
+        for value in (
+            "https://w3id.org/fair-bioheaders/fht/v0.4.0",
+            "https://w3id.org/fair-bioheaders/fht/v0.4.0/",
+            "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/v0.6.0/fht.json",
+            "https://raw.githubusercontent.com/FAIR-bioHeaders/"
+            "FAIR-bioHeaders-Specification/v0.6.0/fht.json",
+            "https://example.org/fht.json",
+            raw_main + "\n",
+        ):
+            with self.subTest(schema=value):
+                self.assert_invalid(self.record(schema=value), "was expected")
         self.assert_invalid(self.record(schemaVersion=1.0), "is not of type 'string'")
         self.assert_invalid(self.record(schemaVersion="1.1"), "is not one of ['1.0']")
 
@@ -451,6 +465,37 @@ class FhtSchemaTests(unittest.TestCase):
     def test_checksum_is_a_44_character_sha512_256_value(self):
         self.assert_invalid(self.record(checksum="A" * 43), "does not match")
         self.assert_invalid(self.record(checksum="A" * 44), "does not match")
+
+
+    def test_local_patterns_agree_across_regex_dialects(self):
+        """FHT-local patterns avoid "$" and "\\S", whose meaning differs between
+        Python's re (jsonschema) and ECMA-262 (ajv, browsers)."""
+        blank = ["", " ", "\t\n", "\ufeff", "\u001c", "\u001f", "\u0085",
+                 "\u00a0", "\u2028", "\u3000", " \ufeff\u0085 "]
+        for value in blank:
+            for field in ("transcriptome", "version", "dateCreated"):
+                with self.subTest(field=field, value=value):
+                    errors = list(self.validator.iter_errors(self.record(**{field: value})))
+                    self.assertTrue(errors)
+            with self.subTest(field="metadataAuthor.name", value=value):
+                self.assertTrue(list(self.validator.iter_errors(
+                    self.record(metadataAuthor=[{"name": value}]))))
+            with self.subTest(field="sample.tissue", value=value):
+                self.assertTrue(list(self.validator.iter_errors(
+                    self.record(sample=[{"tissue": value}]))))
+        for value in ("x", " x ", "\u200b", "\ufeffx", "caf\u00e9"):
+            with self.subTest(nonblank=value):
+                self.assert_valid(self.record(transcriptome=value,
+                                              sample=[{"tissue": value}]))
+        self.assert_valid(self.record(sequencingRuns=["SRR1"],
+                                      sample=[{"tissueIdentifier": "UBERON:1"}]))
+        self.assert_invalid(self.record(sequencingRuns=["SRR1\n"]), "does not match")
+        self.assert_invalid(self.record(sample=[{"tissueIdentifier": "UBERON:1\n"}]),
+                            "does not match")
+        local = json.dumps(self.schema["properties"]["sequencingRuns"]) + json.dumps(
+            self.schema["$defs"]["Sample"])
+        self.assertNotIn("$\"", local)
+        self.assertNotIn('\\\\S"', local)
 
 
 if __name__ == "__main__":

@@ -240,6 +240,94 @@ def lane_unsupported_mixed(toolkit, vectors, work):
                 "is a consumer coverage gap, not a normative invalid outcome")
 
 
+def _reader():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(
+        "check_fht_fixtures", ROOT / "scripts" / "check_fht_fixtures.py")
+    reader = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(reader)
+    return reader
+
+
+def partition_installed_contract(vectors, installed_schema):
+    """Split off vectors whose outcome the installed draft bytes decide
+    differently from this checkout's fht.json.
+
+    A released toolkit reads the draft revision it was built with. Where that
+    older contract and this checkout's contract give different verdicts for
+    a record that reaches the contract stage, comparing the toolkit with the
+    rule-text expectation would test the pin, not the reader. Such vectors
+    are probed against the installed bytes instead (lane_installed_contract)
+    and reported NOT-RUN for the current contract. No expectation changes.
+    Returns (compared, dependent) where dependent holds (vector, installed_ok).
+    """
+    import jsonschema
+    reader = _reader()
+    installed = jsonschema.Draft202012Validator(
+        installed_schema, format_checker=jsonschema.FormatChecker())
+    compared, dependent = [], []
+    for vector in vectors:
+        try:
+            data = vector_bytes(vector)
+        except ValueError:
+            compared.append(vector)
+            continue
+        stage, _, _, record = reader.first_rejection(data)
+        if stage is not None or reader.schema_selection(record) != "current":
+            compared.append(vector)
+            continue
+        current_ok = not reader.schema_errors(record)
+        installed_ok = not list(installed.iter_errors(record))
+        if current_ok == installed_ok:
+            compared.append(vector)
+        else:
+            dependent.append((vector, installed_ok))
+    return compared, dependent
+
+
+def lane_installed_contract(toolkit, dependent, work):
+    """The toolkit must at least agree with its own installed draft bytes."""
+    for vector, installed_ok in dependent:
+        code, output = toolkit.run("verify", place(vector, work))
+        checksum_failed = "checksum verification failed" in output.casefold()
+        want = 0 if installed_ok else 1
+        if code != want or checksum_failed:
+            fail(f"{vector['id']}: the installed draft bytes "
+                 f"{'accept' if installed_ok else 'reject'} this record, but "
+                 f"verify exited {code}"
+                 + (" with a checksum failure" if checksum_failed else ""))
+        finding(f"{vector['id']}: current-contract comparison NOT-RUN: the "
+                f"installed draft {'accepts' if installed_ok else 'rejects'} it "
+                f"while this checkout's fht.json "
+                f"{'rejects' if installed_ok else 'accepts'} it (pin older than "
+                f"the contract; reader agrees with its own bytes)")
+
+
+def install_checkout_contract(toolkit, entry):
+    """Overlay this checkout's fht.json onto the installed draft (opt-in).
+
+    For a throwaway environment only: the installed package's draft file is
+    replaced by this checkout's bytes and its registry entry records their
+    digest, so every vector is compared against the contract under review
+    rather than against the revision the release was built with."""
+    import subprocess as _subprocess
+    site = toolkit.site_packages()
+    package = site / "bioheaders"
+    raw = (ROOT / "fht.json").read_bytes()
+    (package / entry["file"]).write_bytes(raw)
+    bundled_path = package / "schemas" / "bundled.json"
+    registry = json.loads(bundled_path.read_text(encoding="utf-8"))
+    head = _subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+                           capture_output=True, text=True).stdout.strip() or "unknown"
+    registry["drafts"]["FHT"].update(
+        sha256=hashlib.sha256(raw).hexdigest(),
+        revision=f"checkout {head} (overlaid by run_toolkit_lane.py)",
+        retrieved="overlay")
+    bundled_path.write_text(json.dumps(registry, indent=2) + "\n", encoding="utf-8")
+    print(f"overlay: installed FHT draft replaced by this checkout's fht.json "
+          f"({hashlib.sha256(raw).hexdigest()[:12]}…) in {package}")
+
+
 def lane_verify(toolkit, vectors, work):
     """Lane 2: `verify` under the draft lane against the rule-derived expected."""
     checked = {"valid": 0, "invalid": 0}
@@ -438,7 +526,7 @@ def lane_combine(toolkit, vectors, work):
                  f"{output.strip()[:160]!r}")
         if data == original:
             identical += 1
-    finding(f"combine: {identical} of {checked} recombined files are byte-identical "
+    measured(f"combine: {identical} of {checked} recombined files are byte-identical "
             f"to the distributed bytes; the writer emits its own canonical header "
             f"for the same values, which the rule text allows (FORMAT.md: combine "
             f"regenerates the header and recomputes the checksum)")
@@ -521,11 +609,25 @@ def main(argv=None):
                         help="Python environment with fair-bioheaders installed")
     parser.add_argument("--keep", action="store_true",
                         help="keep the scratch directory and print its path")
+    parser.add_argument("--checkout-contract", action="store_true",
+                        help="overlay this checkout's fht.json onto the installed "
+                             "draft before scoring (modifies the environment: use a "
+                             "throwaway venv)")
+    parser.add_argument("--strict", action="store_true",
+                        help="fail when any finding is reported, not only on "
+                             "disagreements")
     args = parser.parse_args(argv)
 
     if not environment_ok():
         return 1
     toolkit = Toolkit(args.venv)
+    if args.checkout_contract:
+        _, entry = lane_identity(toolkit)
+        if FAILURES or entry is None:
+            print("Identity check failed before the overlay: NOTHING SCORED")
+            return 1
+        install_checkout_contract(toolkit, entry)
+        FINDINGS.clear()
     version, entry = lane_identity(toolkit)
     if FAILURES:
         print("Identity check failed: NOTHING SCORED")
@@ -536,6 +638,9 @@ def main(argv=None):
         installed_schema = json.loads((toolkit.site_packages() / "bioheaders" / entry["file"]).read_bytes())
         compared, unsupported = partition_mixed_capability(vectors, installed_schema)
         lane_unsupported_mixed(toolkit, unsupported, work)
+        compared, dependent = partition_installed_contract(compared, installed_schema)
+        lane_installed_contract(toolkit, dependent, work)
+        unsupported = unsupported + [vector for vector, _ in dependent]
         if FAILURES:
             print("Unsupported-value preflight failed: NOTHING SCORED")
             return 1
@@ -561,6 +666,10 @@ def main(argv=None):
               f"README.md records them and issue #9 owns the implementation.")
         return 1
     print(f"implementation comparisons: {len(compared)}; current-contract unsupported/not-run: {len(unsupported)}")
+    if args.strict and FINDINGS:
+        print(f"\n{len(FINDINGS)} finding(s) and --strict: failing. With "
+              f"--checkout-contract every vector must be compared and agree.")
+        return 1
     print(f"\nOK: the installed reader agrees with the compared subset; unsupported "
           f"current-contract values are not acceptance passes "
           f"({len(FINDINGS)} finding(s) reported for #9)")

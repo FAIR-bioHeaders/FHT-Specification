@@ -318,3 +318,29 @@ positive stays NOT-RUN against the installed four-value enum, as above. Both new
 vectors agree with the installed reader: it accepts the plain date and rejects
 the truncated stream ("Compressed file ended before the end-of-stream marker was
 reached").
+
+## Installed reader against this checkout's contract — 2026-11-18
+
+The `installed-draft` job now runs the named release twice, each in its own
+fresh environment:
+
+1. **As installed.** `fair-bioheaders==0.11.0` reads the draft revision it was
+   built with (`b9ad19a6…`). A vector whose verdict that older contract decides
+   differently from this checkout's `fht.json` is not compared with the
+   rule-text expectation; the reader must instead agree with its own installed
+   bytes, and the vector is reported NOT-RUN as a finding for #9 (this
+   generalizes the earlier `mixed` handling).
+2. **Against this checkout.** `run_toolkit_lane.py --checkout-contract --strict`
+   overlays this checkout's `fht.json` onto the throwaway environment's draft
+   file and registry digest, compares every vector, and fails on any finding as
+   well as on any disagreement.
+
+Measured locally on Linux (Python 3.13.14) on 2026-11-18 with the 82-vector
+suite: as installed, 78 vectors compared with no disagreement and 4 NOT-RUN
+(`mixed` plus the three dialect vectors the older draft accepts); against this
+checkout, all 82 compared (30 valid accepted, 52 invalid rejected), with 0
+findings.
+
+`validate-specification.yml` checks out full history (`fetch-depth: 0`): the
+typed-HTML binding test resolves the commit that last changed `fht.json` and
+verifies its stored bytes ([FHT-MICRODATA.md](FHT-MICRODATA.md)).
