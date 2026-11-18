@@ -130,10 +130,54 @@ class FHTMicrodataTests(unittest.TestCase):
         manifest = json.loads((FIXTURES / "manifest.json").read_text())
         for name, expected in manifest["invalid"].items():
             with self.subTest(name=name, reason=expected["reason"]):
-                with self.assertRaises(MicrodataError):
+                with self.assertRaisesRegex(MicrodataError, expected.get("error", "")):
                     read_page(
                         (FIXTURES / "invalid" / name).read_text(), allow_draft=True
                     )
+
+    def test_visible_value_fixtures_differ_from_a_readable_page_only_by_the_defect(self):
+        """Each visible-values fixture is the minimal de novo example plus one
+        concealment, so the rejection is that defect's and nothing else's."""
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        read_page(base, allow_draft=True, warn=lambda message: None)
+        manifest = json.loads((FIXTURES / "manifest.json").read_text())
+        for name, expected in manifest["invalid"].items():
+            if not expected["reason"].startswith(("Visible values", "R14")):
+                continue
+            with self.subTest(name=name):
+                text = (FIXTURES / "invalid" / name).read_text()
+                self.assertNotEqual(text, base)
+                self.assertEqual(text.count("itemscope itemtype"), 1)
+
+    def test_safe_links_and_shown_attribute_values_still_read(self):
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        date = '<span itemprop="dateCreated" data-fhr-type="string">2026-09-15</span>'
+        for markup, value in [
+            ('<a itemprop="relatedLink" href="https://example.org/x">'
+             'https://example.org/x</a>', ["https://example.org/x"]),
+            ('<a itemprop="relatedLink" href="doi:10.5555/x">doi:10.5555/x</a>',
+             ["doi:10.5555/x"]),
+        ]:
+            with self.subTest(markup=markup):
+                page = base.replace(date, date + '</td></tr><tr><th scope="row">'
+                                    'relatedLink</th><td>' + markup)
+                record = read_page(page, allow_draft=True, warn=lambda message: None)
+                self.assertEqual(record["relatedLink"], value)
+        version = '<span itemprop="version" data-fhr-type="string">1.0</span>'
+        page = base.replace(version, '<data itemprop="version" value="1.0">1.0</data>')
+        self.assertEqual(read_page(page, allow_draft=True,
+                                   warn=lambda message: None)["version"], "1.0")
+        # Visibility is inherited only from ancestors: a hidden sibling elsewhere
+        # in the page does not hide the record.
+        page = base.replace("<h1>", '<div hidden>unrelated</div><h1>')
+        read_page(page, allow_draft=True, warn=lambda message: None)
+
+    def test_old_html_parser_is_refused(self):
+        import fht_microdata
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        with patch.object(fht_microdata, "MINIMUM_PYTHON", (99,)):
+            with self.assertRaisesRegex(MicrodataError, "Python 3.13.6"):
+                read_page(base, allow_draft=True)
 
     def test_release_and_wrong_family_selection_never_fall_back(self):
         for value in [

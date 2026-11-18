@@ -36,6 +36,51 @@
     "repeated-array-container.html": {
       "valid": false,
       "reason": "M4: repeated array containers remain nested and fail the array item schema"
+    },
+    "hidden-attribute.html": {
+      "valid": false,
+      "reason": "Visible values: a hidden property is not shown in the page",
+      "error": "not visible"
+    },
+    "display-none-ancestor.html": {
+      "valid": false,
+      "reason": "Visible values: an ancestor with display:none hides the value",
+      "error": "not visible"
+    },
+    "hidden-scope.html": {
+      "valid": false,
+      "reason": "Visible values: the FHT scope itself is concealed",
+      "error": "not visible"
+    },
+    "meta-content.html": {
+      "valid": false,
+      "reason": "Visible values: a meta content attribute is never shown",
+      "error": "not visible"
+    },
+    "noscript-property.html": {
+      "valid": false,
+      "reason": "Visible values: noscript contents are not rendered when scripting is enabled",
+      "error": "not visible"
+    },
+    "itemref.html": {
+      "valid": false,
+      "reason": "Visible values: itemref pulls properties from outside the item",
+      "error": "itemref"
+    },
+    "multi-token-itemprop.html": {
+      "valid": false,
+      "reason": "Visible values: one element cannot supply two fields",
+      "error": "several properties"
+    },
+    "javascript-href.html": {
+      "valid": false,
+      "reason": "R14: an active href outside http/https/ftp/urn/doi/info",
+      "error": "R14"
+    },
+    "data-value-differs.html": {
+      "valid": false,
+      "reason": "Visible values: a data value attribute must equal the text shown",
+      "error": "differs from the text"
     }
   }
 }

@@ -123,6 +123,36 @@ rejects embedded extension properties. Base-contract round trips are lossless,
 while records with extensions must retain their original JSON/YAML preservation
 copy. No extension is silently promoted to a standard field.
 
+## Visible values
+
+The binding's promise is that the embedded data is the readable value. The
+reader therefore rejects a page whose metadata a person viewing it cannot see,
+instead of extracting it:
+
+- a property element, or the FHT scope, that is concealed: the `hidden`
+  attribute, an inline `style` with `display: none`, `visibility: hidden` or
+  `visibility: collapse`, or `content-visibility: hidden`, on the element or
+  any ancestor; or contents that are never rendered (`head`, `title`, `style`,
+  `noscript`, `meta`, `link`);
+- a property whose value would come from an attribute with no visible text:
+  `meta[content]`, `link`, `img`, `audio`, `video`, `source`, `track`, `embed`,
+  `iframe` and `object`;
+- a `data`, `meter` or `time` value attribute that differs from the text the
+  element shows;
+- an `href` (on `a` or `area`) outside the FORMAT.md R14 schemes (`http`,
+  `https`, `ftp`, `urn`, `doi`, `info`): in a page it is an active link, so a
+  `javascript:` or `data:` URL is refused rather than warned about;
+- `itemref`, which pulls properties from outside the item, and an `itemprop`
+  with more than one token, which would let one visible value fill two fields.
+
+These are restrictions of this draft binding, stricter than the shared
+MICRODATA.md M2 value rules; the writer never produces any of them. The
+negative fixtures in `tests/fixtures/microdata/invalid/` each change one
+readable example page in exactly one of these ways. The reference needs Python
+3.13.6 or later: earlier `html.parser` versions parse markup inside `<title>`
+and `<textarea>`, which browsers treat as text, and `read_page` refuses to run
+on them rather than read different values from the ones a browser shows.
+
 ## Supplied protocol, kit and sample context
 
 The [recorded Molik decisions](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6928571815)
@@ -192,7 +222,10 @@ References to enum definitions remain scalar bindings, not object scopes.
 It does not alter the model, JSON Schema, existing example records, conformance
 vectors or pilot. The test fixture manifest records rule-derived invalid cases:
 wrong family/version, repeated scalar, missing object scope, array stray text,
-conflicting family scopes and script content used as a required value. Additional
+conflicting family scopes, script content used as a required value, and the
+visible-values cases above (hidden, `display: none`, a hidden scope, `meta`
+content, `noscript`, `itemref`, a multi-token `itemprop`, a `javascript:`
+href and a `data` value that differs from its text). Additional
 executable cases cover all 29 existing fields, complete format validation,
 non-finite numbers, ordered duplicates, zero types, hostile strings, optional end
 tags, duplicated attributes, extension loss warnings and explicit draft opt-in.
