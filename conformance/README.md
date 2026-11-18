@@ -120,10 +120,10 @@ real-data pilot: see "Promotion candidates from the pilot" below.
 
 `selfChecksum` names, per vector, the state of the file's own root checksum
 line under the R1-R5 recomputation, and is recorded on **every** vector
-(82/82):
+in [`manifest.json`](manifest.json):
 
 - `matches` — the stated value equals the recomputed value over the covered
-  bytes. The positive class: all 30 valid vectors carry it, and so do the
+  bytes. The positive class: all valid vectors carry it, and so do the
   invalid vectors whose single defect lies elsewhere (the anti-accident rule:
   an implementation must not pass a vector by failing the comparison by
   accident).
@@ -286,7 +286,8 @@ V7 also decides what a reader does when it did *not* choose the lane — then th
 owning-repository raw-main URL is "any other value" under V5, so each of these
 records is read as FHR and rejected there. Measured with `fair-bioheaders`
 0.11.0 in both configurations (see [`../docs/CI.md`](../docs/CI.md)): on the
-current 82-vector suite (2026-11-18, Linux), 0 of 82 vectors are accepted with
+then 82-vector suite (2026-11-18, Linux; a dated measurement, not the current
+suite census), 0 of 82 vectors are accepted with
 the lane off, and with it on all 30 valid vectors are accepted once the reader
 holds this checkout's contract (29 with its own older bundled draft, which
 lacks `mixed`). The first measurement, 2026-11-15 on the then 72-vector suite,
@@ -368,7 +369,7 @@ ln -s "$PWD/../FAIR-bioHeaders-Tools-JavaScript/node_modules" /tmp/fhtjs/node_mo
 
 A and C were run against these bytes on 2026-11-15 and reported **no
 disagreement with any of the 72 vectors the suite then had**, not only with the
-four candidates. A was re-run on 2026-11-18 against the current 82 vectors, with
+four candidates. A was re-run on 2026-11-18 against the then 82 vectors, with
 no disagreement ([`../docs/CI.md`](../docs/CI.md)); C was not re-run. A
 through `bioheaders verify` / `verify-links`, C through `inspectBytes(bytes,
 {container: 'fasta', drafts: ['FHT'], parents})` on a read-only `git archive`
@@ -578,8 +579,10 @@ vector asserts it: FORMAT.md does not decide padding, and the released
 
 ## Raw-main-only schema URL and portable patterns — 2026-11-18
 
-The suite now has **82 vectors: 30 valid and 52 invalid**. Five invalid vectors
-were added; no existing vector's bytes or expected outcome changed.
+At this dated revision the suite had **82 vectors: 30 valid and 52 invalid**.
+The current vector list and outcomes are in [`manifest.json`](manifest.json),
+which is authoritative for the census. Five invalid vectors were added; no
+existing vector's bytes or expected outcome changed.
 
 - `fht.json` accepts only the raw-main `schema` URL (C2 above). The V5 vector
   `fht-fasta-schema-shared-raw-tag` cites the V2 form

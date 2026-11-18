@@ -280,18 +280,22 @@ These sections apply according to the Git remote. Keep the shared sections of
 this file in step across all six specification repositories — the shared
 publication repository and the FHR, FHP, FHT, FHGFF3 and FHGM development
 repositories — modulo declared per-repository link adaptations: a repository
-may substitute an absolute shared-specification URL where a relative path does
-not resolve in its own tree. FHP-Specification's existing absolute links to the
-shared schema-selection rules and version registry are also permitted, even
-though those paths exist locally. A repository may also carry sections that describe
+may substitute an absolute shared-specification URL where a relative path is
+missing or resolves to a pinned compatibility copy rather than the intended
+shared version. A repository may also carry sections that describe
 only its own tree (currently the shared repository's "Draft metadata profiles
-(#56)" section, FHR-Specification's development-tree paragraph, and
-FHGM-Specification's local-development-scope section); never delete another
+(#56)" section, FHR-Specification's development-tree paragraph,
+FHGM-Specification's local-development-scope section, FHGFF3's
+local-checks paragraph under Verification, and this repository's
+FHT-Specification local-tree section); never delete another
 repository's local section. Port only intended shared-guidance changes and
 record the shared source commit; comparisons of the shared sections across
 repositories are advisory, not a gate. The byte-identity requirement for these
 sections was retired by maintainer decision on 2026-11-14. Shared policy can
 describe every type without importing unrelated code or histories.
+
+FHT port source for this section: shared specification commit
+`24eab381959fc8e1e0aa20f0def6f67533ce83d7` (shared specification PR #263).
 
 ### Shared publication and conformance
 
