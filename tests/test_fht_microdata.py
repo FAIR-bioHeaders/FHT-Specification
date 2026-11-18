@@ -128,9 +128,13 @@ class FHTMicrodataTests(unittest.TestCase):
 
     def test_committed_rule_derived_rejections(self):
         manifest = json.loads((FIXTURES / "manifest.json").read_text())
+        self.assertEqual(set(manifest["invalid"]),
+                         {path.name for path in (FIXTURES / "invalid").glob("*.html")})
         for name, expected in manifest["invalid"].items():
             with self.subTest(name=name, reason=expected["reason"]):
-                with self.assertRaisesRegex(MicrodataError, expected.get("error", "")):
+                self.assertIsInstance(expected["error"], str)
+                self.assertTrue(expected["error"].strip(), "missing rejection rule")
+                with self.assertRaisesRegex(MicrodataError, expected["error"]):
                     read_page(
                         (FIXTURES / "invalid" / name).read_text(), allow_draft=True
                     )
@@ -188,12 +192,47 @@ class FHTMicrodataTests(unittest.TestCase):
         page = base.replace("<h1>", '<div hidden>unrelated</div><h1>')
         read_page(page, allow_draft=True, warn=lambda message: None)
 
-    def test_old_html_parser_is_refused(self):
+    def test_concealed_attribute_array_items_and_containers_are_rejected(self):
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        for tag in ("a", "area"):
+            for attrs in ('hidden', 'style="display:none"'):
+                with self.subTest(tag=tag, attrs=attrs):
+                    item = (f'<{tag} itemprop="item" href="https://hidden.example/" '
+                            f'{attrs}>https://shown.example/</{tag}>')
+                    row = ('<tr><th scope="row">relatedLink</th><td>'
+                           '<ol itemprop="relatedLink" data-fhr-type="array">'
+                           + item + '</ol></td></tr>')
+                    page = base.replace('</tbody></table></body>',
+                                        row + '</tbody></table></body>')
+                    with self.assertRaisesRegex(MicrodataError, "not visible"):
+                        read_page(page, allow_draft=True, warn=lambda _: None)
+        # Even an empty concealed object item cannot evade the property gate.
+        row = ('<tr><th scope="row">sample</th><td>'
+               '<ol itemprop="sample" data-fhr-type="array">'
+               '<div itemprop="item" itemscope data-fhr-type="object" hidden>'
+               '</div></ol></td></tr>')
+        with self.assertRaisesRegex(MicrodataError, "not visible"):
+            read_page(base.replace('</tbody></table></body>',
+                                   row + '</tbody></table></body>'),
+                      allow_draft=True, warn=lambda _: None)
+
+    def test_parser_capability_is_checked_instead_of_version(self):
         import fht_microdata
         base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
-        with patch.object(fht_microdata, "MINIMUM_PYTHON", (99,)):
-            with self.assertRaisesRegex(MicrodataError, "Python 3.13.6"):
+        self.assertTrue(fht_microdata._supports_rcdata())
+        with patch.object(sys, "version_info", (3, 9, 0)):
+            # A capable backport is accepted regardless of its version label.
+            read_page(base, allow_draft=True, warn=lambda _: None)
+
+        class ParserWithoutRCDATA(HTMLParser):
+            RCDATA_CONTENT_ELEMENTS = ()
+
+        with patch.object(fht_microdata, "HTMLParser", ParserWithoutRCDATA):
+            self.assertFalse(fht_microdata._supports_rcdata())
+            with self.assertRaisesRegex(MicrodataError, "RCDATA-capable"):
                 read_page(base, allow_draft=True)
+            # Writing escaped markup does not use html.parser.
+            self.assertIn("FHT metadata record", write_page(self.record, allow_draft=True))
 
     def test_release_and_wrong_family_selection_never_fall_back(self):
         for value in [

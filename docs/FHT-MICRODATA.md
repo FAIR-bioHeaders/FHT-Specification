@@ -152,10 +152,14 @@ instead of extracting it:
 These are restrictions of this draft binding, stricter than the shared
 MICRODATA.md M2 value rules; the writer never produces any of them. The
 negative fixtures in `tests/fixtures/microdata/invalid/` each change one
-readable example page in exactly one of these ways. The reference needs Python
-3.13.6 or later: earlier `html.parser` versions parse markup inside `<title>`
-and `<textarea>`, which browsers treat as text, and `read_page` refuses to run
-on them rather than read different values from the ones a browser shows.
+readable example page in exactly one of these ways. Every invalid fixture must
+name its expected rejection; a missing or empty error assertion fails the tests.
+The reader probes the installed `html.parser` for RCDATA behavior: markup inside
+`<title>` and `<textarea>` must stay text and character references must decode.
+It refuses a parser that fails this capability check, including versions without
+the behavior, while accepting backports that provide it. No version-number floor
+is used. The writer escapes markup without using `html.parser`, so it does not
+need this reader-specific capability check. CI uses the current Python 3.13.
 
 ## Supplied protocol, kit and sample context
 
