@@ -19,10 +19,19 @@ Under the existing V7 draft lane, the reference accepts only that owning raw-mai
 selector and the current string `schemaVersion: "1.0"`. This is a development
 value, not a released version. The exact local schema bytes are recorded in
 [`provenance.json`](../tests/fixtures/microdata/provenance.json), SHA-256
-`2c437f60468fe939bad299522d5033e01e08f60974aec872ca0b5e50628d173b`.
-The Q4 follow-ups deliberately re-anchor this test-only binding to owning
-schema commit `91fdc1f35ab73db99c5342f00fe689c50dd51574`, which also requires a nonblank
-name on supplied assembly authors.
+`4156353aa6d077fee2d2c69be4e17859b8e4f81bb10824f3c87f6701de196e7a`.
+The digest is the pin. The owning-source commit is not stored as a second
+constant: the reference resolves it from the checked-out history as the commit
+that last changed `fht.json`, and accepts it only when the `fht.json` stored in
+that commit hashes to the pinned digest (`owning_commit` in
+`tests/fht_microdata.py`; a shallow clone is refused). Each read reports that
+commit and digest. An earlier revision of this binding named
+`8b178a02b01876953d0360bc9f46bd11a609b3c6`, a pull-request branch commit that
+the squash merge left off `main` (the same bytes landed as `f908fec`); resolving
+the commit from history means a squash merge cannot strand it again.
+Re-anchoring after a schema change updates only the digest.
+The current digest covers the Q4 follow-up (#52), which also requires a
+nonblank name on supplied assembly authors.
 No FHT release or fixed alias currently exists. Every release-tag/w3id selector,
 unknown selector, wrong family and unavailable version is rejected; nothing is
 substituted or fetched. This is rejection by an explicitly FHT-only draft

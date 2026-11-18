@@ -71,12 +71,16 @@ rule text, derived from the merged contract, is:
   taxon URI, DOI); nested cardinality (`sample` items need one value,
   optional arrays non-empty when present); the closed top level plus the
   `x-` extension pattern; and only the two permitted parent pairs (FR-007).
-- **[C2] Schema-URL closure.** A record's `schema` value must match the
-  FHT URL pattern: this repository's raw `main` URL, one of its release-tag
-  URLs, or a `https://w3id.org/fair-bioheaders/fht/vX.Y.Z` URL. Unlike
-  released FHR (selection rule V5 leaves its `schema` open), an arbitrary
-  URL or another type's schema URL fails the contract; it never silently
-  selects the FHT schema.
+- **[C2] Schema-URL closure.** A record's `schema` value must be this
+  repository's raw `main` URL,
+  `https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json`,
+  exactly (a JSON Schema `const`). That is the one citation shared rule V7
+  admits for a draft, and a draft never takes a release form, so release-tag
+  and w3id URLs are rejected as well; a reader routes them to FHR under V5.
+  The released forms (the shared V2 raw-tag URL and the V3 w3id URL) are added
+  when FHT is published. Unlike released FHR (selection rule V5 leaves its
+  `schema` open), an arbitrary URL or another type's schema URL fails the
+  contract; it never silently selects the FHT schema.
 - **[C3] Parent-link verification.** A `derivedFrom` item's `checksum` is
   the parent file's FHR-family checksum under R1-R5. A reader that has the
   parent file must recompute it and compare as exact strings: equal is
@@ -107,7 +111,7 @@ real-data pilot: see "Promotion candidates from the pilot" below.
 
 `selfChecksum` names, per vector, the state of the file's own root checksum
 line under the R1-R5 recomputation, and is recorded on **every** vector
-(77/77):
+(82/82):
 
 - `matches` — the stated value equals the recomputed value over the covered
   bytes. The positive class: all 30 valid vectors carry it, and so do the
@@ -214,12 +218,12 @@ cited at its recomputed value by the checked-pass vectors.
 | Header text (R6-R8, R10, R12/R13) | ordinary comments/blank lines incl. `;~#` and a post-record `;` comment, raw UTF-8 value, plain (unquoted) `dateCreated` read as the string written (`yaml-plain-date`, R12); rejections: U+2028 (R6), BOM (R7), duplicate key and anchor/alias (R8), `;~` after record and concatenation (R10), `011` (R12), `.inf` (R13) |
 | Writer recommendations | escaped `\x3E`/`\x40` (R11), `javascript:` relatedLink kept valid with `warnings: ["R14"]` |
 | Extensions (R15) | valid `x-` values of every JSON type and in the rich record; rejections: nested `x-` key, `X-Wrongcase` key |
-| Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, and the three parent-shape defects |
-| Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL and arbitrary URL (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0` and raw tag `v9.9.9` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
+| Contract (C1) | minimal (nine required fields only), rich (every optional field), all three `assemblyType` values in `examples/`; rejections: missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key, `SRS` run accession, the three parent-shape defects, and three values that only one regex dialect used to reject (a run accession ending in a line feed, a lone U+FEFF `transcriptome`, a lone U+001C `version`) |
+| Selection (C2, V1, V5) | valid raw-main citation (`fht-fasta-schema-raw-main`, the only resolvable FHT URL today); rejections: FHR schema URL, arbitrary URL and the raw-main URL followed by a line feed (C2), future major `2.0` and unquoted number via raw-main (V1), `w3id .../fht/v0.5.0`, this repository's raw tag `v9.9.9` and the shared repository's V2 raw tag `…/FAIR-bioHeaders-Specification/v0.6.0/fht.json` (V5, `result: invalid-as-fhr` — read as FHR, rejected by the current FHR schema; after FHT registration the w3id vector becomes V4, but the development-repository raw-tag URL remains V5 because it matches no V2 form) |
 | Parent links (C3) | checked-pass ×5 (the two-link rich record, `-parent-transcribed-from`, `-parent-filtered-from`, and the two pilot candidates `-parent-subset-citing-whole` and `-parent-masked-exact`), unchecked ×1, checked-fail ×3 (`-parent-mismatched`, and the pilot candidates `-parent-real-digest-wrong-file` and `-parent-case-folded-digest`, whose stated value is a genuine digest of a *different* shipped file), mixed verdicts ×1 (checked-pass + checked-fail in one record; #37) |
 
-Counts: 30 valid, 47 invalid, 3 parent fixtures; every vector carries a
-finalized `selfChecksum` (30 matches-invalid + 30 matches-valid = 60, 7
+Counts: 30 valid, 52 invalid, 3 parent fixtures; every vector carries a
+finalized `selfChecksum` (35 matches-invalid + 30 matches-valid = 65, 7
 broken, 10 unreachable) and the ten C3 link vectors carry `parentLink`
 entries. Rule coverage self-check:
 every registered rule except the recommendation/warning/outcome-only/lane
@@ -254,10 +258,10 @@ both sides nor a recorded reason.
 | R14 link schemes (warn only) | `-link-scheme-warning` (`warnings: ["R14"]`) | — (never a rejection; `notApplicable`) | FORMAT.md |
 | R15 `x-` extensions | `-extension-fields`, `-rich` | `-extension-nested-key`, `-extension-uppercase-key` | FORMAT.md (via FR-010) |
 | V1 raw-main selects current | `-schema-raw-main` | `-version-2-0-via-raw-main`, `-schemaversion-number` | SCHEMA-VERSIONS.md |
-| V5 unrecognized value is FHR | — (no FHT-valid record can be FHR-valid; `notApplicable`) | `-schema-w3id-release-without-fht`, `-schema-raw-tag-unknown` (`result: invalid-as-fhr`) | SCHEMA-VERSIONS.md, as limited by V7 |
+| V5 unrecognized value is FHR | — (no FHT-valid record can be FHR-valid; `notApplicable`) | `-schema-w3id-release-without-fht`, `-schema-raw-tag-unknown`, `-schema-shared-raw-tag` (`result: invalid-as-fhr`) | SCHEMA-VERSIONS.md, as limited by V7 |
 | V7 opt-in draft lane | — (governs whether any record here is read as the draft; no byte outcome of its own, `notApplicable`) | — (same reason) | SCHEMA-VERSIONS.md |
 | C1 contract validation | `-minimal`, `-rich`, `-lf`, `-cdna`, `-extension-fields`, the three parent-link positives | the missing/unknown `assemblyType`, `cDNA` molecule type, empty `sample`, FHR `genome` key, legacy `masking` key and `SRS` run rejections | `fht.json`, this README |
-| C2 schema-URL closure | `-schema-raw-main` | `-cites-fhr-schema`, `-cites-arbitrary-url` | `fht.json` |
+| C2 schema-URL closure | `-schema-raw-main` | `-cites-fhr-schema`, `-cites-arbitrary-url`, `-schema-trailing-line-feed` | `fht.json` |
 | C3 parent links | `-parent-transcribed-from`, `-parent-filtered-from`, `-parent-unavailable`, `-rich` | `-parent-mismatched`, `-parent-mixed-verdicts` | this README |
 
 The "where" column distinguishes the shared-document rules from this
@@ -502,7 +506,10 @@ When FHT is published through the #55 chain
    bytes move to a new `fht-fasta-schema-*` vector set citing the w3id
    URL, exactly as FHP moved to `…/fhp/v0.4.0`; the raw-main vectors stay
    valid under V1 and keep their ids (ids are never reused or rewritten).
-   The two V5-shaped rejection vectors then **diverge, and that asymmetry
+   The `schema` constraint of `fht.json` also changes then: today it is
+   the raw-main URL only (C2), and publication adds the V2 shared raw-tag
+   and V3 w3id forms for the released version (issue #10). The V5-shaped
+   rejection vectors then **diverge, and that asymmetry
    is the expected outcome** (recorded on closed #30; the V7 ruling,
    FAIR-bioHeaders-Specification#221 Option A): once FHT enters
    `schemas/versions.json`, a `https://w3id.org/fair-bioheaders/fht/vX.Y.Z`
@@ -554,3 +561,26 @@ by the runner's reader (unit tests in `tests/test_fixture_reader.py`), but no
 vector asserts it: FORMAT.md does not decide padding, and the released
 `fair-bioheaders` 0.11.0 reader accepts trailing NUL bytes (measured
 2026-11-18), so that is reader policy here, not a rule-text outcome.
+
+## Raw-main-only schema URL and portable patterns — 2026-11-18
+
+The suite now has **82 vectors: 30 valid and 52 invalid**. Five invalid vectors
+were added; no existing vector's bytes or expected outcome changed.
+
+- `fht.json` accepts only the raw-main `schema` URL (C2 above). The V5 vector
+  `fht-fasta-schema-shared-raw-tag` cites the V2 form
+  `…/FAIR-bioHeaders-Specification/v0.6.0/fht.json`: no release carries an
+  `fht.json`, so it is read as FHR and rejected there like the other two V5
+  vectors. `fht-fasta-schema-trailing-line-feed` (C2) is the raw-main URL plus
+  a line feed.
+- FHT's own patterns are written so Python's `re` (jsonschema) and ECMA-262
+  (ajv, browsers) agree. Anchored patterns end with `(?![\s\S])` instead of
+  `$`, which Python also matches before a final line feed. Non-blank checks use
+  an explicit character class, the union of both dialects' whitespace, instead
+  of `\S`, because Python counts U+001C-U+001F and U+0085 as whitespace and
+  U+FEFF as not, and ECMA-262 the reverse. The C1 vectors
+  `fht-fasta-run-accession-trailing-line-feed`,
+  `fht-fasta-blank-transcriptome-bom` and `fht-fasta-blank-version-separator`
+  each used to be accepted by one dialect. Patterns imported unchanged from the
+  pinned shared core (for example `scholarlyArticle` and `identifier`) keep
+  their shared form.

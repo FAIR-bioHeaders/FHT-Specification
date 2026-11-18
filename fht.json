@@ -23,7 +23,7 @@
       "properties": {
         "name": {
           "description": "Name of the person or organization",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string",
           "minLength": 1
         },
@@ -270,7 +270,7 @@
           "format": "date",
           "type": "string",
           "minLength": 1,
-          "pattern": "\\S"
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
         },
         "derivedFrom": {
           "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
@@ -299,7 +299,7 @@
         "instrument": {
           "description": "Legacy-compatible free-text sequencing instrument names. Prefer sequencingRuns when run accessions exist; do not infer an instrument from a run accession or a software name.",
           "items": {
-            "pattern": "\\S",
+            "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
             "type": "string"
           },
           "minItems": 1,
@@ -307,7 +307,7 @@
         },
         "libraryStrategy": {
           "description": "One supplied library strategy term for the whole set, using the producer's ENA term where applicable. Omit when experiments differ or the value is unknown; this slot is not an ENA-controlled enum.",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string"
         },
         "metadataAuthor": {
@@ -343,8 +343,8 @@
           "type": "array"
         },
         "schema": {
-          "description": "URL of the FHT JSON Schema this record follows (FHT-Specification raw main, a release tag URL, or its w3id URL). It identifies the header type and contract; it is not a transcriptome or project identifier.",
-          "pattern": "^(https://raw\\.githubusercontent\\.com/FAIR-bioHeaders/FHT-Specification/(main|v[0-9]+\\.[0-9]+\\.[0-9]+)/fht\\.json|https://w3id\\.org/fair-bioheaders/fht/v[0-9]+\\.[0-9]+\\.[0-9]+/?)$",
+          "const": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json",
+          "description": "URL of the FHT JSON Schema this record follows. While FHT is an unreleased draft, the only accepted value is this development repository's raw-main fht.json URL, the one citation shared rule V7 admits for a draft. A draft never takes a release form, so release tag and w3id forms are rejected here (a reader routes them to FHR under V5); the release forms are added when FHT is published. It identifies the header type and contract; it is not a transcriptome or project identifier.",
           "type": "string"
         },
         "schemaVersion": {
@@ -363,7 +363,7 @@
         "sequencingRuns": {
           "description": "Actual SRA/ENA/DDBJ run accessions supporting the set. An SRS sample accession is not a run and must not be substituted.",
           "items": {
-            "pattern": "^(SRR|ERR|DRR)[0-9]+$",
+            "pattern": "^(SRR|ERR|DRR)[0-9]+(?![\\s\\S])",
             "type": "string"
           },
           "minItems": 1,
@@ -379,14 +379,14 @@
         },
         "transcriptome": {
           "description": "Name of the transcriptome resource described by the file",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string",
           "minLength": 1
         },
         "transcriptomeSynonym": {
           "description": "Other supplied names for the transcriptome",
           "items": {
-            "pattern": "\\S",
+            "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
             "type": "string"
           },
           "minItems": 1,
@@ -394,7 +394,7 @@
         },
         "version": {
           "description": "Version of the transcriptome resource",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string",
           "minLength": 1
         },
@@ -448,7 +448,7 @@
       "properties": {
         "name": {
           "description": "Name of the person or organization",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string",
           "minLength": 1
         },
@@ -496,27 +496,27 @@
       "properties": {
         "condition": {
           "description": "Supplied treatment, disease or other condition context",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string"
         },
         "developmentalStage": {
           "description": "Supplied developmental stage or life stage",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string"
         },
         "strain": {
           "description": "Supplied strain, breed or cultivar",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string"
         },
         "tissue": {
           "description": "Supplied tissue or anatomical source label",
-          "pattern": "\\S",
+          "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
           "type": "string"
         },
         "tissueIdentifier": {
           "description": "CURIE for the supplied tissue concept, preferably UBERON, PO or CL. The pattern checks CURIE form, not that the identifier resolves.",
-          "pattern": "^[A-Za-z][A-Za-z0-9._-]*:[A-Za-z0-9._-]+$",
+          "pattern": "^[A-Za-z][A-Za-z0-9._-]*:[A-Za-z0-9._-]+(?![\\s\\S])",
           "type": "string"
         }
       },
@@ -719,7 +719,7 @@
       "format": "date",
       "type": "string",
       "minLength": 1,
-      "pattern": "\\S"
+      "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
     },
     "derivedFrom": {
       "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
@@ -748,7 +748,7 @@
     "instrument": {
       "description": "Legacy-compatible free-text sequencing instrument names. Prefer sequencingRuns when run accessions exist; do not infer an instrument from a run accession or a software name.",
       "items": {
-        "pattern": "\\S",
+        "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
         "type": "string"
       },
       "minItems": 1,
@@ -756,7 +756,7 @@
     },
     "libraryStrategy": {
       "description": "One supplied library strategy term for the whole set, using the producer's ENA term where applicable. Omit when experiments differ or the value is unknown; this slot is not an ENA-controlled enum.",
-      "pattern": "\\S",
+      "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
       "type": "string"
     },
     "metadataAuthor": {
@@ -792,8 +792,8 @@
       "type": "array"
     },
     "schema": {
-      "description": "URL of the FHT JSON Schema this record follows (FHT-Specification raw main, a release tag URL, or its w3id URL). It identifies the header type and contract; it is not a transcriptome or project identifier.",
-      "pattern": "^(https://raw\\.githubusercontent\\.com/FAIR-bioHeaders/FHT-Specification/(main|v[0-9]+\\.[0-9]+\\.[0-9]+)/fht\\.json|https://w3id\\.org/fair-bioheaders/fht/v[0-9]+\\.[0-9]+\\.[0-9]+/?)$",
+      "const": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json",
+      "description": "URL of the FHT JSON Schema this record follows. While FHT is an unreleased draft, the only accepted value is this development repository's raw-main fht.json URL, the one citation shared rule V7 admits for a draft. A draft never takes a release form, so release tag and w3id forms are rejected here (a reader routes them to FHR under V5); the release forms are added when FHT is published. It identifies the header type and contract; it is not a transcriptome or project identifier.",
       "type": "string"
     },
     "schemaVersion": {
@@ -812,7 +812,7 @@
     "sequencingRuns": {
       "description": "Actual SRA/ENA/DDBJ run accessions supporting the set. An SRS sample accession is not a run and must not be substituted.",
       "items": {
-        "pattern": "^(SRR|ERR|DRR)[0-9]+$",
+        "pattern": "^(SRR|ERR|DRR)[0-9]+(?![\\s\\S])",
         "type": "string"
       },
       "minItems": 1,
@@ -828,14 +828,14 @@
     },
     "transcriptome": {
       "description": "Name of the transcriptome resource described by the file",
-      "pattern": "\\S",
+      "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
       "type": "string",
       "minLength": 1
     },
     "transcriptomeSynonym": {
       "description": "Other supplied names for the transcriptome",
       "items": {
-        "pattern": "\\S",
+        "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
         "type": "string"
       },
       "minItems": 1,
@@ -843,7 +843,7 @@
     },
     "version": {
       "description": "Version of the transcriptome resource",
-      "pattern": "\\S",
+      "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]",
       "type": "string",
       "minLength": 1
     },

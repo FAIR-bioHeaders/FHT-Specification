@@ -14,7 +14,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 import yaml
-from fht_microdata import FHT_ITEMTYPE, MicrodataError, read_page, write_page
+from fht_microdata import (FHT_ITEMTYPE, MicrodataError, owning_commit, read_page,
+                           write_page)
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES = ROOT / "tests" / "fixtures" / "microdata"
@@ -286,8 +287,9 @@ class FHTMicrodataTests(unittest.TestCase):
                 read_page(text, allow_draft=True)
         self.assertEqual(len(captured), 2)
         provenance = json.loads((FIXTURES / "provenance.json").read_text())
+        commit = owning_commit(provenance["fhtSchemaSha256"])
         for message in diagnostics:
-            for detail in ["V7 FHT draft", FHT_ITEMTYPE, provenance["owningSourceCommit"],
+            for detail in ["V7 FHT draft", FHT_ITEMTYPE, commit,
                            provenance["fhtSchemaSha256"], "released=false"]:
                 self.assertIn(detail, message)
         original = Path.read_bytes
@@ -302,6 +304,24 @@ class FHTMicrodataTests(unittest.TestCase):
         schema["description"] = "custom unmatched contract"
         with self.assertRaisesRegex(MicrodataError, "custom schema"):
             read_page(text, schema=schema, allow_draft=True, warn=diagnostics.append)
+
+    def test_owning_commit_is_resolved_and_verified_from_history(self):
+        pinned = json.loads((FIXTURES / "provenance.json").read_text())["fhtSchemaSha256"]
+        commit = owning_commit(pinned)
+        # Independent of the helper: the commit is on the checked-out history,
+        # it last changed fht.json, and its stored blob has the pinned digest.
+        def git(*args):
+            return subprocess.run(["git", "-C", str(ROOT), *args], check=True,
+                                  capture_output=True).stdout
+        git("merge-base", "--is-ancestor", commit, "HEAD")
+        self.assertEqual(git("log", "-1", "--format=%H", "--", "fht.json").decode().strip(),
+                         commit)
+        self.assertEqual(hashlib.sha256(git("show", f"{commit}:fht.json")).hexdigest(),
+                         pinned)
+        self.assertNotIn("owningSourceCommit",
+                         json.loads((FIXTURES / "provenance.json").read_text()))
+        with self.assertRaisesRegex(MicrodataError, "does not hash to the pinned digest"):
+            owning_commit("0" * 64)
 
     def test_warning_uses_the_verified_provenance_snapshot(self):
         text = write_page(self.record, allow_draft=True)

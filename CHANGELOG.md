@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- Draft contract (rejection boundary of the unreleased draft): `schema` accepts
+  only this repository's raw-main URL, because rule V7 gives a draft no release
+  form; release forms are added at publication (#10). FHT-local patterns now
+  give the same answer in Python and ECMA-262 regex dialects (no trailing-LF
+  `$`, an explicit non-blank class instead of `\S`). New vectors: one C2, three
+  C1 and one V5 rejection; existing vector bytes and outcomes are unchanged.
+  `fht.json` is documented as normative over `linkml-validate`. The typed-HTML
+  binding resolves its owning commit from git history and verifies the stored
+  bytes, instead of comparing a hard-coded commit. The installed-draft CI job
+  also runs the toolkit against this checkout's `fht.json` and fails on
+  findings. Rebased over #52: the `AssemblyAuthor` name uses the
+  same portable non-blank class, and the binding digest is re-pinned to the
+  regenerated `fht.json`.
+
 - Fixture runner: assert per invalid vector the rule that rejects it (rule ids
   raised by the byte/text reader, exact `fht.json` errors per contract vector,
   `checked-fail` recomputed for C3, and the V5 outcome computed against a pinned

@@ -16,7 +16,10 @@ established by this repository state. See
 
 - Approved Q4/Q8 follow-up: [nonempty metadata values and actual genome extraction](docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17); taxon rules stay unchanged; supplied `assemblyAuthor` items need a nonblank `name` (proposed after #50).
 - Schema source: [`fht_linkml.yml`](fht_linkml.yml)
-- Generated contract: [`fht.json`](fht.json)
+- Generated contract: [`fht.json`](fht.json). It is the normative contract:
+  validate records with it, not with `linkml-validate` on the model, because the
+  generator adds rules LinkML cannot express
+  ([details](docs/FHT-MIGRATION.md#contract-version-and-urls)).
 - Design and evidence: [`specs/fht-field-decisions.md`](specs/fht-field-decisions.md)
 - Minimal and rich designs: [`specs/fht-record-designs.md`](specs/fht-record-designs.md)
 - Revised spec 005 proposal: [`specs/005-rna-transcriptome-header/spec.md`](specs/005-rna-transcriptome-header/spec.md)
