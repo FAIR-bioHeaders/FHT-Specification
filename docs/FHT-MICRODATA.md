@@ -134,6 +134,10 @@ instead of extracting it:
   `visibility: collapse`, or `content-visibility: hidden`, on the element or
   any ancestor; or contents that are never rendered (`head`, `title`, `style`,
   `noscript`, `meta`, `link`);
+- a scalar value that includes text from a concealed descendant (for example
+  `Visible<span hidden>Hidden</span>`, which a viewer reads as `Visible`). Only
+  the scalar's own descendants are checked; concealed markup elsewhere in the
+  page, outside any property value, is not refused;
 - a property whose value would come from an attribute with no visible text:
   `meta[content]`, `link`, `img`, `audio`, `video`, `source`, `track`, `embed`,
   `iframe` and `object`;

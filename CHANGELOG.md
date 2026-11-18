@@ -13,10 +13,11 @@
   into a local section.
 
 - Typed-HTML reference (#11): read only values a viewer can see. Reject hidden
-  or `display: none` properties and scopes, unrendered elements, `meta[content]`
-  and other attribute-only values, `data`/`meter`/`time` values that differ from
+  or `display: none` properties and scopes, concealed descendants that add text
+  to a scalar value, unrendered elements, `meta[content]` and other
+  attribute-only values, `data`/`meter`/`time` values that differ from
   their text, `href` schemes outside R14, `itemref` and multi-token `itemprop`.
-  Nine negative fixtures; the reference requires Python 3.13.6 or later for
+  Ten negative fixtures; the reference requires Python 3.13.6 or later for
   correct `<title>`/`<textarea>` (RCDATA) parsing. The writer and the seven
   example pages are unchanged.
 
