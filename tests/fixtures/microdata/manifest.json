@@ -81,6 +81,11 @@
       "valid": false,
       "reason": "Visible values: a data value attribute must equal the text shown",
       "error": "differs from the text"
+    },
+    "hidden-descendant.html": {
+      "valid": false,
+      "reason": "Visible values: an unmarked hidden descendant contributes concealed scalar text",
+      "error": "not visible"
     }
   }
 }

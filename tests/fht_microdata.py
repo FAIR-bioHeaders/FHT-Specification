@@ -282,6 +282,8 @@ def _text(node):
     parts = []
     for child in node.children:
         if isinstance(child, str):
+            if child and node.concealed:
+                _check_visible(node)
             parts.append(child)
         elif child.tag not in _INERT_CONTENT:
             parts.append(_text(child))
