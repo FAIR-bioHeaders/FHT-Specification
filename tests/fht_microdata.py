@@ -159,6 +159,21 @@ _CONCEALING_STYLE = re.compile(
     r"|content-visibility\s*:\s*hidden)\s*(?:!\s*important\s*)?(?:;|$)",
     re.IGNORECASE,
 )
+_CSS_COMMENT = re.compile(r"/\*[\s\S]*?(?:\*/|$)")
+
+
+def _style_hides_or_is_unsupported(style):
+    """Check a bounded inline-style subset, not a CSS cascade or layout engine."""
+    # Quotes may contain comment-looking text; escapes can spell both property
+    # names and values. Refuse these forms instead of guessing their CSS tokens.
+    if any(character in style for character in ("\\", "\"", "'")):
+        return True
+    # CSS comments separate tokens, rather than joining split identifiers. This
+    # also handles an EOF-terminated comment after an otherwise complete value.
+    normalized = _CSS_COMMENT.sub(" ", style)
+    return "*/" in normalized or bool(_CONCEALING_STYLE.search(normalized))
+
+
 # Elements whose value would come from an attribute with no visible text.
 _ATTRIBUTE_ONLY = {"meta", "link", "img", "audio", "video", "source", "track",
                    "embed", "iframe", "object"}
@@ -194,7 +209,7 @@ def _supports_rcdata():
 
 def _conceals(tag, attrs):
     return (tag in _UNRENDERED or "hidden" in attrs
-            or bool(_CONCEALING_STYLE.search(attrs.get("style", ""))))
+            or _style_hides_or_is_unsupported(attrs.get("style", "")))
 
 
 class MicrodataError(ValueError):
@@ -335,7 +350,7 @@ def _check_visible(element):
     if element.concealed:
         raise MicrodataError(
             f"property {' '.join(element.itemprop) or element.tag!r} is not "
-            "visible (hidden, display:none or an unrendered element)"
+            "visible or has unsupported inline CSS (hidden, display:none or an unrendered element)"
         )
     if "itemref" in element.attrs:
         raise MicrodataError("itemref is not supported: properties must be in the item")

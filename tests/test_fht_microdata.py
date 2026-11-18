@@ -216,6 +216,37 @@ class FHTMicrodataTests(unittest.TestCase):
                                    row + '</tbody></table></body>'),
                       allow_draft=True, warn=lambda _: None)
 
+    def test_inline_style_comment_and_escape_visibility_guards(self):
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        anchor = '<span itemprop="version" data-fhr-type="string">1.0</span>'
+        self.assertEqual(base.count(anchor), 1)
+        for style in (
+            "display:/**/none", "display:none /*x*/", "DISPLAY:/**/NoNe/**/!important",
+            "visibility:/**/hidden", "content-visibility:hidden/*x*/", "display:none/*",
+            r"displ\61 y:none", r"display:n\6f ne", r"display:none!impor\74 ant",
+            'font-family:"/*";display:none',
+        ):
+            with self.subTest(style=style):
+                # Cover a direct property and an ancestor of an attribute-valued item.
+                page = base.replace(anchor, anchor.replace("<span ", f"<span style='{style}' "))
+                with self.assertRaisesRegex(MicrodataError, "not visible"):
+                    read_page(page, allow_draft=True, warn=lambda _: None)
+                row = ('<tr><th>relatedLink</th><td>'
+                       f"<ol itemprop='relatedLink' data-fhr-type='array' style='{style}'>"
+                       '<a itemprop="item" href="https://example.org/">'
+                       'https://example.org/</a></ol></td></tr>')
+                page = base.replace('</tbody></table></body>',
+                                    row + '</tbody></table></body>')
+                self.assertNotEqual(page, base)
+                with self.assertRaisesRegex(MicrodataError, "not visible"):
+                    read_page(page, allow_draft=True, warn=lambda _: None)
+        # Removing comments must not concatenate identifiers into concealment.
+        for style in ("color:/**/red", "display:/**/block", "dis/**/play:none"):
+            with self.subTest(visible_style=style):
+                page = base.replace(anchor, anchor.replace("<span ", f"<span style='{style}' "))
+                self.assertEqual(read_page(page, allow_draft=True,
+                                           warn=lambda _: None)["version"], "1.0")
+
     def test_parser_capability_is_checked_instead_of_version(self):
         import fht_microdata
         base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
