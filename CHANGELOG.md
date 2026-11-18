@@ -7,7 +7,10 @@
   to a scalar value, unrendered elements, `meta[content]` and other
   attribute-only values, `data`/`meter`/`time` values that differ from
   their text, `href` schemes outside R14, `itemref` and multi-token `itemprop`.
-  Concealed attribute-valued array items and containers are checked too.
+  Concealed attribute-valued array items and containers are checked too. CSS
+  comments are token separators for inline visibility checks; escaped or quoted
+  inline style syntax is conservatively refused. This reference does not compute
+  arbitrary stylesheet cascades or layout.
   Eleven visible-value negative fixtures; all 20 invalid fixtures declare their
   expected rejection. The reader probes `<title>`/`<textarea>` RCDATA behavior,
   accepting capable backports without a version-number floor. The writer and

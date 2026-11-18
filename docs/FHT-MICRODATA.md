@@ -126,14 +126,20 @@ copy. No extension is silently promoted to a standard field.
 ## Visible values
 
 The binding's promise is that the embedded data is the readable value. The
-reader therefore rejects a page whose metadata a person viewing it cannot see,
-instead of extracting it:
+reference reader applies the direct visibility checks below before extracting
+metadata. It does not load arbitrary stylesheets or compute the CSS cascade or
+layout; producers remain responsible for keeping the rendered table visible:
 
 - a property element, or the FHT scope, that is concealed: the `hidden`
   attribute, an inline `style` with `display: none`, `visibility: hidden` or
   `visibility: collapse`, or `content-visibility: hidden`, on the element or
   any ancestor; or contents that are never rendered (`head`, `title`, `style`,
-  `noscript`, `meta`, `link`);
+  `noscript`, `meta`, `link`). Inline CSS comments separate tokens for these
+  checks, so `display:/**/none` and `display:none /*comment*/` are refused;
+- an inline style containing a backslash or quote, or an unmatched comment
+  terminator, on a property or its ancestor. CSS escapes and quoted values are
+  outside this reference reader's supported inline-style subset, so these are
+  conservatively refused rather than interpreted as visible;
 - a scalar value that includes text from a concealed descendant (for example
   `Visible<span hidden>Hidden</span>`, which a viewer reads as `Visible`). Only
   the scalar's own descendants are checked; concealed markup elsewhere in the
