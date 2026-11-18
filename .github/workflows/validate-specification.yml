@@ -33,3 +33,25 @@ jobs:
           git diff --exit-code fht.json
       - name: Check pinned shared imports
         run: python scripts/check_provenance.py
+
+  browser:
+    # Optional-dependency lane (docs/FHT-MICRODATA.md, "Optional browser-DOM
+    # verification"): extract the seven typed-HTML examples with a real
+    # Chromium DOM and compare them with the canonical JSON. Pinned Playwright.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+      - name: Install Playwright 1.65.0 and Chromium outside the checkout
+        run: |
+          npm install --prefix "$RUNNER_TEMP/fht-browser" --ignore-scripts playwright@1.65.0
+          "$RUNNER_TEMP/fht-browser/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Browser-DOM extraction of the HTML examples
+        env:
+          FHT_PLAYWRIGHT_MODULE: ${{ runner.temp }}/fht-browser/node_modules/playwright
+        run: node scripts/check_fht_html_browser.mjs

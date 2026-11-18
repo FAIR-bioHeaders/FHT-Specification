@@ -257,8 +257,9 @@ packet does not reopen the accepted initial design or generation pipeline.
 ## Optional browser-DOM verification
 
 The reference unit suite runs in normal Python CI without a browser dependency.
-For a separate real-browser check, install Playwright 1.65.0 and Chromium in a
-disposable location, then point the optional script at that installation:
+The real-browser check runs as its own CI job (`browser` in
+`validate-specification.yml`). To run it locally, install Playwright 1.65.0 and
+Chromium in a disposable location, then point the script at that installation:
 
 ```sh
 npm install --prefix /tmp/fht-browser --ignore-scripts playwright@1.65.0

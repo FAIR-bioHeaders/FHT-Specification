@@ -128,6 +128,8 @@ adds draft evidence without extending the file-based manifest.
 | jsonschema | `4.26.0` (`jsonschema[format]`) | legacy-draft and fixture lanes; also inside the `>=4.21,<5` range of `requirements-validation.txt` |
 | PyYAML | `6.0.3` | legacy-draft and fixture lanes |
 | markdownlint-cli2 | `0.24.0` (markdownlint 0.42.1 rule set) | docs lane via `npx -y`, Node 22 |
+| LinkML lane environment | every package exact in `requirements-linkml.txt` (linkml 1.11.1, jsonschema 4.26.0, PyYAML 6.0.3 and their transitive dependencies) | `validate-specification.yml` `validate` job |
+| Playwright | `1.65.0` with its Chromium | `validate-specification.yml` `browser` job |
 | actions/checkout | `3d3c42e5…` v7 | all workflows |
 | actions/setup-python | `5fda3b95…` v7 | all workflows |
 | actions/setup-node | `949feb24…` v7 | docs lane |
@@ -344,3 +346,16 @@ findings.
 `validate-specification.yml` checks out full history (`fetch-depth: 0`): the
 typed-HTML binding test resolves the commit that last changed `fht.json` and
 verifies its stored bytes ([FHT-MICRODATA.md](FHT-MICRODATA.md)).
+
+## Locked contract environment and browser lane — 2026-11-18
+
+`requirements-linkml.txt` is now an exact lock of the whole environment the
+`validate` job installs (resolved for CPython 3.13), so `json-schema-generator.py`
+regenerates `fht.json` from the same LinkML, jsonschema and transitive versions on
+every run; a fresh install from the lock reproduced the committed `fht.json`
+byte for byte. The `browser` job of `validate-specification.yml` installs
+Playwright 1.65.0 and Chromium outside the checkout and runs
+`scripts/check_fht_html_browser.mjs`, which extracts the seven typed-HTML
+examples through a real browser DOM and compares them with the canonical JSON
+(locally: "7 standalone records match Chromium DOM extraction; no active content
+or network requests").

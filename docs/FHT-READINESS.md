@@ -87,7 +87,7 @@ contracts or default consumer support, and this packet changes no issue gate.
 
 ## Verification recorded for this packet
 
-On macOS with Python 3.13, the installed 0.11.0 lane exited 0: 28 valid / 44
+On macOS with Python 3.13, on the suite as it then stood (72 vectors), the installed 0.11.0 lane exited 0: 28 valid / 44
 invalid compared, 10 parent-link vectors, 0/72 default-path accepts, 28 byte-exact
 strips and 28 metadata round trips. Stream checks executed **72 verify, 28 strip,
 28 combine**, with byte-exact payload comparisons and verified combined stdout. The stdout
@@ -100,7 +100,9 @@ local draft bytes printed
 `59ad9641adcb0e5591045c2d894c066d1adc9984cca84c5ff6502f8dad88487e`.
 Those different digests were reported as a finding, not relabeled equal.
 
-The independent fixture checker passed all 72 vectors and examples. Native
+The independent fixture checker passed all 72 vectors the suite then had, and
+the examples; on 2026-11-18 it passes all 82 current vectors, now asserting each
+rejection's rule. Native
 repository unittests, provenance/legacy checks, documentation checks and pinned
 Markdownlint passed. Harness controls deliberately corrupt payload stdout,
 remove all cases and make the named default accept: each is detected. The Linux

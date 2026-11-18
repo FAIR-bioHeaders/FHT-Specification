@@ -8,6 +8,7 @@ updated provenance record, so a local edit cannot masquerade as a shared change.
 import hashlib
 import json
 from pathlib import Path
+import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -29,6 +30,20 @@ def main():
         print(f"Provenance check failed: {error}", file=sys.stderr)
         return 1
     failures = []
+    try:
+        citation = (ROOT / "CITATION.cff").read_text(encoding="utf-8")
+        commits = re.findall(
+            r"^# Pinned shared-source-commit: ([0-9a-f]{40})$", citation, re.MULTILINE
+        )
+        if len(commits) != 1:
+            failures.append("CITATION.cff: expected exactly one pinned shared-source-commit")
+        elif commits[0] != record.get("source_commit"):
+            failures.append(
+                "CITATION.cff shared source commit does not match "
+                "schemas/provenance.json source_commit"
+            )
+    except OSError as error:
+        failures.append(f"CITATION.cff: {error}")
     for relative, expected in record.get("files", {}).items():
         path = ROOT / relative
         if not path.is_file():
