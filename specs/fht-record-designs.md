@@ -39,12 +39,12 @@ What it still accepts, because the shared objects and slots it imports do not
 constrain them: `relatedLink: []` and `identifier: []`; `""` for
 `documentation`, `reuseConditions`, `funding` and `voucherSpecimen`; an
 `assemblySoftware` item with an empty `name` or `version`; `commandLineOption: []`
-or `[""]`; `assemblyAuthor: [{}]` or an empty assembly-author `name`; and
-`taxon: {}`, an empty `accessionID` or an empty `vitalStats` object. Of these,
-the empty `taxon`, the nameless assembly author and the nameless software break
-FHR's non-empty rule for required values, so such a record is schema-valid but
-not conforming. Whether the draft schema should reject them, and the optional
-empties, is open in
+or `[""]`; and `taxon: {}`, an empty `accessionID` or an empty `vitalStats`
+object. The approved Q4 follow-up in #52 now rejects a supplied assembly author
+without a non-blank name; its list remains optional. The retained taxon rules
+and the schema-accepted software/optional values above do not acquire new FHT
+rejection or nonconformance rules from the released FHR guidance. Further draft
+rejection boundaries are proposals, rather than adopted requirements, in
 [#56](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/56).
 
 Empty strings, empty lists and `null` are not unknown-value sentinels: omit an
