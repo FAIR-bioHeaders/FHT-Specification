@@ -11,6 +11,7 @@ No network access, released aliases, checksum verification or browser integratio
 import hashlib
 import json
 import math
+import re
 import subprocess
 import warnings
 from html import escape
@@ -148,6 +149,68 @@ _TYPED = {"string", "integer", "number", "boolean", "null"}
 # properties and contribute no scalar text (docs/FHT-MICRODATA.md F7).
 _INERT_CONTENT = {"script", "template"}
 
+# Visible values only (docs/FHT-MICRODATA.md, "Visible values"). The binding's
+# promise is that the embedded data is the readable value, so a property a
+# reader of the page cannot see is an error, not metadata.
+# Elements whose contents are never rendered in the page body.
+_UNRENDERED = {"head", "title", "style", "noscript", "meta", "link"}
+_CONCEALING_STYLE = re.compile(
+    r"(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse)"
+    r"|content-visibility\s*:\s*hidden)\s*(?:!\s*important\s*)?(?:;|$)",
+    re.IGNORECASE,
+)
+_CSS_COMMENT = re.compile(r"/\*[\s\S]*?(?:\*/|$)")
+
+
+def _style_hides_or_is_unsupported(style):
+    """Check a bounded inline-style subset, not a CSS cascade or layout engine."""
+    # Quotes may contain comment-looking text; escapes can spell both property
+    # names and values. Refuse these forms instead of guessing their CSS tokens.
+    if any(character in style for character in ("\\", "\"", "'")):
+        return True
+    # CSS comments separate tokens, rather than joining split identifiers. This
+    # also handles an EOF-terminated comment after an otherwise complete value.
+    normalized = _CSS_COMMENT.sub(" ", style)
+    return "*/" in normalized or bool(_CONCEALING_STYLE.search(normalized))
+
+
+# Elements whose value would come from an attribute with no visible text.
+_ATTRIBUTE_ONLY = {"meta", "link", "img", "audio", "video", "source", "track",
+                   "embed", "iframe", "object"}
+# Elements whose value attribute must equal the text the page shows.
+_SHOWN_ATTRIBUTE = {"data", "meter", "time"}
+# FORMAT.md R14: the link schemes a validator accepts without a warning. An
+# href is an active link in the rendered page, so other schemes are refused.
+_R14_SCHEMES = {"http", "https", "ftp", "urn", "doi", "info"}
+_SCHEME = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*):")
+def _supports_rcdata():
+    """Probe parser behavior, including backports, rather than a version number."""
+    events = []
+
+    class Probe(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            events.append(("start", tag))
+
+        def handle_endtag(self, tag):
+            events.append(("end", tag))
+
+        def handle_data(self, data):
+            events.append(("data", data))
+
+    parser = Probe(convert_charrefs=True)
+    parser.feed("<title>a<b>c</b>&amp;</title>"
+                "<textarea>x<i>y</i>&amp;</textarea>")
+    parser.close()
+    return events == [
+        ("start", "title"), ("data", "a<b>c</b>&"), ("end", "title"),
+        ("start", "textarea"), ("data", "x<i>y</i>&"), ("end", "textarea"),
+    ]
+
+
+def _conceals(tag, attrs):
+    return (tag in _UNRENDERED or "hidden" in attrs
+            or _style_hides_or_is_unsupported(attrs.get("style", "")))
+
 
 class MicrodataError(ValueError):
     """The document is not valid FHT microdata."""
@@ -162,10 +225,12 @@ class _Node:
         "itemtype",
         "itemprop",
         "datatype",
+        "concealed",
     )
 
-    def __init__(self, tag, attrs):
+    def __init__(self, tag, attrs, concealed=False):
         self.tag = tag
+        self.concealed = concealed or _conceals(tag, attrs)
         self.attrs = attrs
         self.children = []
         self.itemscope = "itemscope" in attrs
@@ -214,7 +279,7 @@ class _TreeBuilder(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         self._close_implied(tag)
-        node = _Node(tag, _first_wins(attrs))
+        node = _Node(tag, _first_wins(attrs), self.stack[-1].concealed)
         self.stack[-1].children.append(node)
         if tag not in _VOID:
             self.stack.append(node)
@@ -248,6 +313,8 @@ def _text(node):
     parts = []
     for child in node.children:
         if isinstance(child, str):
+            if child and node.concealed:
+                _check_visible(node)
             parts.append(child)
         elif child.tag not in _INERT_CONTENT:
             parts.append(_text(child))
@@ -255,10 +322,43 @@ def _text(node):
 
 
 def _value_of(element):
+    _check_visible(element)
+    if element.tag in _ATTRIBUTE_ONLY:
+        raise MicrodataError(
+            f"<{element.tag}> property value is not visible text in the page"
+        )
     attribute = _VALUE_ATTRIBUTE.get(element.tag)
     if attribute and attribute in element.attrs:
-        return element.attrs[attribute]
+        value = element.attrs[attribute]
+        if element.tag in _SHOWN_ATTRIBUTE and value != _text(element):
+            raise MicrodataError(
+                f"<{element.tag} {attribute}> differs from the text the page shows"
+            )
+        if attribute == "href":
+            scheme = _SCHEME.match(value.strip())
+            if not scheme or scheme.group(1).lower() not in _R14_SCHEMES:
+                raise MicrodataError(
+                    f"href {value!r} is an active link outside the R14 schemes "
+                    "(http, https, ftp, urn, doi, info)"
+                )
+        return value
     return _text(element)
+
+
+def _check_visible(element):
+    """Visible values: no concealed property, itemref or multi-token itemprop."""
+    if element.concealed:
+        raise MicrodataError(
+            f"property {' '.join(element.itemprop) or element.tag!r} is not "
+            "visible or has unsupported inline CSS (hidden, display:none or an unrendered element)"
+        )
+    if "itemref" in element.attrs:
+        raise MicrodataError("itemref is not supported: properties must be in the item")
+    if len(element.itemprop) > 1:
+        raise MicrodataError(
+            "one element names several properties (itemprop "
+            f"{' '.join(element.itemprop)!r}); write one property per element"
+        )
 
 
 def _resolve(root, subschema):
@@ -326,6 +426,8 @@ def _property_elements(scope):
                 continue
             if child.tag in _INERT_CONTENT:
                 continue  # Script and template contents never contribute metadata.
+            if child.itemprop or child.itemscope:
+                _check_visible(child)
             if child.datatype in ("array", "object"):
                 # A typed container's children are the container's own values,
                 # not properties of the enclosing item.
@@ -358,6 +460,9 @@ def _item_subschema(root, subschema):
 
 
 def _read_value(element, root, subschema):
+    # Recursive array items bypass _property_elements(), including attribute-
+    # valued links and nested containers. Apply the same gate at every value.
+    _check_visible(element)
     datatype = element.datatype
     if datatype == "array":
         items = []
@@ -528,6 +633,11 @@ def _draft_schema(allow_draft, schema):
 
 def read_page(text, schema=None, *, allow_draft=False, warn=None):
     """Extract and schema-check one draft FHT record; never verify sequence bytes."""
+    if not _supports_rcdata():
+        raise MicrodataError(
+            "the FHT HTML reader requires RCDATA-capable html.parser behavior: "
+            "<title>/<textarea> markup must stay text with references decoded"
+        )
     schema, provenance = _draft_schema(allow_draft, schema)
     builder = _TreeBuilder()
     # HTML preprocessing normalizes literal line endings before tokenization;
@@ -547,6 +657,7 @@ def read_page(text, schema=None, *, allow_draft=False, warn=None):
     if OTHER_FAMILY_TYPES & set(family[0].itemtype):
         raise MicrodataError("mixed family itemtype identity")
     scope = family[0]
+    _check_visible(scope)
     selectors = [
         element for element, name in _property_elements(scope) if name == "schema"
     ]

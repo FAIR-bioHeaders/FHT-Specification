@@ -128,12 +128,142 @@ class FHTMicrodataTests(unittest.TestCase):
 
     def test_committed_rule_derived_rejections(self):
         manifest = json.loads((FIXTURES / "manifest.json").read_text())
+        self.assertEqual(set(manifest["invalid"]),
+                         {path.name for path in (FIXTURES / "invalid").glob("*.html")})
         for name, expected in manifest["invalid"].items():
             with self.subTest(name=name, reason=expected["reason"]):
-                with self.assertRaises(MicrodataError):
+                self.assertIsInstance(expected["error"], str)
+                self.assertTrue(expected["error"].strip(), "missing rejection rule")
+                with self.assertRaisesRegex(MicrodataError, expected["error"]):
                     read_page(
                         (FIXTURES / "invalid" / name).read_text(), allow_draft=True
                     )
+
+    def test_visible_value_fixtures_differ_from_a_readable_page_only_by_the_defect(self):
+        """Each visible-values fixture is the minimal de novo example plus one
+        concealment, so the rejection is that defect's and nothing else's."""
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        read_page(base, allow_draft=True, warn=lambda message: None)
+        manifest = json.loads((FIXTURES / "manifest.json").read_text())
+        for name, expected in manifest["invalid"].items():
+            if not expected["reason"].startswith(("Visible values", "R14")):
+                continue
+            with self.subTest(name=name):
+                text = (FIXTURES / "invalid" / name).read_text()
+                self.assertNotEqual(text, base)
+                self.assertEqual(text.count("itemscope itemtype"), 1)
+
+    def test_safe_links_and_shown_attribute_values_still_read(self):
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        date = '<span itemprop="dateCreated" data-fhr-type="string">2026-09-15</span>'
+        for markup, value in [
+            ('<a itemprop="relatedLink" href="https://example.org/x">'
+             'https://example.org/x</a>', ["https://example.org/x"]),
+            ('<a itemprop="relatedLink" href="doi:10.5555/x">doi:10.5555/x</a>',
+             ["doi:10.5555/x"]),
+        ]:
+            with self.subTest(markup=markup):
+                page = base.replace(date, date + '</td></tr><tr><th scope="row">'
+                                    'relatedLink</th><td>' + markup)
+                record = read_page(page, allow_draft=True, warn=lambda message: None)
+                self.assertEqual(record["relatedLink"], value)
+        version = '<span itemprop="version" data-fhr-type="string">1.0</span>'
+        page = base.replace(version, '<data itemprop="version" value="1.0">1.0</data>')
+        self.assertEqual(read_page(page, allow_draft=True,
+                                   warn=lambda message: None)["version"], "1.0")
+        # Visibility is inherited only from ancestors: a hidden sibling elsewhere
+        # in the page does not hide the record.
+        page = base.replace("<h1>", '<div hidden>unrelated</div><h1>')
+        read_page(page, allow_draft=True, warn=lambda message: None)
+
+    def test_concealed_scalar_descendants_are_rejected(self):
+        record = json.loads((ROOT / "examples/minimal-de-novo.fht.json").read_text())
+        base = write_page(record, allow_draft=True)
+        name = record["metadataAuthor"][0]["name"]
+        for attrs in ('hidden', 'style="display:none"', 'style="visibility:hidden"'):
+            with self.subTest(attrs=attrs):
+                page = base.replace(name, f'Visible<span {attrs}><b>Hidden</b></span>')
+                with self.assertRaisesRegex(MicrodataError, "not visible"):
+                    read_page(page, allow_draft=True, warn=lambda message: None)
+        # Visible descendants contribute text; unrelated concealed siblings do not.
+        page = base.replace(name, 'Visible<span><b>Nested</b></span>')
+        self.assertEqual(read_page(page, allow_draft=True, warn=lambda message: None)
+                         ["metadataAuthor"][0]["name"], "VisibleNested")
+        page = base.replace("<h1>", '<div hidden>unrelated</div><h1>')
+        read_page(page, allow_draft=True, warn=lambda message: None)
+
+    def test_concealed_attribute_array_items_and_containers_are_rejected(self):
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        for tag in ("a", "area"):
+            for attrs in ('hidden', 'style="display:none"'):
+                with self.subTest(tag=tag, attrs=attrs):
+                    item = (f'<{tag} itemprop="item" href="https://hidden.example/" '
+                            f'{attrs}>https://shown.example/</{tag}>')
+                    row = ('<tr><th scope="row">relatedLink</th><td>'
+                           '<ol itemprop="relatedLink" data-fhr-type="array">'
+                           + item + '</ol></td></tr>')
+                    page = base.replace('</tbody></table></body>',
+                                        row + '</tbody></table></body>')
+                    with self.assertRaisesRegex(MicrodataError, "not visible"):
+                        read_page(page, allow_draft=True, warn=lambda _: None)
+        # Even an empty concealed object item cannot evade the property gate.
+        row = ('<tr><th scope="row">sample</th><td>'
+               '<ol itemprop="sample" data-fhr-type="array">'
+               '<div itemprop="item" itemscope data-fhr-type="object" hidden>'
+               '</div></ol></td></tr>')
+        with self.assertRaisesRegex(MicrodataError, "not visible"):
+            read_page(base.replace('</tbody></table></body>',
+                                   row + '</tbody></table></body>'),
+                      allow_draft=True, warn=lambda _: None)
+
+    def test_inline_style_comment_and_escape_visibility_guards(self):
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        anchor = '<span itemprop="version" data-fhr-type="string">1.0</span>'
+        self.assertEqual(base.count(anchor), 1)
+        for style in (
+            "display:/**/none", "display:none /*x*/", "DISPLAY:/**/NoNe/**/!important",
+            "visibility:/**/hidden", "content-visibility:hidden/*x*/", "display:none/*",
+            r"displ\61 y:none", r"display:n\6f ne", r"display:none!impor\74 ant",
+            'font-family:"/*";display:none',
+        ):
+            with self.subTest(style=style):
+                # Cover a direct property and an ancestor of an attribute-valued item.
+                page = base.replace(anchor, anchor.replace("<span ", f"<span style='{style}' "))
+                with self.assertRaisesRegex(MicrodataError, "not visible"):
+                    read_page(page, allow_draft=True, warn=lambda _: None)
+                row = ('<tr><th>relatedLink</th><td>'
+                       f"<ol itemprop='relatedLink' data-fhr-type='array' style='{style}'>"
+                       '<a itemprop="item" href="https://example.org/">'
+                       'https://example.org/</a></ol></td></tr>')
+                page = base.replace('</tbody></table></body>',
+                                    row + '</tbody></table></body>')
+                self.assertNotEqual(page, base)
+                with self.assertRaisesRegex(MicrodataError, "not visible"):
+                    read_page(page, allow_draft=True, warn=lambda _: None)
+        # Removing comments must not concatenate identifiers into concealment.
+        for style in ("color:/**/red", "display:/**/block", "dis/**/play:none"):
+            with self.subTest(visible_style=style):
+                page = base.replace(anchor, anchor.replace("<span ", f"<span style='{style}' "))
+                self.assertEqual(read_page(page, allow_draft=True,
+                                           warn=lambda _: None)["version"], "1.0")
+
+    def test_parser_capability_is_checked_instead_of_version(self):
+        import fht_microdata
+        base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
+        self.assertTrue(fht_microdata._supports_rcdata())
+        with patch.object(sys, "version_info", (3, 9, 0)):
+            # A capable backport is accepted regardless of its version label.
+            read_page(base, allow_draft=True, warn=lambda _: None)
+
+        class ParserWithoutRCDATA(HTMLParser):
+            RCDATA_CONTENT_ELEMENTS = ()
+
+        with patch.object(fht_microdata, "HTMLParser", ParserWithoutRCDATA):
+            self.assertFalse(fht_microdata._supports_rcdata())
+            with self.assertRaisesRegex(MicrodataError, "RCDATA-capable"):
+                read_page(base, allow_draft=True)
+            # Writing escaped markup does not use html.parser.
+            self.assertIn("FHT metadata record", write_page(self.record, allow_draft=True))
 
     def test_release_and_wrong_family_selection_never_fall_back(self):
         for value in [
