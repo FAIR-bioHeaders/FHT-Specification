@@ -1,4 +1,4 @@
-"""Check pinned shared imports against schemas/provenance.json.
+"""Check pinned shared files (LinkML imports, released FHR schema) against schemas/provenance.json.
 
 The pinned core and shared files are copied verbatim from the shared
 specification repository. This check fails if either copy changes without an
