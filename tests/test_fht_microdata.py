@@ -381,14 +381,17 @@ class FHTMicrodataTests(unittest.TestCase):
             with self.subTest(field=field, value=value), self.assertRaises(MicrodataError):
                 write_page(dict(self.record, **{field: value}), allow_draft=True)
 
-    def test_q4_metadata_authors_are_named_without_tightening_assembly_authors(self):
-        record = dict(self.record, assemblyAuthor=[{"uri": "https://orcid.org/0000-0002-1825-0097"}])
+    def test_q4_metadata_and_assembly_authors_are_named(self):
+        record = dict(self.record, assemblyAuthor=[{"name": "Named assembly author",
+                                                     "uri": "https://orcid.org/0000-0002-1825-0097"}])
         typed_equal(self, record, read_page(write_page(record, allow_draft=True),
                                           allow_draft=True, warn=lambda _: None))
         for authors in ([], [{}], [{"name": ""}], [{"name": " "}],
                         [{"uri": "https://orcid.org/0000-0002-1825-0097"}]):
             with self.subTest(authors=authors), self.assertRaises(MicrodataError):
                 write_page(dict(record, metadataAuthor=authors), allow_draft=True)
+            with self.subTest(assembly=authors), self.assertRaises(MicrodataError):
+                write_page(dict(record, assemblyAuthor=authors), allow_draft=True)
         text = write_page(record, allow_draft=True)
         # The reader independently validates extracted metadata, not just writer output.
         altered = text.replace(record["metadataAuthor"][0]["name"], " ")

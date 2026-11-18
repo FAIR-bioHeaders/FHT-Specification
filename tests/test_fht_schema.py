@@ -73,10 +73,23 @@ class FhtSchemaTests(unittest.TestCase):
                 self.assertTrue(list(self.validator.iter_errors(self.record(metadataAuthor=[author]))))
         self.assert_valid(self.record(metadataAuthor=[{"name": "Named metadata author"}]))
 
-    def test_q4_does_not_tighten_optional_assembly_author_or_taxon(self):
-        self.assert_valid(self.record(taxon={}, assemblyAuthor=[{}]))
-        self.assert_valid(self.record(assemblyAuthor=[{"uri": "https://orcid.org/0000-0002-1825-0097"}]))
+    def test_q4_assembly_author_items_are_named_but_the_list_stays_optional(self):
+        self.assert_valid(self.record())
+        self.assert_valid(self.record(assemblyAuthor=[{"name": "Named assembly author"}]))
         self.assert_invalid(self.record(assemblyAuthor=[]), "non-empty")
+        for author in ({}, {"uri": "https://orcid.org/0000-0002-1825-0097"},
+                       {"name": ""}, {"name": " ", "nameType": "Organizational"},
+                       {"name": "\t\n"}):
+            with self.subTest(author=author):
+                record = self.record(assemblyAuthor=[author])
+                self.assertTrue(list(self.validator.iter_errors(record)))
+                self.assertTrue(list(Draft202012Validator(self.schema).iter_errors(record)))
+        self.assertEqual(self.schema["properties"]["assemblyAuthor"]["items"],
+                         {"$ref": "#/$defs/AssemblyAuthor"})
+        self.assertNotIn("assemblyAuthor", self.schema["required"])
+
+    def test_q4_does_not_tighten_taxon_or_the_shared_author(self):
+        self.assert_valid(self.record(taxon={}))
         self.assertNotIn("required", self.schema["$defs"]["Author"])
         self.assertNotIn("minLength", self.schema["$defs"]["Author"]["properties"]["name"])
         self.assertEqual(self.schema["properties"]["metadataAuthor"]["minItems"], 1)

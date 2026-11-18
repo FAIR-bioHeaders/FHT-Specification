@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Proposed Q4 follow-up after #50: supplied `assemblyAuthor` items need a
+  nonblank `name` (local `AssemblyAuthor`, same rule as `MetadataAuthor`); the
+  list stays optional and the shared `Author`, taxon and sample rules are
+  unchanged. Rejection-boundary change to the unreleased draft; the 75
+  conformance vectors and canonical examples are unchanged. The test-only HTML
+  binding is re-anchored to the new schema bytes.
+
 - Narrow #50 to the approved Q4 nonempty metadata values and Q8 extraction
   documentation after #51. Require nonblank transcriptome/version/date and
   nonempty, named metadata authors, without tightening optional assembly authors,

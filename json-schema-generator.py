@@ -74,7 +74,7 @@ NON_BLANK = {"minLength": 1, "pattern": "\\S"}
 
 
 def apply_required_value_rules(generated):
-    """Reject empty required strings and empty/nameless metadata authors only."""
+    """Reject empty required strings and empty/nameless metadata and assembly authors."""
     roots = [generated]
     if isinstance(generated.get("$defs", {}).get("FHT"), dict):
         roots.append(generated["$defs"]["FHT"])
@@ -85,10 +85,13 @@ def apply_required_value_rules(generated):
             properties[name].setdefault("pattern", "\\S")
         properties["metadataAuthor"]["minItems"] = 1
         properties["metadataAuthor"]["items"] = {"$ref": "#/$defs/MetadataAuthor"}
+        # assemblyAuthor stays optional; when present every item is named.
+        properties["assemblyAuthor"]["items"] = {"$ref": "#/$defs/AssemblyAuthor"}
     defs = generated["$defs"]
-    author = defs["MetadataAuthor"]
-    author["required"] = sorted(set(author.get("required", [])) | {"name"})
-    author["properties"]["name"].update(NON_BLANK)
+    for name in ("MetadataAuthor", "AssemblyAuthor"):
+        author = defs[name]
+        author["required"] = sorted(set(author.get("required", [])) | {"name"})
+        author["properties"]["name"].update(NON_BLANK)
     # Taxon is deliberately left as the pinned core defines it: the maintainers
     # chose to keep the current taxon rules (name and uri both optional) for
     # this draft (FHT-Specification#8, 2026-11-16).
