@@ -1,6 +1,6 @@
 {
   "status": "unreleased draft binding proposal",
-  "fhtSchemaSha256": "2c437f60468fe939bad299522d5033e01e08f60974aec872ca0b5e50628d173b",
+  "fhtSchemaSha256": "a795265e8f23a135f4d59ee5a0733c0e350ed937387244f9c4292df763358677",
   "referenceParser": {
     "repository": "FAIR-bioHeaders/FHP-Specification",
     "commit": "bc7110fedb6f05b52b1d2348b5b14a79b91b0637",
@@ -17,5 +17,5 @@
     "minimal-genome-guided.fht.json": "5275abb006894008d32dde9773bf694eb03ad001e93709a1b37a8e1de2317f75",
     "mixed-molecules.fht.json": "ded89b91ca993516dbb48ef4bb6687b144748236876c6053bdc058f8b7e30a28"
   },
-  "owningSourceCommit": "91fdc1f35ab73db99c5342f00fe689c50dd51574"
+  "owningSource": "Resolved at read time, not stored: the commit that last changed fht.json on the checked-out history, accepted only when its stored fht.json hashes to fhtSchemaSha256 (tests/fht_microdata.py owning_commit). Re-anchoring after a schema change updates fhtSchemaSha256 only."
 }
