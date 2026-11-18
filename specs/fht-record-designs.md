@@ -24,31 +24,57 @@ and [revised spec 005](005-rna-transcriptome-header/spec.md) together.
 | `checksum` | One shared SHA-512/256 scalar | Detect file-byte changes | Tool-computed exact-file checksum using adopted exclusion rules |
 | `assemblyType` | One proposed enum string | Choose how to interpret construction/source claims | Known workflow history using D2's definitions |
 
-Requiredness applies to the slot. As in released FHR (shared
-`docs/SCHEMA-VERSIONS.md`, "Required values are non-empty"), a required value
-must also be non-empty, including where the schema cannot reject the empty form.
-What the generated `fht.json` itself rejects:
+Requiredness applies to the slot. The empty-value statements below come from
+three different sources, and each paragraph says which one it states.
+
+**Current FHT draft requirements.** These are what the generated `fht.json`
+(from `fht_linkml.yml`) rejects. The required-value and author rules were
+approved in the
+[Q4/Q8 follow-up record](../docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17)
+or its [assembly-author addendum](../docs/FHT-MIGRATION.md#assembly-author-names-q4-proposed-after-50)
+(#52). The array and sample rules come from the draft feature specification
+([`005-rna-transcriptome-header/spec.md`](005-rna-transcriptome-header/spec.md)):
 
 - blank `transcriptome`, `version` and `dateCreated`; an empty `metadataAuthor`
-  list and a metadata author without a non-blank `name`;
+  list and a metadata author without a non-blank `name`; a supplied
+  `assemblyAuthor` item without a non-blank `name` (#52);
 - an empty list for the FHT arrays `transcriptomeSynonym`, `assemblyAuthor`,
   `assemblySoftware`, `sample`, `sequencingRuns`, `instrument` and `derivedFrom`,
   a `sample` item with no value, and blank items of the FHT string fields.
 
-What it still accepts, because the shared objects and slots it imports do not
-constrain them: `relatedLink: []` and `identifier: []`; `""` for
-`documentation`, `reuseConditions`, `funding` and `voucherSpecimen`; an
-`assemblySoftware` item with an empty `name` or `version`; `commandLineOption: []`
-or `[""]`; and `taxon: {}`, an empty `accessionID` or an empty `vitalStats`
-object. The approved Q4 follow-up in #52 now rejects a supplied assembly author
-without a non-blank name; its list remains optional. The retained taxon rules
-and the schema-accepted software/optional values above do not acquire new FHT
-rejection or nonconformance rules from the released FHR guidance. Further draft
-rejection boundaries are proposals, rather than adopted requirements, in
-[#56](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/56).
+The same record keeps the taxon members optional, including the empty taxon
+object, and keeps the sample array. This page does not change either decision.
 
-Empty strings, empty lists and `null` are not unknown-value sentinels: omit an
-unknown optional value. Missing a required value cannot be repaired with `null`,
+**Shared family guidance.** The shared format rules
+([FORMAT.md v0.6.0, "Checksum decision"](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/v0.6.0/docs/FORMAT.md#checksum-decision):
+"The schemas do not express every requirement. Required values must be
+non-empty"; details in
+[SCHEMA-VERSIONS.md v0.6.0, "Required values are non-empty"](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/v0.6.0/docs/SCHEMA-VERSIONS.md#required-values-are-non-empty))
+say that a required value must also be non-empty where the schema cannot reject
+the empty form, and that a record breaking this is schema-valid but not
+conforming. That text governs the released FHR, FHP and FHGFF3 schemas and
+names their fields: required strings, a `taxon` with a non-empty `name` or
+`uri`, and the author lists and author names. It says nothing about software
+names. No FHT document adopts it as an FHT conformance rule. For the
+unreleased FHT draft it is guidance. FHT's own requirements are only the ones
+listed under the previous heading.
+
+**Values `fht.json` still accepts, with constraints proposed in #56.** The
+shared objects and slots that FHT imports do not constrain these:
+`relatedLink: []` and `identifier: []`; `""` for `documentation`,
+`reuseConditions`, `funding` and `voucherSpecimen`; an `assemblySoftware` item
+with an empty `name` or `version`; `commandLineOption: []` or `[""]`;
+`taxon: {}`; and an empty `accessionID` or `vitalStats` object. A record with
+any of them, including a nameless software item and an empty taxon, is valid
+under the current FHT draft. No FHT requirement makes it non-conforming.
+[#56](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/56) proposes
+draft-schema constraints for these values. They are proposals only. The taxon
+item there would revisit the settled taxon decision, so it is the maintainers'
+call.
+
+**Current FHT guidance for writers** ([`FHT-MIGRATION.md`](../docs/FHT-MIGRATION.md),
+README). Empty strings, empty lists and `null` are not unknown-value sentinels:
+omit an unknown optional value. Missing a required value cannot be repaired with `null`,
 `unknown`, a guessed person or a dummy checksum.
 
 ## Three minimal record designs

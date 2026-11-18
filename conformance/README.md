@@ -66,7 +66,8 @@ rule text, derived from the merged contract, is:
   required fields (`schema`, `schemaVersion` `"1.0"`, `transcriptome`,
   `assemblyType`, `taxon`, `version`, `metadataAuthor`, `dateCreated`,
   `checksum`) present, with non-blank `transcriptome`, `version` and
-  `dateCreated` and at least one named metadata author; enums (`de novo`,
+  `dateCreated`, at least one named metadata author and a name on every
+  supplied assembly author; enums (`de novo`,
   `genome-guided`, `annotation-derived`; `mRNA`, `rRNA`, `tRNA`,
   `transcribed RNA`, `mixed`; `unstranded`, `forward`, `reverse`); patterns
   (checksums, run accessions, taxon URI, DOI); nested cardinality (`sample`
@@ -75,7 +76,7 @@ rule text, derived from the merged contract, is:
   `instrument` and `derivedFrom` need one item when present); the closed top
   level plus the `x-` extension pattern; and only the two permitted parent
   pairs (FR-007). The schema does not reject every empty value: `taxon: {}`,
-  an unnamed assembly author or software item, `relatedLink: []` and empty
+  an unnamed software item, `relatedLink: []` and empty
   optional strings still validate (see
   [`../specs/fht-record-designs.md`](../specs/fht-record-designs.md) and
   [#56](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/56)).
