@@ -20,7 +20,9 @@
   binding resolves its owning commit from git history and verifies the stored
   bytes, instead of comparing a hard-coded commit. The installed-draft CI job
   also runs the toolkit against this checkout's `fht.json` and fails on
-  findings.
+  findings. Rebased over #52: the `AssemblyAuthor` name uses the
+  same portable non-blank class, and the binding digest is re-pinned to the
+  regenerated `fht.json`.
 
 - Fixture runner: assert per invalid vector the rule that rejects it (rule ids
   raised by the byte/text reader, exact `fht.json` errors per contract vector,
@@ -32,6 +34,13 @@
   missing `statedChecksum`) instead of crashing. New vectors
   `fht-fasta-yaml-plain-date` (valid) and `fht-fasta-gzip-truncated` (invalid);
   existing vector bytes and outcomes are unchanged. Refs #8.
+
+- Proposed Q4 follow-up after #50: supplied `assemblyAuthor` items need a
+  nonblank `name` (local `AssemblyAuthor`, same rule as `MetadataAuthor`); the
+  list stays optional and the shared `Author`, taxon and sample rules are
+  unchanged. Rejection-boundary change to the unreleased draft; the 75
+  conformance vectors and canonical examples are unchanged. The test-only HTML
+  binding is re-anchored to the new schema bytes.
 
 - Narrow #50 to the approved Q4 nonempty metadata values and Q8 extraction
   documentation after #51. Require nonblank transcriptome/version/date and
