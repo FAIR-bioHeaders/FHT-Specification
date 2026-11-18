@@ -11,7 +11,9 @@ No network access, released aliases, checksum verification or browser integratio
 import hashlib
 import json
 import math
+import re
 import subprocess
+import sys
 import warnings
 from html import escape
 from html.parser import HTMLParser
@@ -148,6 +150,36 @@ _TYPED = {"string", "integer", "number", "boolean", "null"}
 # properties and contribute no scalar text (docs/FHT-MICRODATA.md F7).
 _INERT_CONTENT = {"script", "template"}
 
+# Visible values only (docs/FHT-MICRODATA.md, "Visible values"). The binding's
+# promise is that the embedded data is the readable value, so a property a
+# reader of the page cannot see is an error, not metadata.
+# Elements whose contents are never rendered in the page body.
+_UNRENDERED = {"head", "title", "style", "noscript", "meta", "link"}
+_CONCEALING_STYLE = re.compile(
+    r"(?:^|;)\s*(?:display\s*:\s*none|visibility\s*:\s*(?:hidden|collapse)"
+    r"|content-visibility\s*:\s*hidden)\s*(?:!\s*important\s*)?(?:;|$)",
+    re.IGNORECASE,
+)
+# Elements whose value would come from an attribute with no visible text.
+_ATTRIBUTE_ONLY = {"meta", "link", "img", "audio", "video", "source", "track",
+                   "embed", "iframe", "object"}
+# Elements whose value attribute must equal the text the page shows.
+_SHOWN_ATTRIBUTE = {"data", "meter", "time"}
+# FORMAT.md R14: the link schemes a validator accepts without a warning. An
+# href is an active link in the rendered page, so other schemes are refused.
+_R14_SCHEMES = {"http", "https", "ftp", "urn", "doi", "info"}
+_SCHEME = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*):")
+# Python's html.parser treats <title> and <textarea> contents as RCDATA (text,
+# with character references decoded) only from 3.13.6 / 3.14 on; earlier
+# versions parse tags inside them, which browsers do not. The reference refuses
+# to run on such a parser rather than read values a browser shows as text.
+MINIMUM_PYTHON = (3, 13, 6)
+
+
+def _conceals(tag, attrs):
+    return (tag in _UNRENDERED or "hidden" in attrs
+            or bool(_CONCEALING_STYLE.search(attrs.get("style", ""))))
+
 
 class MicrodataError(ValueError):
     """The document is not valid FHT microdata."""
@@ -162,10 +194,12 @@ class _Node:
         "itemtype",
         "itemprop",
         "datatype",
+        "concealed",
     )
 
-    def __init__(self, tag, attrs):
+    def __init__(self, tag, attrs, concealed=False):
         self.tag = tag
+        self.concealed = concealed or _conceals(tag, attrs)
         self.attrs = attrs
         self.children = []
         self.itemscope = "itemscope" in attrs
@@ -214,7 +248,7 @@ class _TreeBuilder(HTMLParser):
 
     def handle_starttag(self, tag, attrs):
         self._close_implied(tag)
-        node = _Node(tag, _first_wins(attrs))
+        node = _Node(tag, _first_wins(attrs), self.stack[-1].concealed)
         self.stack[-1].children.append(node)
         if tag not in _VOID:
             self.stack.append(node)
@@ -255,10 +289,42 @@ def _text(node):
 
 
 def _value_of(element):
+    if element.tag in _ATTRIBUTE_ONLY:
+        raise MicrodataError(
+            f"<{element.tag}> property value is not visible text in the page"
+        )
     attribute = _VALUE_ATTRIBUTE.get(element.tag)
     if attribute and attribute in element.attrs:
-        return element.attrs[attribute]
+        value = element.attrs[attribute]
+        if element.tag in _SHOWN_ATTRIBUTE and value != _text(element):
+            raise MicrodataError(
+                f"<{element.tag} {attribute}> differs from the text the page shows"
+            )
+        if attribute == "href":
+            scheme = _SCHEME.match(value.strip())
+            if not scheme or scheme.group(1).lower() not in _R14_SCHEMES:
+                raise MicrodataError(
+                    f"href {value!r} is an active link outside the R14 schemes "
+                    "(http, https, ftp, urn, doi, info)"
+                )
+        return value
     return _text(element)
+
+
+def _check_visible(element):
+    """Visible values: no concealed property, itemref or multi-token itemprop."""
+    if element.concealed:
+        raise MicrodataError(
+            f"property {' '.join(element.itemprop) or element.tag!r} is not "
+            "visible (hidden, display:none or an unrendered element)"
+        )
+    if "itemref" in element.attrs:
+        raise MicrodataError("itemref is not supported: properties must be in the item")
+    if len(element.itemprop) > 1:
+        raise MicrodataError(
+            "one element names several properties (itemprop "
+            f"{' '.join(element.itemprop)!r}); write one property per element"
+        )
 
 
 def _resolve(root, subschema):
@@ -326,6 +392,8 @@ def _property_elements(scope):
                 continue
             if child.tag in _INERT_CONTENT:
                 continue  # Script and template contents never contribute metadata.
+            if child.itemprop or child.itemscope:
+                _check_visible(child)
             if child.datatype in ("array", "object"):
                 # A typed container's children are the container's own values,
                 # not properties of the enclosing item.
@@ -528,6 +596,11 @@ def _draft_schema(allow_draft, schema):
 
 def read_page(text, schema=None, *, allow_draft=False, warn=None):
     """Extract and schema-check one draft FHT record; never verify sequence bytes."""
+    if sys.version_info < MINIMUM_PYTHON:
+        raise MicrodataError(
+            "the FHT HTML reference needs Python 3.13.6 or later: older "
+            "html.parser versions parse markup inside <title> and <textarea>"
+        )
     schema, provenance = _draft_schema(allow_draft, schema)
     builder = _TreeBuilder()
     # HTML preprocessing normalizes literal line endings before tokenization;
@@ -547,6 +620,7 @@ def read_page(text, schema=None, *, allow_draft=False, warn=None):
     if OTHER_FAMILY_TYPES & set(family[0].itemtype):
         raise MicrodataError("mixed family itemtype identity")
     scope = family[0]
+    _check_visible(scope)
     selectors = [
         element for element, name in _property_elements(scope) if name == "schema"
     ]
