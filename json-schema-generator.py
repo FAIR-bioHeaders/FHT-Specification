@@ -70,7 +70,17 @@ def apply_common_rules(generated):
 
 
 REQUIRED_STRINGS = ("transcriptome", "version", "dateCreated")
-NON_BLANK = {"minLength": 1, "pattern": "\\S"}
+# "Contains a non-blank character", written so Python's re (jsonschema) and
+# ECMA-262 (ajv, browsers) give the same answer. "\\S" does not: Python counts
+# U+001C-U+001F and U+0085 as whitespace and U+FEFF as not, ECMA-262 the
+# reverse. The excluded set is the union of both dialects' whitespace, so a
+# value is blank in one exactly when it is blank in the other. The same class
+# is used in fht_linkml.yml.
+NON_BLANK_CLASS = (
+    "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a"
+    "\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
+)
+NON_BLANK = {"minLength": 1, "pattern": NON_BLANK_CLASS}
 
 
 def apply_required_value_rules(generated):
@@ -82,7 +92,7 @@ def apply_required_value_rules(generated):
         properties = node["properties"]
         for name in REQUIRED_STRINGS:
             properties[name]["minLength"] = 1
-            properties[name].setdefault("pattern", "\\S")
+            properties[name].setdefault("pattern", NON_BLANK_CLASS)
         properties["metadataAuthor"]["minItems"] = 1
         properties["metadataAuthor"]["items"] = {"$ref": "#/$defs/MetadataAuthor"}
     defs = generated["$defs"]

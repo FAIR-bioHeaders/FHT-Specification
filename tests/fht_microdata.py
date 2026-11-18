@@ -11,6 +11,7 @@ No network access, released aliases, checksum verification or browser integratio
 import hashlib
 import json
 import math
+import subprocess
 import warnings
 from html import escape
 from html.parser import HTMLParser
@@ -460,6 +461,50 @@ def _validate(record, schema):
         )
 
 
+def _git(*args):
+    try:
+        result = subprocess.run(["git", "-C", str(ROOT), *args],
+                                capture_output=True, timeout=60)
+    except (OSError, subprocess.SubprocessError) as error:
+        raise MicrodataError(
+            f"draft binding provenance cannot be verified: git {args[0]}: {error}"
+        ) from error
+    if result.returncode:
+        raise MicrodataError(
+            f"draft binding provenance cannot be verified: git {args[0]} failed: "
+            + result.stderr.decode("utf-8", "replace").strip()
+        )
+    return result.stdout
+
+
+def owning_commit(pinned_sha256):
+    """The owning-source commit of the pinned draft bytes, resolved from history.
+
+    The binding pins the exact fht.json bytes by SHA-256 (provenance.json). The
+    commit is not copied into a second constant: it is the commit that last
+    changed fht.json on the checked-out history, and it is accepted only when
+    the fht.json blob stored in that commit hashes to the pinned digest. A
+    squash merge therefore cannot leave the binding naming a branch-only
+    commit, and a stale or hand-edited pin fails here. A shallow clone cannot
+    answer the question and is refused."""
+    if _git("rev-parse", "--is-shallow-repository").strip() != b"false":
+        raise MicrodataError(
+            "draft binding provenance cannot be verified in a shallow clone: "
+            "fetch the full history (actions/checkout fetch-depth: 0)"
+        )
+    commit = _git("log", "-1", "--format=%H", "--", "fht.json").decode().strip()
+    if len(commit) != 40:
+        raise MicrodataError("draft binding provenance: no commit changed fht.json")
+    stored = _git("show", f"{commit}:fht.json")
+    if hashlib.sha256(stored).hexdigest() != pinned_sha256:
+        raise MicrodataError(
+            f"draft binding provenance: fht.json at {commit} does not hash to the "
+            "pinned digest (uncommitted schema bytes, or a pin that was not "
+            "re-anchored)"
+        )
+    return commit
+
+
 def _draft_schema(allow_draft, schema):
     if not allow_draft:
         raise MicrodataError("FHT draft reference binding requires allow_draft=True")
@@ -468,10 +513,10 @@ def _draft_schema(allow_draft, schema):
     provenance = json.loads(
         (ROOT / "tests/fixtures/microdata/provenance.json").read_text(encoding="utf-8")
     )
-    if (provenance.get("fhtSchemaSha256") != hashlib.sha256(raw).hexdigest()
-            or provenance.get("owningSourceCommit") !=
-            "8b178a02b01876953d0360bc9f46bd11a609b3c6"):
+    pinned = provenance.get("fhtSchemaSha256")
+    if pinned != hashlib.sha256(raw).hexdigest():
         raise MicrodataError("draft binding provenance does not match owning source")
+    provenance = dict(provenance, owningSourceCommit=owning_commit(pinned))
     if schema is not None and schema != local:
         raise MicrodataError("custom schema must match the pinned owning draft")
     selected = local
