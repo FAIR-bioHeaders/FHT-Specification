@@ -181,7 +181,8 @@ RULES = {
            "which read back as the same characters.",
     "R12": "Header parsing: YAML metadata is read with YAML 1.2 core-schema types and "
            "must read the same under YAML 1.1; explicit tags and plain scalars that the "
-           "two versions read differently (010, 1_000, 1:30, yes, on, 1e3) are invalid.",
+           "two versions read differently (010, 1_000, 1:30, yes, on, 1e3) are invalid; "
+           "plain scalars that look like dates or times are strings, as written.",
     "R13": "Numbers: a numeric metadata value must be a finite number. YAML .nan, "
            ".inf and -.inf make the record invalid.",
     "R14": "Links: a value whose schema format is uri should use http or https (ftp, "
@@ -418,11 +419,20 @@ def multimember_gzip(data, split):
 
 
 def decompress(data):
-    """Concatenated gzip members (also valid BGZF input)."""
+    """Concatenated gzip members (also valid BGZF input); every member must be
+    complete. Raises ValueError for a truncated member or for trailing bytes
+    (including NUL padding) that do not start another member."""
     out = b""
     while data:
+        if data[:2] != b"\x1f\x8b":
+            raise ValueError("trailing bytes after the last gzip member")
         engine = zlib.decompressobj(31)
-        out += engine.decompress(data) + engine.flush()
+        try:
+            out += engine.decompress(data) + engine.flush()
+        except zlib.error as error:
+            raise ValueError(f"corrupt gzip member: {error}") from error
+        if not engine.eof:
+            raise ValueError("truncated gzip member")
         data = engine.unused_data
     return out
 
@@ -763,6 +773,24 @@ def build_vectors():
                     "Raw non-ASCII UTF-8 (U+00E9) in a header value is allowed; "
                     "only U+0085, U+2028 and U+2029 are excluded from header lines.",
                     expected=dict(EXPECTED_METADATA, documentation=utf8_documentation))
+    # R12 (FORMAT.md v0.6.0): "Plain scalars that look like dates or times are
+    # strings, exactly as written." Writers quote them (yaml_scalar does), but a
+    # reader must accept the plain form and keep the text: the shared suite's
+    # valid fasta-yaml-portable-types vector carries ";~dateCreated: 2026-10-08".
+    lines = lines_of(FHT_RECORD)
+    date_line = [i for i, line in enumerate(lines)
+                 if line.text.startswith(PREFIX + b"dateCreated:")]
+    assert len(date_line) == 1
+    lines[date_line[0]] = Line(PREFIX + b"dateCreated: " + FHT_RECORD["dateCreated"].encode())
+    fht_lines_valid("fht-fasta-yaml-plain-date", lines, ["R12", "C1"],
+                    "dateCreated written as the plain (unquoted) scalar "
+                    "2026-11-10: under R12 a plain scalar that looks like a "
+                    "date is a string, exactly as written, so the record reads "
+                    "the same under YAML 1.1 and 1.2 and passes the date "
+                    "format (the FHT form of the shared "
+                    "fasta-yaml-portable-types vector).",
+                    expected=dict(EXPECTED_METADATA,
+                                  dateCreated=FHT_RECORD["dateCreated"]))
     extension = record_of(**{
         "x-example-note": "Producer extension (placeholder)",
         "x-example-count": 3,
@@ -937,6 +965,17 @@ def build_vectors():
             "fht-fasta-sequence-tampered compressed as one gzip member: the "
             "covered bytes still disagree after decompression, so the mismatch "
             "survives framing.", "broken", compression="gzip")
+
+    # A gzip stream cut short inside its CRC-32/ISIZE trailer: every deflate
+    # byte is present, but the member is incomplete, so R1 has no decompressed
+    # bytes to hash. A reader must reject it instead of hashing what a lenient
+    # decompressor happened to return.
+    invalid("fht-fasta-gzip-truncated", gzip_member(plain)[:-6], "R1",
+            "fht-fasta-lf as one gzip member truncated six bytes before its "
+            "end, inside the CRC-32/ISIZE trailer: the stream is incomplete, so "
+            "there are no decompressed bytes for R1 to hash and the file is "
+            "rejected before any checksum comparison.", "unreachable",
+            compression="gzip")
 
     def wrong_digest(algorithm):
         return lambda covered: base64.b64encode(
@@ -1630,8 +1669,12 @@ def self_check():
         stated, computed = reference_checksum(data)
         assert stated == computed == entry["checksum"], entry["name"]
     for entry in INVALID:
-        data = (decompress(entry["data"]) if entry.get("compression")
-                else entry["data"])
+        try:
+            data = (decompress(entry["data"]) if entry.get("compression")
+                    else entry["data"])
+        except ValueError:
+            assert entry["self_checksum"] == "unreachable", entry["name"]
+            continue
         if entry["self_checksum"] == "matches":
             stated, computed = reference_checksum(data)
             assert stated == computed, entry["name"]

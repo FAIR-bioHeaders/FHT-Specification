@@ -55,7 +55,7 @@
       "notApplicable": "R11 is a writing recommendation: a raw '>' or '@' keeps the file valid and validators warn; the shared suite likewise has no invalid R11 vector."
     },
     "R12": {
-      "summary": "Header parsing: YAML metadata is read with YAML 1.2 core-schema types and must read the same under YAML 1.1; explicit tags and plain scalars that the two versions read differently (010, 1_000, 1:30, yes, on, 1e3) are invalid."
+      "summary": "Header parsing: YAML metadata is read with YAML 1.2 core-schema types and must read the same under YAML 1.1; explicit tags and plain scalars that the two versions read differently (010, 1_000, 1:30, yes, on, 1e3) are invalid; plain scalars that look like dates or times are strings, as written."
     },
     "R13": {
       "summary": "Numbers: a numeric metadata value must be a finite number. YAML .nan, .inf and -.inf make the record invalid."
@@ -397,6 +397,26 @@
         "version": "1.0.0",
         "assemblyType": "de novo",
         "documentation": "Synthetic FHT conformance vector; caf\u00e9 (placeholder UTF-8 metadata)"
+      }
+    },
+    {
+      "id": "fht-fasta-yaml-plain-date",
+      "file": "valid/fht-fasta-yaml-plain-date.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "valid",
+      "rules": [
+        "R12",
+        "C1"
+      ],
+      "description": "dateCreated written as the plain (unquoted) scalar 2026-11-10: under R12 a plain scalar that looks like a date is a string, exactly as written, so the record reads the same under YAML 1.1 and 1.2 and passes the date format (the FHT form of the shared fasta-yaml-portable-types vector).",
+      "checksum": "e+VZ9vSU8d3x5rvHJHrZ2H6nntB3DlboQdDe5+MHDM8=",
+      "selfChecksum": "matches",
+      "metadata": {
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "version": "1.0.0",
+        "assemblyType": "de novo",
+        "dateCreated": "2026-11-10"
       }
     },
     {
@@ -755,6 +775,17 @@
       "rule": "R3",
       "reason": "fht-fasta-sequence-tampered compressed as one gzip member: the covered bytes still disagree after decompression, so the mismatch survives framing.",
       "selfChecksum": "broken"
+    },
+    {
+      "id": "fht-fasta-gzip-truncated",
+      "file": "invalid/fht-fasta-gzip-truncated.fht.fasta.gz",
+      "format": "fht-fasta",
+      "compressed": true,
+      "compression": "gzip",
+      "expected": "invalid",
+      "rule": "R1",
+      "reason": "fht-fasta-lf as one gzip member truncated six bytes before its end, inside the CRC-32/ISIZE trailer: the stream is incomplete, so there are no decompressed bytes for R1 to hash and the file is rejected before any checksum comparison.",
+      "selfChecksum": "unreachable"
     },
     {
       "id": "fht-fasta-checksum-sha256",
