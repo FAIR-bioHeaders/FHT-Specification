@@ -24,11 +24,32 @@ and [revised spec 005](005-rna-transcriptome-header/spec.md) together.
 | `checksum` | One shared SHA-512/256 scalar | Detect file-byte changes | Tool-computed exact-file checksum using adopted exclusion rules |
 | `assemblyType` | One proposed enum string | Choose how to interpret construction/source claims | Known workflow history using D2's definitions |
 
-Requiredness applies to the slot; the contract does not independently tighten
-optional nested Taxon/Author members. The generated schema states array and
-nested constraints explicitly: optional arrays need at least one item when
-present, and empty strings or `null` are not unknown-value sentinels. Missing a required value cannot be
-repaired with `null`, `unknown`, a guessed person or a dummy checksum.
+Requiredness applies to the slot. As in released FHR (shared
+`docs/SCHEMA-VERSIONS.md`, "Required values are non-empty"), a required value
+must also be non-empty, including where the schema cannot reject the empty form.
+What the generated `fht.json` itself rejects:
+
+- blank `transcriptome`, `version` and `dateCreated`; an empty `metadataAuthor`
+  list and a metadata author without a non-blank `name`;
+- an empty list for the FHT arrays `transcriptomeSynonym`, `assemblyAuthor`,
+  `assemblySoftware`, `sample`, `sequencingRuns`, `instrument` and `derivedFrom`,
+  a `sample` item with no value, and blank items of the FHT string fields.
+
+What it still accepts, because the shared objects and slots it imports do not
+constrain them: `relatedLink: []` and `identifier: []`; `""` for
+`documentation`, `reuseConditions`, `funding` and `voucherSpecimen`; an
+`assemblySoftware` item with an empty `name` or `version`; `commandLineOption: []`
+or `[""]`; `assemblyAuthor: [{}]` or an empty assembly-author `name`; and
+`taxon: {}`, an empty `accessionID` or an empty `vitalStats` object. Of these,
+the empty `taxon`, the nameless assembly author and the nameless software break
+FHR's non-empty rule for required values, so such a record is schema-valid but
+not conforming. Whether the draft schema should reject them, and the optional
+empties, is open in
+[#56](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/56).
+
+Empty strings, empty lists and `null` are not unknown-value sentinels: omit an
+unknown optional value. Missing a required value cannot be repaired with `null`,
+`unknown`, a guessed person or a dummy checksum.
 
 ## Three minimal record designs
 

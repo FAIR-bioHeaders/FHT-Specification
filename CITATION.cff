@@ -15,15 +15,16 @@
 # FAIR-bioHeaders-Specification#211; publication requires maintainer approval).
 #
 # Source provenance of the draft contract: fht.json (title "FHT", JSON Schema
-# 2020-12, served from the main branch only) was generated from the FHT 1.0
-# LinkML model at PR #21 (merge commit 0ceb6f460e1f749f9eb2afb0a8b2f83cddb0e07a)
-# and extended with top-level x- keys at PR #24 (commit 2d582f1); it imports the
-# pinned shared core snapshot in schemas/provenance.json (commit
-# 980029e5886a1a56a2d2545bfe59c7107539d38d, shared v0.4.0/v0.4.1 line). The
-# schemaVersion "1.0" value is a development draft, not a released contract:
-# FAIR-bioHeaders-Specification v0.5.0 registers only FHR, FHP and FHGFF3 in
-# schemas/versions.json, and no https://w3id.org/fair-bioheaders/fht/ alias
-# exists.
+# 2020-12, served from the main branch only) was first generated from the FHT
+# 1.0 LinkML model at PR #21 (merge commit
+# 0ceb6f460e1f749f9eb2afb0a8b2f83cddb0e07a) and extended with top-level x- keys
+# at PR #24 (commit 2d582f1); later draft revisions are in this repository's
+# history. It imports the shared core and shared objects pinned in
+# schemas/provenance.json: FAIR-bioHeaders-Specification release v0.6.0, tag
+# commit 0ae18b00ee4bd71ab2dc28bae706b0f9d195076b. The schemaVersion "1.0" value
+# is a development draft, not a released contract: FAIR-bioHeaders-Specification
+# v0.6.0 registers only FHR, FHP and FHGFF3 in schemas/versions.json, and no
+# https://w3id.org/fair-bioheaders/fht/ alias exists.
 cff-version: 1.2.0
 title: FHT Specification (development repository)
 message: >-

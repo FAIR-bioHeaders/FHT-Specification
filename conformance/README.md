@@ -65,12 +65,20 @@ rule text, derived from the merged contract, is:
   validate against `fht.json` (draft 2020-12, asserted `format`s): the nine
   required fields (`schema`, `schemaVersion` `"1.0"`, `transcriptome`,
   `assemblyType`, `taxon`, `version`, `metadataAuthor`, `dateCreated`,
-  `checksum`) present and non-empty; enums (`de novo`, `genome-guided`,
-  `annotation-derived`; `mRNA`, `rRNA`, `tRNA`, `transcribed RNA`;
-  `unstranded`, `forward`, `reverse`); patterns (checksums, run accessions,
-  taxon URI, DOI); nested cardinality (`sample` items need one value,
-  optional arrays non-empty when present); the closed top level plus the
-  `x-` extension pattern; and only the two permitted parent pairs (FR-007).
+  `checksum`) present, with non-blank `transcriptome`, `version` and
+  `dateCreated` and at least one named metadata author; enums (`de novo`,
+  `genome-guided`, `annotation-derived`; `mRNA`, `rRNA`, `tRNA`,
+  `transcribed RNA`, `mixed`; `unstranded`, `forward`, `reverse`); patterns
+  (checksums, run accessions, taxon URI, DOI); nested cardinality (`sample`
+  items need one value; the FHT arrays `transcriptomeSynonym`,
+  `assemblyAuthor`, `assemblySoftware`, `sample`, `sequencingRuns`,
+  `instrument` and `derivedFrom` need one item when present); the closed top
+  level plus the `x-` extension pattern; and only the two permitted parent
+  pairs (FR-007). The schema does not reject every empty value: `taxon: {}`,
+  an unnamed assembly author or software item, `relatedLink: []` and empty
+  optional strings still validate (see
+  [`../specs/fht-record-designs.md`](../specs/fht-record-designs.md) and
+  [#56](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/56)).
 - **[C2] Schema-URL closure.** A record's `schema` value must be this
   repository's raw `main` URL,
   `https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json`,
@@ -275,10 +283,13 @@ Every vector here is read **through** the opt-in draft lane: the `expected`
 values describe a reader that chose to read this repository's `fht.json`. Rule
 V7 also decides what a reader does when it did *not* choose the lane — then the
 owning-repository raw-main URL is "any other value" under V5, so each of these
-records is read as FHR and rejected there. Measured 2026-11-15 with
-`fair-bioheaders` 0.11.0 in both configurations (see
-[`../docs/CI.md`](../docs/CI.md)): 0 of 72 vectors accepted with the lane off,
-28 accepted with it on.
+records is read as FHR and rejected there. Measured with `fair-bioheaders`
+0.11.0 in both configurations (see [`../docs/CI.md`](../docs/CI.md)): on the
+current 82-vector suite (2026-11-18, Linux), 0 of 82 vectors are accepted with
+the lane off, and with it on all 30 valid vectors are accepted once the reader
+holds this checkout's contract (29 with its own older bundled draft, which
+lacks `mixed`). The first measurement, 2026-11-15 on the then 72-vector suite,
+was 0 of 72 off and 28 on.
 
 That is a second, configuration-dependent outcome for the *same bytes*, and this
 manifest vocabulary cannot hold it: a vector has one `file`, one `expected` and
@@ -355,7 +366,9 @@ ln -s "$PWD/../FAIR-bioHeaders-Tools-JavaScript/node_modules" /tmp/fhtjs/node_mo
 ```
 
 A and C were run against these bytes on 2026-11-15 and reported **no
-disagreement with any of the 72 vectors**, not only with the four candidates: A
+disagreement with any of the 72 vectors the suite then had**, not only with the
+four candidates. A was re-run on 2026-11-18 against the current 82 vectors, with
+no disagreement ([`../docs/CI.md`](../docs/CI.md)); C was not re-run. A
 through `bioheaders verify` / `verify-links`, C through `inspectBytes(bytes,
 {container: 'fasta', drafts: ['FHT'], parents})` on a read-only `git archive`
 export of that repository's `origin/main`. C's own `capability:draft` runner

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Documentation and CI: state exactly which empty values `fht.json` rejects and
+  which it still accepts (FHR's non-empty rule for required values applies
+  either way; schema constraints are proposed in #56, parent-link and
+  completeness checks in #57); C1 now lists `mixed`. Fix the stale shared pin in
+  `CITATION.cff` (v0.6.0, `0ae18b00`) and dated 72-vector counts. Lock
+  `requirements-linkml.txt` exactly and run the Chromium browser check in CI.
+  AGENTS.md: port the shared real-data-cases wording (specification `e11a9bf`)
+  and the FHP absolute-links sentence (`659115c`), and move the FHT-only update
+  into a local section.
+
 - Typed-HTML reference (#11): read only values a viewer can see. Reject hidden
   or `display: none` properties and scopes, unrendered elements, `meta[content]`
   and other attribute-only values, `data`/`meter`/`time` values that differ from
