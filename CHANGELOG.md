@@ -7,9 +7,11 @@
   to a scalar value, unrendered elements, `meta[content]` and other
   attribute-only values, `data`/`meter`/`time` values that differ from
   their text, `href` schemes outside R14, `itemref` and multi-token `itemprop`.
-  Ten negative fixtures; the reference requires Python 3.13.6 or later for
-  correct `<title>`/`<textarea>` (RCDATA) parsing. The writer and the seven
-  example pages are unchanged.
+  Concealed attribute-valued array items and containers are checked too.
+  Eleven visible-value negative fixtures; all 20 invalid fixtures declare their
+  expected rejection. The reader probes `<title>`/`<textarea>` RCDATA behavior,
+  accepting capable backports without a version-number floor. The writer and
+  the seven example pages are unchanged.
 
 - Draft contract (rejection boundary of the unreleased draft): `schema` accepts
   only this repository's raw-main URL, because rule V7 gives a draft no release

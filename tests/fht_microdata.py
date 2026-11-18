@@ -13,7 +13,6 @@ import json
 import math
 import re
 import subprocess
-import sys
 import warnings
 from html import escape
 from html.parser import HTMLParser
@@ -169,11 +168,28 @@ _SHOWN_ATTRIBUTE = {"data", "meter", "time"}
 # href is an active link in the rendered page, so other schemes are refused.
 _R14_SCHEMES = {"http", "https", "ftp", "urn", "doi", "info"}
 _SCHEME = re.compile(r"^([A-Za-z][A-Za-z0-9+.-]*):")
-# Python's html.parser treats <title> and <textarea> contents as RCDATA (text,
-# with character references decoded) only from 3.13.6 / 3.14 on; earlier
-# versions parse tags inside them, which browsers do not. The reference refuses
-# to run on such a parser rather than read values a browser shows as text.
-MINIMUM_PYTHON = (3, 13, 6)
+def _supports_rcdata():
+    """Probe parser behavior, including backports, rather than a version number."""
+    events = []
+
+    class Probe(HTMLParser):
+        def handle_starttag(self, tag, attrs):
+            events.append(("start", tag))
+
+        def handle_endtag(self, tag):
+            events.append(("end", tag))
+
+        def handle_data(self, data):
+            events.append(("data", data))
+
+    parser = Probe(convert_charrefs=True)
+    parser.feed("<title>a<b>c</b>&amp;</title>"
+                "<textarea>x<i>y</i>&amp;</textarea>")
+    parser.close()
+    return events == [
+        ("start", "title"), ("data", "a<b>c</b>&"), ("end", "title"),
+        ("start", "textarea"), ("data", "x<i>y</i>&"), ("end", "textarea"),
+    ]
 
 
 def _conceals(tag, attrs):
@@ -291,6 +307,7 @@ def _text(node):
 
 
 def _value_of(element):
+    _check_visible(element)
     if element.tag in _ATTRIBUTE_ONLY:
         raise MicrodataError(
             f"<{element.tag}> property value is not visible text in the page"
@@ -428,6 +445,9 @@ def _item_subschema(root, subschema):
 
 
 def _read_value(element, root, subschema):
+    # Recursive array items bypass _property_elements(), including attribute-
+    # valued links and nested containers. Apply the same gate at every value.
+    _check_visible(element)
     datatype = element.datatype
     if datatype == "array":
         items = []
@@ -598,10 +618,10 @@ def _draft_schema(allow_draft, schema):
 
 def read_page(text, schema=None, *, allow_draft=False, warn=None):
     """Extract and schema-check one draft FHT record; never verify sequence bytes."""
-    if sys.version_info < MINIMUM_PYTHON:
+    if not _supports_rcdata():
         raise MicrodataError(
-            "the FHT HTML reference needs Python 3.13.6 or later: older "
-            "html.parser versions parse markup inside <title> and <textarea>"
+            "the FHT HTML reader requires RCDATA-capable html.parser behavior: "
+            "<title>/<textarea> markup must stay text with references decoded"
         )
     schema, provenance = _draft_schema(allow_draft, schema)
     builder = _TreeBuilder()
