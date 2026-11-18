@@ -172,6 +172,22 @@ class FHTMicrodataTests(unittest.TestCase):
         page = base.replace("<h1>", '<div hidden>unrelated</div><h1>')
         read_page(page, allow_draft=True, warn=lambda message: None)
 
+    def test_concealed_scalar_descendants_are_rejected(self):
+        record = json.loads((ROOT / "examples/minimal-de-novo.fht.json").read_text())
+        base = write_page(record, allow_draft=True)
+        name = record["metadataAuthor"][0]["name"]
+        for attrs in ('hidden', 'style="display:none"', 'style="visibility:hidden"'):
+            with self.subTest(attrs=attrs):
+                page = base.replace(name, f'Visible<span {attrs}><b>Hidden</b></span>')
+                with self.assertRaisesRegex(MicrodataError, "not visible"):
+                    read_page(page, allow_draft=True, warn=lambda message: None)
+        # Visible descendants contribute text; unrelated concealed siblings do not.
+        page = base.replace(name, 'Visible<span><b>Nested</b></span>')
+        self.assertEqual(read_page(page, allow_draft=True, warn=lambda message: None)
+                         ["metadataAuthor"][0]["name"], "VisibleNested")
+        page = base.replace("<h1>", '<div hidden>unrelated</div><h1>')
+        read_page(page, allow_draft=True, warn=lambda message: None)
+
     def test_old_html_parser_is_refused(self):
         import fht_microdata
         base = (ROOT / "examples/html/minimal-de-novo.fht.html").read_text()
@@ -445,14 +461,17 @@ class FHTMicrodataTests(unittest.TestCase):
             with self.subTest(field=field, value=value), self.assertRaises(MicrodataError):
                 write_page(dict(self.record, **{field: value}), allow_draft=True)
 
-    def test_q4_metadata_authors_are_named_without_tightening_assembly_authors(self):
-        record = dict(self.record, assemblyAuthor=[{"uri": "https://orcid.org/0000-0002-1825-0097"}])
+    def test_q4_metadata_and_assembly_authors_are_named(self):
+        record = dict(self.record, assemblyAuthor=[{"name": "Named assembly author",
+                                                     "uri": "https://orcid.org/0000-0002-1825-0097"}])
         typed_equal(self, record, read_page(write_page(record, allow_draft=True),
                                           allow_draft=True, warn=lambda _: None))
         for authors in ([], [{}], [{"name": ""}], [{"name": " "}],
                         [{"uri": "https://orcid.org/0000-0002-1825-0097"}]):
             with self.subTest(authors=authors), self.assertRaises(MicrodataError):
                 write_page(dict(record, metadataAuthor=authors), allow_draft=True)
+            with self.subTest(assembly=authors), self.assertRaises(MicrodataError):
+                write_page(dict(record, assemblyAuthor=authors), allow_draft=True)
         text = write_page(record, allow_draft=True)
         # The reader independently validates extracted metadata, not just writer output.
         altered = text.replace(record["metadataAuthor"][0]["name"], " ")

@@ -248,8 +248,7 @@ authorize the remaining nonempty-value follow-up, distinct from the nine-root
 presence decision. `transcriptome`, `version` and `dateCreated` must be nonblank;
 `metadataAuthor` has at least one item and each metadata author has a nonblank
 `name`. The local `MetadataAuthor` specialization implements that constraint
-without changing the pinned shared `Author` object or the optional
-`assemblyAuthor` name rules. Taxon members retain their current optionality,
+without changing the pinned shared `Author` object. Taxon members retain their current optionality,
 including the already permitted empty taxon object; the FHT sample array stays.
 No new taxonomy decision is opened here.
 
@@ -274,3 +273,15 @@ The Q8 clarification changes no relationship pair or verification algorithm and
 does not certify the biological truth of a schema-valid claim.
 
 Refs #8 and #11: both remain open for acceptance and publication/runtime handoffs.
+
+### Assembly author names (Q4, proposed after #50)
+
+The Q4 answer ("absolutely required, every time, no exceptions") also covers the
+names of supplied assembly authors. `assemblyAuthor` stays optional, but when it
+is present every item has a nonblank `name`, through a local `AssemblyAuthor`
+specialization with the same rule as `MetadataAuthor`. The shared `Author`
+object, taxon members and the sample array are unchanged. An item that gives
+only an ORCID `uri`, or an empty or whitespace name, becomes invalid: like the
+rules above, this is a rejection-boundary change to the unreleased draft that
+needs maintainer approval. The 75 conformance fixtures and the canonical
+examples are unchanged, since none has an unnamed assembly author.

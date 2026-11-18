@@ -202,6 +202,7 @@ classes:
         minimum_cardinality: 1
       assemblyAuthor:
         description: Attributions for the assembly or extraction, when supplied
+        range: AssemblyAuthor
       dateCreated:
         description: Date the transcriptome resource was created, not the sample collection date
       checksum:
@@ -244,7 +245,18 @@ classes:
   MetadataAuthor:
     description: >-
       A metadata author with a supplied non-blank name, under the approved Q4
-      follow-up. This restriction is not applied to optional assemblyAuthor.
+      follow-up. Optional assemblyAuthor items follow the same rule
+      (AssemblyAuthor).
+    is_a: Author
+    slot_usage:
+      name:
+        required: true
+        pattern: '[^\t-\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]'
+  AssemblyAuthor:
+    description: >-
+      An assembly author with a supplied non-blank name (Q4 follow-up). The
+      assemblyAuthor list stays optional; when present, every item names its
+      person or organization.
     is_a: Author
     slot_usage:
       name:
