@@ -30,6 +30,8 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: '3.13'
+      - name: Install the existing pinned fixture-parser dependency
+        run: python -m pip install 'PyYAML==6.0.3'
       - name: Fixture-only adapter and bootstrap controls
         run: python -m unittest discover -s tests -p test_declared_references.py -v
       - name: Actual pinned checker and release-tag offline integration
