@@ -39,7 +39,8 @@ def inventory(root=ROOT):
               "revision": revision, "revisionKind": "tag", "commit": record.get("source_commit")}
     imports, contracts = [], []
     for local, declaration in record["files"].items():
-        item = {"local": relative(local), "path": relative(declaration["source_path"]),
+        item = {"local": relative(local),
+                "path": relative(declaration["source_path"]) if declaration.get("source_path") else None,
                 "sha256": declaration.get("sha256")}
         (contracts if item["path"] == "fhr.json" else imports).append(item)
     # These are the declared selected imports, not a claim to mirror every file
