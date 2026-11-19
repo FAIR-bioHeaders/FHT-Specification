@@ -5,6 +5,27 @@ FAIR-bioHeaders-Specification #211. This packet records the adopted D1–D3 deci
 FHT remains an unreleased draft; default toolkit support is not established.
 See the [decision record](FHT-DECISION-DOCKET.md#d1d3-accepted--november-19-2026).
 
+## Shared draft staging — November 19, 2026
+
+[Shared PR #277](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/pull/277)
+merged as `d6eaa7316f7d86eccb1e45072deeda03e05c2c16`; its Pages job succeeded.
+The shared `drafts/fht/` candidate retains 239 exact owning files from accepted
+merge `4ddda69cbcbb3920a06ab657173c0198672cd7bf`, with the unchanged draft schema
+SHA-256 `b62c4e227042e162b43d2c461cfe6c3ece3806636ca88a4cf9b0b2f902fb1fc3`.
+Actual receipts record 93 fixtures and 116 executed units with zero skips,
+failures or errors. Eleven candidate integrity controls, three Node comparison controls and actual
+Chromium integer/type mutations pass; the installed overlay compares 91 cases and explicitly
+stages two arithmetic cases as NOT-RUN. FHCRC controls establish reference/zlib
+agreement separately from that scoped installed-suite comparison.
+
+This is shared draft staging and documentation deployment, not joint final
+acceptance, a released root contract, a registry row, an alias or default runtime
+support. The staged checklist is
+[shared docs/FHT.md](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/blob/d6eaa7316f7d86eccb1e45072deeda03e05c2c16/docs/FHT.md).
+Questionnaire answers and D1–D3 remain settled; the separate producer pilot is
+not reinstated as a publication prerequisite. The advisory reference rollout
+changes CI plumbing only and does not advance this accepted source pin.
+
 ## Acceptance accounting
 
 The seven rows below follow [#8](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8)

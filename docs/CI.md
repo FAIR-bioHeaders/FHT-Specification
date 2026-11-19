@@ -378,3 +378,15 @@ adjacent DOM mutations plus an integer-to-object marker mutation. All values
 use recursively typed normalization so an object cannot impersonate an integer.
 Node controls preserve integer/float/string distinctions
 and array order. No schema bound or field meaning changes.
+
+## Declared-reference advisory rollout — 2026-11-19
+
+[The current-record adapter](../references/README.md) reads the existing
+`schemas/provenance.json` on each run. Its read-only engine is pinned to the
+accepted central commit and checked against actual HEAD, immutable git bytes
+and SHA-256 before execution. PR/push CI runs fixture-only adapter tests and a
+separate actual offline integration step against the declared release tag;
+missing authority data fails that integration rather than becoming a skipped
+pass. Scheduled/manual network auditing retains JSON and summarizes `FRESH`,
+`DRIFT`, `ABSENT` or `QUERY_FAILED` without moving pins or adding live-network PR
+gates. Existing provenance, schema and fixture checks remain in force.
