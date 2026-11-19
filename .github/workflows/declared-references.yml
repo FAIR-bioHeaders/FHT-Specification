@@ -1,0 +1,85 @@
+name: FHT declared-reference advisory
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  adapter-controls:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: FAIR-bioHeaders/FAIR-bioHeaders-Specification
+          ref: 6dee4c8baba723ec5cad825d521db2dbbc1921ae
+          path: _reference-checker
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - name: Install the existing pinned fixture-parser dependency
+        run: python -m pip install 'PyYAML==6.0.3'
+      - name: Fixture-only adapter and bootstrap controls
+        run: python -m unittest discover -s tests -p test_declared_references.py -v
+      - name: Actual pinned checker and release-tag offline integration
+        run: python scripts/check_reference_controls.py --checker-root "$GITHUB_WORKSPACE/_reference-checker"
+
+  advisory:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: FAIR-bioHeaders/FAIR-bioHeaders-Specification
+          ref: 6dee4c8baba723ec5cad825d521db2dbbc1921ae
+          path: _reference-checker
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.13'
+      - name: Query declared immutable authorities without changing pins
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python scripts/audit_declared_references.py --checker-root "$GITHUB_WORKSPACE/_reference-checker" \
+            --report-output "$RUNNER_TEMP/fht-reference-audit.json"
+      - name: Record an unperformed audit
+        if: always()
+        run: |
+          if [ ! -s "$RUNNER_TEMP/fht-reference-audit.json" ]; then
+            printf '%s\n' '{"advisory":true,"wrote":[],"references":[{"id":"fht-audit-bootstrap","verdict":"QUERY_FAILED","localComparison":"not-run","reason":"The audit did not produce a report; see the job log."}]}' > "$RUNNER_TEMP/fht-reference-audit.json"
+          fi
+      - name: Retain actual findings and query failures
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: fht-declared-reference-audit
+          path: ${{ runner.temp }}/fht-reference-audit.json
+          if-no-files-found: error
+      - name: Surface the advisory result
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '## Declared references — advisory, no pin writes'
+            echo '```json'
+            cat "$RUNNER_TEMP/fht-reference-audit.json"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
