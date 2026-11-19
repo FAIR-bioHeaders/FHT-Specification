@@ -34,7 +34,7 @@ def inventory(root=ROOT):
     if record["source_repository"].removesuffix(".git").rstrip("/") != "https://github.com/" + AUTHORITY:
         raise ValueError("declared source repository is not the shared publication authority")
     match = re.match(r"^(v[0-9]+\.[0-9]+\.[0-9]+)(?: |$)", record.get("source_release", ""))
-    revision = match.group(1) if match else None
+    revision = match.group(1) if match and record.get("source_commit") else None
     common = {"consumer": CONSUMER, "record": RECORD, "repository": AUTHORITY,
               "revision": revision, "revisionKind": "tag", "commit": record.get("source_commit")}
     imports, contracts = [], []
