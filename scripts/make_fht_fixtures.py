@@ -871,6 +871,22 @@ def build_vectors():
                                   transcriptome=MIXED_RECORD["transcriptome"],
                                   moleculeType="mixed"))
 
+    # The existing imported scholarlyArticle pattern ends in \S+. ECMA-262
+    # excludes NBSP/NNBSP but not ZWJ from that class. These controls exercise
+    # that existing constraint; they do not add a general invisible-text rule.
+    for name, article, description in (
+        ("fht-fasta-doi-ascii", "10.5555/synthetic-fht",
+         "An ASCII scholarlyArticle DOI-shaped placeholder satisfies the "
+         "existing imported pattern; no DOI is resolved or asserted real."),
+        ("fht-fasta-doi-internal-zwj", "10.5555/synthetic\u200d-fht",
+         "An internal U+200D ZWJ is not whitespace under ECMA-262, so the "
+         "existing scholarlyArticle pattern permits it. This pins the bound "
+         "of the pattern, not DOI registration or a general invisible-text policy."),
+    ):
+        fht_lines_valid(name, lines_of(record_of(scholarlyArticle=article)),
+                        ["C1"], description,
+                        expected=dict(EXPECTED_METADATA, scholarlyArticle=article))
+
     # ---- valid: parent links (C3) ---------------------------------------------
     genome_checksum = PARENT_LINKS["genome"]["statedChecksum"]
     minimal_checksum = PARENT_LINKS["minimal"]["statedChecksum"]
@@ -1135,6 +1151,16 @@ def build_vectors():
                        "the extension pattern and is an unknown key.")
 
     # ---- invalid: FHT contract (C1) ----------------------------------------------
+    for name, codepoint, label in (
+        ("fht-fasta-doi-trailing-nbsp", "\u00a0", "U+00A0 NBSP"),
+        ("fht-fasta-doi-trailing-narrow-nbsp", "\u202f", "U+202F narrow NBSP"),
+    ):
+        fht_invalid_record(name,
+                           record_of(scholarlyArticle="10.5555/synthetic-fht" + codepoint),
+                           "C1", "The scholarlyArticle DOI-shaped value ends in "
+                           + label + "; ECMA-262 \\S excludes this whitespace, "
+                           "so the existing imported DOI pattern rejects it. "
+                           "The exact-byte checksum still matches.")
     fht_invalid_record("fht-fasta-missing-assembly-type",
                        record_of(drop=["assemblyType"]), "C1",
                        "The required assemblyType field is absent.")

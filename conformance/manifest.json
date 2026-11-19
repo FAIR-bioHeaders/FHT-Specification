@@ -561,6 +561,44 @@
       }
     },
     {
+      "id": "fht-fasta-doi-ascii",
+      "file": "valid/fht-fasta-doi-ascii.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "valid",
+      "rules": [
+        "C1"
+      ],
+      "description": "An ASCII scholarlyArticle DOI-shaped placeholder satisfies the existing imported pattern; no DOI is resolved or asserted real.",
+      "checksum": "UWEk5ca5oCwV8/QZtS61oczPbRc10jxUwojxCdAn5Js=",
+      "selfChecksum": "matches",
+      "metadata": {
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "version": "1.0.0",
+        "assemblyType": "de novo",
+        "scholarlyArticle": "10.5555/synthetic-fht"
+      }
+    },
+    {
+      "id": "fht-fasta-doi-internal-zwj",
+      "file": "valid/fht-fasta-doi-internal-zwj.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "valid",
+      "rules": [
+        "C1"
+      ],
+      "description": "An internal U+200D ZWJ is not whitespace under ECMA-262, so the existing scholarlyArticle pattern permits it. This pins the bound of the pattern, not DOI registration or a general invisible-text policy.",
+      "checksum": "Ie7utk6tdrYy2sRL2NIDlarBoktemg2wT3JjVR4B4NI=",
+      "selfChecksum": "matches",
+      "metadata": {
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "version": "1.0.0",
+        "assemblyType": "de novo",
+        "scholarlyArticle": "10.5555/synthetic\u200d-fht"
+      }
+    },
+    {
       "id": "fht-fasta-parent-transcribed-from",
       "file": "valid/fht-fasta-parent-transcribed-from.fht.fasta",
       "format": "fht-fasta",
@@ -1017,6 +1055,68 @@
         "documentation": "Synthetic FHT conformance vector; not a real transcriptome.",
         "X-Wrongcase": "extension keys are lowercase x-",
         "checksum": "U5zVWwhhiOoGItnEykDO0of/InUdS1GnMwP7cGLEsyM="
+      }
+    },
+    {
+      "id": "fht-fasta-doi-trailing-nbsp",
+      "file": "invalid/fht-fasta-doi-trailing-nbsp.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "invalid",
+      "rule": "C1",
+      "reason": "The scholarlyArticle DOI-shaped value ends in U+00A0 NBSP; ECMA-262 \\S excludes this whitespace, so the existing imported DOI pattern rejects it. The exact-byte checksum still matches.",
+      "selfChecksum": "matches",
+      "metadata": {
+        "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json",
+        "schemaVersion": "1.0",
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "assemblyType": "de novo",
+        "moleculeType": "mRNA",
+        "taxon": {
+          "name": "Homo sapiens",
+          "uri": "https://identifiers.org/taxonomy:9606"
+        },
+        "version": "1.0.0",
+        "metadataAuthor": [
+          {
+            "name": "Synthetic metadata author (placeholder)"
+          }
+        ],
+        "dateCreated": "2026-11-10",
+        "documentation": "Synthetic FHT conformance vector; not a real transcriptome.",
+        "scholarlyArticle": "10.5555/synthetic-fht\u00a0",
+        "checksum": "u2APxa/aVljRksRHfu7cLq9JYRI2FQWkEdBTx2RUFhQ="
+      }
+    },
+    {
+      "id": "fht-fasta-doi-trailing-narrow-nbsp",
+      "file": "invalid/fht-fasta-doi-trailing-narrow-nbsp.fht.fasta",
+      "format": "fht-fasta",
+      "compressed": false,
+      "expected": "invalid",
+      "rule": "C1",
+      "reason": "The scholarlyArticle DOI-shaped value ends in U+202F narrow NBSP; ECMA-262 \\S excludes this whitespace, so the existing imported DOI pattern rejects it. The exact-byte checksum still matches.",
+      "selfChecksum": "matches",
+      "metadata": {
+        "schema": "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json",
+        "schemaVersion": "1.0",
+        "transcriptome": "Synthetic FHT conformance transcript set",
+        "assemblyType": "de novo",
+        "moleculeType": "mRNA",
+        "taxon": {
+          "name": "Homo sapiens",
+          "uri": "https://identifiers.org/taxonomy:9606"
+        },
+        "version": "1.0.0",
+        "metadataAuthor": [
+          {
+            "name": "Synthetic metadata author (placeholder)"
+          }
+        ],
+        "dateCreated": "2026-11-10",
+        "documentation": "Synthetic FHT conformance vector; not a real transcriptome.",
+        "scholarlyArticle": "10.5555/synthetic-fht\u202f",
+        "checksum": "gqj57ipdNTG4oo8OLfQVK4he/O3qmiq+vx6TP7FZDcs="
       }
     },
     {

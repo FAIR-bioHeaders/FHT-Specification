@@ -834,6 +834,8 @@ CONTRACT_RULES = {"C1", "C2", "V1", "R15"}
 # match this set exactly — no missing and no extra error — so a vector that
 # fails for a different reason than its description fails the lane.
 EXPECTED_SCHEMA_ERRORS = {
+    "fht-fasta-doi-trailing-nbsp": {("pattern", "$.scholarlyArticle", "\\xa0")},
+    "fht-fasta-doi-trailing-narrow-nbsp": {("pattern", "$.scholarlyArticle", "\\u202f")},
     "fht-fasta-extension-nested-key": {("additionalProperties", "$.taxon", "'x-note'")},
     "fht-fasta-extension-uppercase-key": {("additionalProperties", "$", "'X-Wrongcase'")},
     "fht-fasta-missing-assembly-type": {("required", "$", "'assemblyType'")},

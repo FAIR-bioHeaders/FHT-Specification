@@ -1,6 +1,6 @@
 # FHT prepublication evidence and decisions
 
-Dated 2026-11-16; refs FHT-Specification #8, #9 and #10, and shared
+Dated 2026-11-19 (historical measurements retain their dates); refs FHT-Specification #8, #9 and #10, and shared
 FAIR-bioHeaders-Specification #211. This packet prepares review. It neither
 changes acceptance criteria nor closes an issue, approves a candidate, publishes
 FHT, or establishes default toolkit support. FHT remains an unreleased draft.
@@ -9,27 +9,30 @@ FHT, or establishes default toolkit support. FHT remains an unreleased draft.
 
 The seven rows below follow [#8](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8)
 and its [per-box evidence](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6904199033).
-The committed suite currently contains 75 vectors (29 valid, 46 invalid).
-Four carry `promotion: candidate-unreviewed`; executing them does not approve them.
+Use [the generated manifest](../conformance/manifest.json) for the current suite
+inventory and outcomes. Four parent-link cases carry
+`promotion: candidate-unreviewed`; executing them does not approve them.
 
 | #8 box | Existing evidence and this packet | Remaining gate |
 | --- | --- | --- |
 | 1 examples for three construction types | Six minimal/rich stems, JSON/YAML/FASTA; `tests/test_examples.py` and fixture checker validate and recompute checksums | Existing evidence; no new example claim |
-| 2 typed serializations | JSON/YAML/embedded FASTA; JSON-LD and HTML explicitly unsupported | #11 owns reviewed HTML binding; no unsupported format is passed here |
+| 2 typed serializations | JSON/YAML/embedded FASTA plus seven canonical typed-HTML pairs and a test-only reference reader/writer; the browser job extracts each pair through Chromium | #11 still owns shared binding publication and installed runtime/website handoff; JSON-LD remains unsupported |
 | 3 byte-level vectors and streams | Existing U/T, line endings, comments, checksums and compressed vectors; installed lane now exercises actual stdin/stdout | Shared-manifest absorption and any shared vocabulary decision remain publication work; these process checks add no normative vector |
 | 4 strip/combine/conversion preservation | Independent payload expectation, metadata values/order/types and recomputed output verification; actual stream payload stdout is compared as bytes | Default-path acceptance belongs to #9 after publication; canonical header regeneration is not whole-file identity |
-| 5 parent outcomes | Existing matching, mismatching and unavailable cases, with distinct exit/report checks | Four added candidate expectations still need independent review |
-| 6 version selection and reviewed expectations | Existing V1/V5/V7 cases and documented release-time V4 asymmetry | Independent reviewer must disposition candidates; no marker is removed here |
+| 5 parent outcomes | Existing matching, mismatching and unavailable cases, with distinct exit/report checks; independent technical derivations are recorded below | Four candidate expectations still need explicit maintainer/curator disposition; technical review is not promotion |
+| 6 version selection and reviewed expectations | Existing V1/V5/V7 cases and documented release-time V4 asymmetry, with recorded independent technical candidate review | Explicit candidate disposition and shared publication follow-through remain; no marker is removed here |
 | 7 named toolkit and shared checks | `run_toolkit_lane.py` against installed 0.11.0; separate Linux CI job; independent fixture/model/provenance gates retained | Shared FHT format does not exist before publication; installed 0.11.0 bundles an older draft, whose digest is printed, not silently substituted |
 
-The installed lane compares 74 candidate-inclusive cases as **implementation
-comparisons**, not independently approved acceptance cases. The newly valid
-mixed case is explicitly unsupported by the old installed contract. Its expected
-outcomes remain unchanged. The printed toolkit identity and draft-byte digests
-bound the comparison: agreement with 0.11.0 is not proof about every change to the
-current draft contract. Default-path behavior is reported separately with the
-lane disabled. The independent job regenerates into a scratch tree and compares
-committed bytes; it does not depend on the toolkit job.
+The installed lane's case counts and NOT-RUN cases come from the suite and the
+installed contract being exercised; they are **implementation comparisons**, not
+independently approved acceptance cases. The as-installed 0.11.0 contract is
+older than the owning draft. The separate `--checkout-contract --strict` lane
+checks that same installed implementation with this checkout's contract bytes;
+this overlay is a test configuration, not a published package refresh. The
+printed toolkit identity and draft-byte digests bound each comparison.
+Default-path behavior is reported separately with the lane disabled. The
+independent job regenerates into a scratch tree and compares committed bytes;
+it does not depend on the toolkit job. See [the dated installed evidence](CI.md#installed-reader-against-this-checkouts-contract--2026-11-18).
 
 ## Independent review request
 
@@ -106,8 +109,29 @@ rejection's rule. Native
 repository unittests, provenance/legacy checks, documentation checks and pinned
 Markdownlint passed. Harness controls deliberately corrupt payload stdout,
 remove all cases and make the named default accept: each is detected. The Linux
-installed-artifact job is prepared; its actual server result must be recorded
-after the PR runs. No Linux pass is claimed by the local measurement.
+installed-artifact lane subsequently passed in merged
+[#49](https://github.com/FAIR-bioHeaders/FHT-Specification/pull/49), as recorded
+in [the November 16 source verification](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/9#issuecomment-6924425112).
+Later contract-aware Linux measurements are recorded in [CI.md](CI.md#installed-reader-against-this-checkouts-contract--2026-11-18).
+These dated results do not claim that any future suite addition has run there.
+
+## Existing DOI-pattern coverage — 2026-11-19
+
+The existing imported `scholarlyArticle` pattern ends in `\S+`. Under the
+family's settled ECMA-262 interpretation, NBSP (U+00A0) and narrow NBSP
+(U+202F) are whitespace and a value ending in either fails C1. An internal
+ZWJ (U+200D) is not whitespace and is permitted by that pattern. Four new
+vectors pin both negative cases and explicit ASCII/ZWJ positive controls.
+The generator computes genuine exact-byte checksums, so the negative cases
+must fail the contract rather than file-integrity comparison.
+
+The expectations follow the existing pattern's character-class semantics,
+corroborated independently by a second reader using Node's actual regex
+engine. They do not establish DOI registration, biological provenance or a
+blanket invisible-character prohibition. No schema, field meaning, existing
+fixture byte, outcome or parent-candidate promotion marker changes. This is
+the owning-suite handoff for [Java #16](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools-Java/issues/16);
+it does not repair or repin a consumer.
 
 ## Handoff order
 
