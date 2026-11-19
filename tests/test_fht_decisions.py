@@ -27,6 +27,11 @@ class DecisionTests(unittest.TestCase):
                        "completeDuplicated": 1, "fragmented": 0, "missing": 1,
                        "total": 4}
 
+    def test_retained_empty_parent_accession_object(self):
+        record = minimal()
+        record["derivedFrom"] = [dict(self.parent, accessionID={})]
+        self.assertTrue(self.validator.is_valid(record))
+
     def test_duplicate_equality_ignores_object_key_order(self):
         record = minimal()
         record["derivedFrom"] = [self.parent, dict(reversed(list(self.parent.items())))]

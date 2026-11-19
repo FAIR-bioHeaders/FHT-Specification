@@ -332,10 +332,13 @@ fresh environment:
    rule-text expectation; the reader must instead agree with its own installed
    bytes, and the vector is reported NOT-RUN as a finding for #9 (this
    generalizes the earlier `mixed` handling).
-2. **Against this checkout.** `run_toolkit_lane.py --checkout-contract --strict`
+2. **Against this checkout.** `run_toolkit_lane.py --checkout-contract --strict --stage-completeness`
    overlays this checkout's `fht.json` onto the throwaway environment's draft
-   file and registry digest, compares every vector, and fails on any finding as
-   well as on any disagreement.
+   file and registry digest. Following adopted D2, two arithmetic-only invalid
+   vectors are explicitly NOT-RUN by this old runtime, with actual acceptance
+   probes and independent owning rejection checks. Every other vector is
+   compared; unexplained findings or any disagreement still fail. Runtime
+   arithmetic enforcement remains #9 publication follow-through.
 
 Measured locally on Linux (Python 3.13.14) on 2026-11-18 with the 82-vector
 suite: as installed, 78 vectors compared with no disagreement and 4 NOT-RUN

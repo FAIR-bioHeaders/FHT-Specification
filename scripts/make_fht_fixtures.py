@@ -1749,9 +1749,8 @@ def manifest():
                   "(FHT-Specification#8). No FHT schema is released and no "
                   "installed toolkit reads FHT in its default path: every "
                   "expected outcome is derived from the rule text, never from "
-                  "an implementation under test. Vectors marked "
-                  "promotion=candidate-unreviewed additionally await a second "
-                  "reader (see promotionCandidates).",
+                  "an implementation under test. D3 file-identity expectation "
+                  "acceptance is recorded separately in expectationReviews.",
         "specification": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-"
                          "Specification/blob/main/docs/FORMAT.md (rules R1-R15)",
         "schemaVersionsSpecification": "https://github.com/FAIR-bioHeaders/"

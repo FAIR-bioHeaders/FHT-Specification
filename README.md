@@ -14,7 +14,7 @@ contract through the opt-in rule V7 lane; this is draft recognition. No release 
 established by this repository state. See
 [the contract and migration record](docs/FHT-MIGRATION.md).
 
-- Approved Q4/Q8 follow-up: [nonempty metadata values and actual genome extraction](docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17); taxon rules stay unchanged; supplied `assemblyAuthor` items need a nonblank `name` (proposed after #50).
+- Approved Q4/Q8 follow-up: [nonempty metadata values and actual genome extraction](docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17); taxon rules stay unchanged; supplied `assemblyAuthor` items need a nonblank `name` (merged #52).
 - Schema source: [`fht_linkml.yml`](fht_linkml.yml)
 - Generated contract: [`fht.json`](fht.json). It is the normative contract:
   validate records with it, not with `linkml-validate` on the model, because the
@@ -63,7 +63,8 @@ The nine required fields are `schema`, `schemaVersion`, `transcriptome`,
 `checksum`. Optional fields cover biological molecule class, software, sample
 context, library strategy/strandedness, run accessions, statistics, BUSCO
 completeness, reviewed parent links and shared provenance/identity fields. Omit
-unknown optional values; do not use `null`, empty strings or invented
+unknown optional values. Empty optional values remain accepted under
+[D1](docs/FHT-DECISION-DOCKET.md); prefer omission rather than invented
 placeholders.
 
 Extension fields: as in FHR 2.1, FHP 1.1 and FHGFF3 1.1 (FAIR-bioHeaders-Specification

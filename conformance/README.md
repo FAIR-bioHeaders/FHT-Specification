@@ -21,7 +21,7 @@ the manifest fields mirror the shared suite's `fhp-fasta` vectors so the
 shared `conformance/manifest.json` can absorb these vectors unchanged when
 FHT is published.
 
-**Status: development, not publication.** Nothing here is released, adopted
+**Status: development, not publication.** Draft D1–D3 decisions are adopted; no FHT contract is released
 or published; FHT has no released contract (issue #10), no toolkit support
 (issue #9) and no shared-manifest entry yet (issue #55 /
 FAIR-bioHeaders-Specification#107, the #55 chain's "lane F").
