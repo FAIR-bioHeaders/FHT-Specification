@@ -15,7 +15,11 @@ def completeness_errors(record):
     value = record.get("completeness") if isinstance(record, dict) else None
     if not isinstance(value, dict):
         return []
-    if not all(name in value and type(value[name]) is int for name in BUSCO_COUNTS):
+    # JSON Schema treats 2.0 as an integer; retain that mathematical semantics.
+    def integer(number):
+        return type(number) is int or (type(number) is float and number.is_integer())
+
+    if not all(name in value and integer(value[name]) for name in BUSCO_COUNTS):
         return []
     observed = sum(value[name] for name in BUSCO_COMPONENTS)
     if observed != value["total"]:

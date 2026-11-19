@@ -70,6 +70,19 @@ class DecisionTests(unittest.TestCase):
         self.assertEqual(completeness_errors(record), [], "bool is not an integer count")
         self.assertFalse(self.validator.is_valid(record))
 
+    def test_mathematical_integer_counts_cannot_bypass_arithmetic(self):
+        record = minimal()
+        record["completeness"] = {k: float(v) if type(v) is int else v
+                                  for k, v in self.counts.items()}
+        self.assertTrue(self.validator.is_valid(record))
+        self.assertEqual(completeness_errors(record), [])
+        record["completeness"]["total"] = 5.0
+        self.assertTrue(self.validator.is_valid(record))
+        self.assertEqual(len(completeness_errors(record)), 1)
+        for invalid in (True, 2.5, float("inf"), float("nan")):
+            record["completeness"]["total"] = invalid
+            self.assertEqual(completeness_errors(record), [])
+
     def test_html_reference_checks_arithmetic_on_write_and_read(self):
         import fht_microdata as html
         record = minimal()
