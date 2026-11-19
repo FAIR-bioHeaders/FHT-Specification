@@ -2,6 +2,7 @@
 # License, v. 2.0. https://mozilla.org/MPL/2.0/.
 """Fixture-only controls; actual pinned-engine integration is a separate job."""
 import copy
+import os
 import hashlib
 import importlib.util
 import json
@@ -9,6 +10,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC = importlib.util.spec_from_file_location("fht_reference_adapter", ROOT / "scripts/audit_declared_references.py")
@@ -22,7 +24,11 @@ class DeclarationTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         (self.root / "schemas").mkdir()
-        self.record = json.loads((ROOT / adapter.RECORD).read_text())
+        self.record = {"source_repository": "https://github.com/" + adapter.AUTHORITY,
+                       "source_commit": "a" * 40, "source_release": "v0.6.0 (fixed fixture)",
+                       "files": {"schemas/core-v0.4.yaml": {"source_path": "schemas/core.yaml", "sha256": "1" * 64},
+                                 "schemas/shared.yaml": {"source_path": "schemas/shared.yaml", "sha256": "2" * 64},
+                                 "schemas/fhr-v0.6.0.json": {"source_path": "fhr.json", "sha256": "3" * 64}}}
         self.write()
 
     def write(self):
@@ -57,8 +63,19 @@ class DeclarationTests(unittest.TestCase):
         self.record["files"]["schemas/shared.yaml"].pop("sha256")
         self.write()
         tree = adapter.inventory(self.root)["references"][0]
-        self.assertIsNone(tree["revision"])
+        self.assertEqual(tree["revision"], "main")
+        self.assertEqual(tree["revisionKind"], "branch")
         self.assertIsNone(next(f for f in tree["files"] if f["local"] == "schemas/shared.yaml")["sha256"])
+
+    def test_missing_commit_or_source_path_stays_an_identifiable_incomplete_declaration(self):
+        self.record.pop("source_commit")
+        self.record["files"]["schemas/shared.yaml"].pop("source_path")
+        self.write()
+        tree, contract = adapter.inventory(self.root)["references"]
+        self.assertEqual(tree["revision"], "v0.6.0")
+        self.assertIsNone(tree["commit"])
+        self.assertIsNone(next(f for f in tree["files"] if f["local"] == "schemas/shared.yaml")["path"])
+        self.assertEqual(contract["class"], "released-contract")
 
     def test_escaping_source_or_consumer_paths_are_rejected(self):
         original = copy.deepcopy(self.record)
@@ -93,7 +110,7 @@ class BootstrapTests(unittest.TestCase):
         return subprocess.check_output(["git", "-C", str(self.root), *args], stderr=subprocess.DEVNULL)
 
     def test_verified_source_is_returned_without_executing_it(self):
-        self.assertEqual(adapter.verify_checker(self.root, self.metadata), self.source.resolve())
+        self.assertEqual(adapter.verify_checker(self.root, self.metadata), self.source.read_bytes())
 
     def test_wrong_head_or_changed_checker_bytes_fail_bootstrap(self):
         bad = dict(self.metadata, commit="0" * 40)
@@ -109,6 +126,73 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(workflow.count("ref: " + metadata["commit"]), 2)
         self.assertIn("contents: read", workflow)
         self.assertIn("workflow_dispatch:", workflow)
+
+    def test_replacement_refs_and_working_bytes_cannot_spoof_the_immutable_script(self):
+        original = self.metadata["commit"]
+        changed = b"raise RuntimeError('replacement must not be trusted')\n"
+        self.source.write_bytes(changed)
+        self.git("add", ".")
+        self.git("commit", "-qm", "replacement script")
+        replacement = self.git("rev-parse", "HEAD").decode().strip()
+        self.git("checkout", "-q", "--detach", original)
+        self.git("replace", original, replacement)
+        environment = dict(os.environ)
+        environment.pop("GIT_NO_REPLACE_OBJECTS", None)
+        self.assertEqual(subprocess.check_output(
+            ["git", "-C", str(self.root), "show", original + ":scripts/check_references.py"],
+            env=environment), changed)
+        self.source.write_bytes(changed)
+        spoofed = dict(self.metadata, sha256=hashlib.sha256(changed).hexdigest())
+        with self.assertRaisesRegex(ValueError, "immutable source/digest"):
+            adapter.verify_checker(self.root, spoofed)
+
+    def test_execution_uses_verified_snapshot_even_when_working_file_changes(self):
+        code = ("import json\nprint(json.dumps({'verifiedSnapshot': True, 'references': ["
+                "{'id':'one','verdict':'ABSENT'},{'id':'two','verdict':'ABSENT'}]}))\n")
+        self.source.write_text(code)
+        self.git("add", "scripts/check_references.py")
+        self.git("commit", "-qm", "verified execution fixture")
+        self.metadata.update(commit=self.git("rev-parse", "HEAD").decode().strip(),
+                             sha256=hashlib.sha256(self.source.read_bytes()).hexdigest())
+        consumer = self.root / "consumer"
+        (consumer / "references").mkdir(parents=True)
+        (consumer / "schemas").mkdir()
+        (consumer / "references/checker.json").write_text(json.dumps(self.metadata))
+        (consumer / "schemas/provenance.json").write_text(json.dumps({
+            "source_repository": "https://github.com/" + adapter.AUTHORITY,
+            "source_commit": "a" * 40, "source_release": "v0.6.0", "files": {}}))
+        marker = self.root / "unverified-executed"
+        evil = "from pathlib import Path\nPath(" + repr(str(marker)) + ").write_text('bad')\nraise RuntimeError('unverified')\n"
+        (self.root / "scripts/json.py").write_text(evil)
+        original_run = subprocess.run
+        swapped = []
+        def swap_then_run(command, *args, **kwargs):
+            if command[0] == adapter.sys.executable:
+                self.source.write_text(evil)
+                swapped.append(True)
+            return original_run(command, *args, **kwargs)
+        with patch.object(adapter.subprocess, "run", side_effect=swap_then_run):
+            report, status = adapter.audit(self.root, root=consumer)
+        self.assertTrue(swapped)
+        self.assertEqual(status, 0)
+        self.assertTrue(report["verifiedSnapshot"])
+        self.assertFalse(marker.exists())
+
+
+class WorkflowFallbackTests(unittest.TestCase):
+    def test_setup_failure_has_json_and_summary_without_python_setup(self):
+        import yaml
+        steps = yaml.safe_load((ROOT / ".github/workflows/declared-references.yml").read_text())["jobs"]["advisory"]["steps"]
+        fallback = next(s["run"] for s in steps if s.get("name") == "Record an unperformed audit")
+        summary = next(s["run"] for s in steps if s.get("name") == "Surface the advisory result")
+        with tempfile.TemporaryDirectory() as work:
+            summary_file = Path(work) / "summary.md"
+            subprocess.run(["bash", "-e", "-c", "python() { return 127; }\n" + fallback + "\n" + summary],
+                           check=True, env={**os.environ, "RUNNER_TEMP": work, "GITHUB_STEP_SUMMARY": str(summary_file)})
+            report = json.loads((Path(work) / "fht-reference-audit.json").read_text())
+            self.assertEqual(report["references"][0]["verdict"], "QUERY_FAILED")
+            self.assertEqual(report["references"][0]["localComparison"], "not-run")
+            self.assertIn("QUERY_FAILED", summary_file.read_text())
 
 
 if __name__ == "__main__":

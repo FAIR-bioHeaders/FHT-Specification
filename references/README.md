@@ -23,11 +23,13 @@ remain their owning checks, with explicit scope exclusions in the report.
 
 ## Verified engine and controlled execution
 
-[checker.json](checker.json) pins the accepted central checker to full commit
-`b9d7c92d92a40f02e9ca6ec826b663f2e906a088` and SHA-256
-`5f34c3372805c9aee3de1abd2de9139d3cdd37f62e809b94bff19d605451f578`.
+[checker.json](checker.json) pins the reviewed central checker to full commit
+`6dee4c8baba723ec5cad825d521db2dbbc1921ae` and SHA-256
+`d64104ed33de344c18ba93c00575cad8b16024db5b95c34ee02556b6868f543c`.
 Before execution the adapter checks actual HEAD, immutable git bytes and digest;
-isolated Python avoids importing neighboring unverified helpers. An unperformed
+Git replacement objects are disabled. The verified immutable bytes execute from
+a private snapshot under isolated Python, so changing the working file after
+verification or placing neighboring helpers cannot change executed code. An unperformed
 or failed bootstrap is not scored as a successful reference comparison.
 
 ```sh
@@ -39,16 +41,20 @@ python scripts/check_reference_controls.py --checker-root /path/to/pinned-shared
 
 The offline authority checkout must contain the declared release tag and commit;
 missing objects or mappings are `QUERY_FAILED`, never a skipped pass. Actual
-offline integration exercises fresh imports, a local byte mutation (`DRIFT`),
-a missing local file (`ABSENT`) and an unmapped authority (`QUERY_FAILED`), while
-proving consumer declarations and bytes were not written. Fixture-only adapter
-tests run normally; actual pinned-engine integration is its own explicit CI step.
+offline integration uses controlled temporary Git authorities and declarations,
+not a freshness requirement on real pins. It exercises fresh fixtures, missing
+metadata/local/authority files (`ABSENT`), supplied floating refs (`DRIFT`), byte
+mutations and query failures, while proving real consumer pins were not written.
+Fixture-only adapter tests run normally; verified-engine fixture integration is
+its own explicit CI step. Missing recorded fields stay incomplete; supplied
+floating values are preserved for the central checker instead of discarded.
 
 ## Scheduled/manual findings
 
 The read-only scheduled/manual workflow queries immutable GitHub API authorities,
 requires a missing-path negative control, compares actual consumer bytes and
-retains the JSON report and job summary. `FRESH`, `DRIFT`, `ABSENT` and
+retains an atomically written JSON report and shell-only job summary. A missing
+report after checkout/Python failure receives an explicit `QUERY_FAILED` fallback. `FRESH`, `DRIFT`, `ABSENT` and
 `QUERY_FAILED` remain distinct. A local comparison not run is labeled separately.
 Ordinary findings leave the audit advisory; `--exit-on-findings` is used for
 controlled offline integration. A bootstrap or malformed-report error fails

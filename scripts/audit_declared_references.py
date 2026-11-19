@@ -5,6 +5,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
@@ -34,9 +35,10 @@ def inventory(root=ROOT):
     if record["source_repository"].removesuffix(".git").rstrip("/") != "https://github.com/" + AUTHORITY:
         raise ValueError("declared source repository is not the shared publication authority")
     match = re.match(r"^(v[0-9]+\.[0-9]+\.[0-9]+)(?: |$)", record.get("source_release", ""))
-    revision = match.group(1) if match and record.get("source_commit") else None
+    revision = match.group(1) if match else record.get("source_release")
+    revision_kind = "tag" if match or not revision else "branch"
     common = {"consumer": CONSUMER, "record": RECORD, "repository": AUTHORITY,
-              "revision": revision, "revisionKind": "tag", "commit": record.get("source_commit")}
+              "revision": revision, "revisionKind": revision_kind, "commit": record.get("source_commit")}
     imports, contracts = [], []
     for local, declaration in record["files"].items():
         item = {"local": relative(local),
@@ -47,7 +49,7 @@ def inventory(root=ROOT):
     # in the authority's schemas directory. FHR is audited separately by role.
     tree = {**common, "id": "fht-shared-model-imports", "class": "copied-tree",
             "materialStatus": "released", "files": imports,
-            "sourcePatterns": [f["path"] for f in imports], "localTree": "schemas",
+            "sourcePatterns": [f["path"] for f in imports if f["path"]], "localTree": "schemas",
             "localExclusions": [RECORD] + [f["local"] for f in contracts]}
     contract = {**common, "id": "fht-v5-fhr-contract", "class": "released-contract", "files": contracts}
     return {"inventoryVersion": 1, "advisory": True,
@@ -61,27 +63,36 @@ def inventory(root=ROOT):
 
 def verify_checker(checkout, metadata):
     checkout = checkout.resolve()
-    if metadata["repository"] != AUTHORITY or not re.fullmatch(r"[0-9a-f]{40}", metadata["commit"]):
+    if (metadata["repository"] != AUTHORITY
+            or metadata["path"] != "scripts/check_references.py"
+            or not re.fullmatch(r"[0-9a-f]{40}", metadata["commit"])
+            or not re.fullmatch(r"[0-9a-f]{64}", metadata["sha256"])):
         raise ValueError("invalid checker source pin")
-    head = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"]).decode().strip()
+    environment = {**os.environ, "GIT_NO_REPLACE_OBJECTS": "1", "GIT_NO_LAZY_FETCH": "1", "GIT_TERMINAL_PROMPT": "0"}
+    head = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], env=environment).decode().strip()
     if head != metadata["commit"]:
         raise ValueError("checker checkout HEAD does not match the declared source commit")
     name = relative(metadata["path"])
     source = checkout / name
+    if source.resolve() != source:
+        raise ValueError("checker source path must not traverse symlinks")
     raw = source.read_bytes()
-    immutable = subprocess.check_output(["git", "-C", str(checkout), "show", f"{head}:{name}"])
+    immutable = subprocess.check_output(["git", "-C", str(checkout), "show", f"{head}:{name}"], env=environment)
     if source.is_symlink() or raw != immutable or digest(raw) != metadata["sha256"]:
         raise ValueError("checker file does not match its immutable source/digest")
-    return source
+    return immutable
 
 
 def audit(checkout, mappings=(), root=ROOT, strict=False):
     metadata = json.loads((root / "references/checker.json").read_text())
-    checker = verify_checker(checkout, metadata)
+    checker_bytes = verify_checker(checkout, metadata)
     table = inventory(root)
     with tempfile.TemporaryDirectory(prefix="fht-declared-references-") as work:
         generated = Path(work) / "inventory.json"
         generated.write_text(json.dumps(table, indent=2) + "\n")
+        checker = Path(work) / "verified_check_references.py"
+        checker.write_bytes(checker_bytes)
+        checker.chmod(0o400)
         command = [sys.executable, "-I", str(checker), "--inventory", str(generated),
                    "--consumer", CONSUMER, "--consumer-root", str(root.resolve())]
         for mapping in mappings:
@@ -103,7 +114,12 @@ def main():
     parser.add_argument("--checker-root", type=Path, required=True)
     parser.add_argument("--checkout", action="append", default=[], metavar="OWNER/REPO=PATH")
     parser.add_argument("--exit-on-findings", action="store_true", help="controlled offline check; scheduled audit stays advisory")
+    parser.add_argument("--report-output", type=Path, help="atomic report outside the source checkout")
     args = parser.parse_args()
+    if args.report_output:
+        if args.report_output.resolve().is_relative_to(ROOT.resolve()):
+            parser.error("report output must remain outside the source checkout")
+        args.report_output.unlink(missing_ok=True)
     try:
         report, status = audit(args.checker_root, args.checkout, strict=args.exit_on_findings)
     except FileNotFoundError as exc:
@@ -116,7 +132,14 @@ def main():
         report = {"advisory": True, "wrote": [], "references": [{"id": "fht-audit-bootstrap",
                   "verdict": "QUERY_FAILED", "localComparison": "not-run", "reason": str(exc)}]}
         status = 1
-    print(json.dumps(report, indent=2))
+    text = json.dumps(report, indent=2) + "\n"
+    if args.report_output:
+        args.report_output.parent.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(mode="w", dir=args.report_output.parent, delete=False) as stream:
+            stream.write(text)
+            temporary = Path(stream.name)
+        temporary.replace(args.report_output)
+    print(text, end="")
     return status
 
 
