@@ -12,6 +12,19 @@ export function parseExactJson(text) {
 }
 
 export function exactStringify(value) {
-  return JSON.stringify(value, (key, item) => typeof item === 'bigint'
-    ? { '$fht-integer': item.toString() } : item);
+  const typed = item => {
+    if (item === null) return ['null'];
+    if (typeof item === 'bigint') return ['integer', item.toString()];
+    if (typeof item === 'string') return ['string', item];
+    if (typeof item === 'boolean') return ['boolean', item];
+    if (typeof item === 'number') {
+      if (!Number.isFinite(item)) throw Error('nonfinite JSON number');
+      return ['number', Object.is(item, -0) ? '-0' : item.toString()];
+    }
+    if (Array.isArray(item)) return ['array', item.map(typed)];
+    if (typeof item === 'object') return ['object', Object.entries(item).map(
+      ([key, child]) => [key, typed(child)])];
+    throw Error('unsupported JSON value');
+  };
+  return JSON.stringify(typed(value));
 }

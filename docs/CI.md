@@ -374,5 +374,7 @@ unchanged; these controls test the already adopted compression policy.
 The browser comparison uses exact integer tokens from the JSON reviver source
 and BigInt from typed DOM integer text. It does not round either side through
 Number. Chromium checks the canonical integer 9007199254740993 and rejects both
-adjacent DOM mutations; Node controls preserve integer/float/string distinctions
+adjacent DOM mutations plus an integer-to-object marker mutation. All values
+use recursively typed normalization so an object cannot impersonate an integer.
+Node controls preserve integer/float/string distinctions
 and array order. No schema bound or field meaning changes.

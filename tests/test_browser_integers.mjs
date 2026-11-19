@@ -19,3 +19,11 @@ test('integer tokens stay separate from floats, strings and ordered arrays', () 
   assert.notEqual(exactStringify(value), exactStringify([...value].reverse()));
   assert.notEqual(exactStringify(1n), exactStringify(1));
 });
+
+test('object and array lookalikes cannot impersonate an integer type', () => {
+  const integer = 9007199254740993n;
+  assert.notEqual(exactStringify(integer), exactStringify({ '$fht-integer': integer.toString() }));
+  assert.notEqual(exactStringify(integer), exactStringify(['integer', integer.toString()]));
+  assert.notEqual(exactStringify({ a: 1n, b: '2' }), exactStringify({ b: '2', a: 1n }));
+  assert.notEqual(exactStringify(null), exactStringify(['null']));
+});

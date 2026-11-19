@@ -80,8 +80,17 @@ try {
     assert.equal(exactStringify(actual) === exactStringify(expected),
       token === '9007199254740993', `large integer DOM control ${token}`);
   }
+  await integer.evaluate(element => {
+    const object = document.createElement('div');
+    object.setAttribute('itemprop', 'totalTranscripts');
+    object.setAttribute('data-fhr-type', 'object');
+    object.innerHTML = '<table><tbody><tr><th>$fht-integer</th><td><span itemprop="$fht-integer" data-fhr-type="string">9007199254740993</span></td></tr></tbody></table>';
+    element.replaceWith(object);
+  });
+  assert.notEqual(exactStringify(await page.evaluate(extract)), exactStringify(expected),
+    'a DOM object resembling the old integer marker must remain a type mismatch');
   assert.deepEqual(requests, [], 'standalone metadata must not fetch anything');
-  console.log(`${pairs.length} standalone records match Chromium DOM extraction; large-integer exact/adjacent controls pass; no active content or network requests.`);
+  console.log(`${pairs.length} standalone records match Chromium DOM extraction; large-integer exact/adjacent/type controls pass; no active content or network requests.`);
 } finally {
   await browser.close();
 }
