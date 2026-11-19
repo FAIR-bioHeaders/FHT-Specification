@@ -76,6 +76,7 @@ import jsonschema  # noqa: E402  (pinned 4.26.0, see docs/CI.md)
 import yaml  # noqa: E402  (pinned 6.0.3)
 
 import make_fht_fixtures as generator  # noqa: E402
+from fht_semantics import completeness_errors  # noqa: E402
 
 CONFORMANCE = ROOT / "conformance"
 EXAMPLES = ROOT / "examples"
@@ -432,7 +433,7 @@ def schema_selection(record):
 
 
 def schema_errors(record):
-    return sorted(error.message for error in VALIDATOR.iter_errors(record))
+    return sorted(error.message for error in VALIDATOR.iter_errors(record)) + completeness_errors(record)
 
 
 def error_triples(validator, record):
@@ -834,6 +835,9 @@ CONTRACT_RULES = {"C1", "C2", "V1", "R15"}
 # match this set exactly — no missing and no extra error — so a vector that
 # fails for a different reason than its description fails the lane.
 EXPECTED_SCHEMA_ERRORS = {
+    "fht-fasta-derived-from-duplicate": {("uniqueItems", "$.derivedFrom", "non-unique")},
+    "fht-fasta-parent-checksum-noncanonical": {("pattern", "$.derivedFrom[0].checksum", "does not match")},
+    "fht-fasta-completeness-missing-count": {("required", "$.completeness", "'missing'")},
     "fht-fasta-doi-trailing-nbsp": {("pattern", "$.scholarlyArticle", "\\xa0")},
     "fht-fasta-doi-trailing-narrow-nbsp": {("pattern", "$.scholarlyArticle", "\\u202f")},
     "fht-fasta-extension-nested-key": {("additionalProperties", "$.taxon", "'x-note'")},
@@ -860,6 +864,12 @@ EXPECTED_SCHEMA_ERRORS = {
     "fht-fasta-version-2-0-via-raw-main": {("enum", "$.schemaVersion", "'2.0'")},
     "fht-fasta-schemaversion-number": {("enum", "$.schemaVersion", "1.0"),
                                        ("type", "$.schemaVersion", "'string'")},
+}
+EXPECTED_SEMANTIC_ERRORS = {
+    "fht-fasta-completeness-sum-exceeds-total": [
+        "C1: completeness component counts must sum to total (sum 5, total 1)"],
+    "fht-fasta-completeness-sum-below-total": [
+        "C1: completeness component counts must sum to total (sum 1, total 2)"],
 }
 # V5 routes a release-form FHT URL to the reader's current FHR schema; the
 # rejection there is computed from the record's bytes (conformance/README.md
@@ -917,6 +927,15 @@ def check_expected_invalid(entry, data, label, compression_error=None):
         fail(f"{label}: declared {rule}, but this reader rejects it at the "
              f"{stage} stage ({raised or 'no rule id'}): {detail}")
         return None
+    elif rule == "C1" and entry["id"] in EXPECTED_SEMANTIC_ERRORS:
+        if error_triples(VALIDATOR, record):
+            fail(f"{label}: arithmetic vector must first pass the generated schema")
+            return None
+        actual = completeness_errors(record)
+        if actual != EXPECTED_SEMANTIC_ERRORS[entry["id"]]:
+            fail(f"{label}: C1 arithmetic errors {actual!r} do not match the declared expectation")
+            return None
+        outcome = "semantic"
     elif rule in CONTRACT_RULES:
         expected = EXPECTED_SCHEMA_ERRORS.get(entry["id"])
         if expected is None:
@@ -1004,7 +1023,7 @@ def lane_expectation_table(vectors):
     """Every contract vector has a recorded expectation and vice versa."""
     contract = {entry["id"] for entry in vectors
                 if entry["expected"] == "invalid" and entry["rule"] in CONTRACT_RULES}
-    stale = sorted(set(EXPECTED_SCHEMA_ERRORS) - contract)
+    stale = sorted((set(EXPECTED_SCHEMA_ERRORS) | set(EXPECTED_SEMANTIC_ERRORS)) - contract)
     if stale:
         fail(f"EXPECTED_SCHEMA_ERRORS names no {sorted(CONTRACT_RULES)} "
              f"invalid vector: {stale}")
@@ -1064,6 +1083,7 @@ def main(argv=None):
           f"{counts.get('rejected-by-shape', 0)} shape, "
           f"{counts.get('rejected-by-checksum', 0)} checksum mismatch, "
           f"{counts.get('rejected-by-schema', 0)} schema, "
+          f"{counts.get('rejected-by-semantic', 0)} arithmetic, "
           f"{counts.get('rejected-by-fhr', 0)} fhr-routed (V5), "
           f"{counts.get('rejected-by-link', 0)} parent-link")
     if FAILURES:

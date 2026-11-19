@@ -21,7 +21,9 @@ What it checks, and the difference between a failure and a finding:
 
 The newly valid mixed-molecule case is explicitly unsupported by the installed
 four-value schema: a specific rejection probe precedes its reported NOT-RUN
-acceptance/writer checks. Every other case remains fully compared.
+acceptance/writer checks. Other current-contract gaps are measured explicitly. The opt-in
+--stage-completeness permits only the two named arithmetic cases as NOT-RUN;
+unexplained mismatches remain strict failures.
 
 Lanes:
 
@@ -83,6 +85,7 @@ _MISSING = object()  # distinguishes "absent" from "present and null"
 
 FAILURES = []
 FINDINGS = []
+STAGED_COMPLETENESS = []
 MEASURED = []
 
 
@@ -285,7 +288,7 @@ def partition_installed_contract(vectors, installed_schema):
     return compared, dependent
 
 
-def lane_installed_contract(toolkit, dependent, work):
+def lane_installed_contract(toolkit, dependent, work, *, stage_completeness=False):
     """The toolkit must at least agree with its own installed draft bytes."""
     for vector, installed_ok in dependent:
         code, output = toolkit.run("verify", place(vector, work))
@@ -296,11 +299,24 @@ def lane_installed_contract(toolkit, dependent, work):
                  f"{'accept' if installed_ok else 'reject'} this record, but "
                  f"verify exited {code}"
                  + (" with a checksum failure" if checksum_failed else ""))
+        reader = _reader()
+        record = reader.parse_metadata(vector_bytes(vector))
+        semantic_only = (vector["id"] in reader.EXPECTED_SEMANTIC_ERRORS
+                         and vector.get("rule") == "C1" and installed_ok
+                         and not list(reader.VALIDATOR.iter_errors(record))
+                         and reader.completeness_errors(record)
+                         == reader.EXPECTED_SEMANTIC_ERRORS[vector["id"]])
+        if stage_completeness and semantic_only:
+            STAGED_COMPLETENESS.append(vector["id"])
+            print(f"note {vector['id']}: C1 arithmetic NOT-RUN by installed toolkit; "
+                  "the generated schema accepts it, the fully supplied count set "
+                  "fails the owning semantic check. Runtime enforcement remains #9.")
+            continue
         finding(f"{vector['id']}: current-contract comparison NOT-RUN: the "
                 f"installed draft {'accepts' if installed_ok else 'rejects'} it "
-                f"while this checkout's fht.json "
-                f"{'rejects' if installed_ok else 'accepts'} it (pin older than "
-                f"the contract; reader agrees with its own bytes)")
+                f"while this checkout's full C1 contract "
+                f"{'rejects' if installed_ok else 'accepts'} it (schema pin or "
+                "semantic implementation differs; reader agrees with installed bytes)")
 
 
 def install_checkout_contract(toolkit, entry):
@@ -616,7 +632,13 @@ def main(argv=None):
     parser.add_argument("--strict", action="store_true",
                         help="fail when any finding is reported, not only on "
                              "disagreements")
+    parser.add_argument("--stage-completeness", action="store_true",
+                        help="explicit prepublication accounting for the two "
+                             "schema-valid C1 BUSCO arithmetic cases old toolkit "
+                             "code cannot check; requires --checkout-contract")
     args = parser.parse_args(argv)
+    if args.stage_completeness and not args.checkout_contract:
+        parser.error("--stage-completeness requires --checkout-contract")
 
     if not environment_ok():
         return 1
@@ -639,7 +661,8 @@ def main(argv=None):
         compared, unsupported = partition_mixed_capability(vectors, installed_schema)
         lane_unsupported_mixed(toolkit, unsupported, work)
         compared, dependent = partition_installed_contract(compared, installed_schema)
-        lane_installed_contract(toolkit, dependent, work)
+        lane_installed_contract(toolkit, dependent, work,
+                                stage_completeness=args.stage_completeness)
         unsupported = unsupported + [vector for vector, _ in dependent]
         if FAILURES:
             print("Unsupported-value preflight failed: NOTHING SCORED")
@@ -666,9 +689,11 @@ def main(argv=None):
               f"README.md records them and issue #9 owns the implementation.")
         return 1
     print(f"implementation comparisons: {len(compared)}; current-contract unsupported/not-run: {len(unsupported)}")
+    print(f"staged C1 arithmetic NOT-RUN by installed runtime: {len(STAGED_COMPLETENESS)} "
+          f"{STAGED_COMPLETENESS}")
     if args.strict and FINDINGS:
         print(f"\n{len(FINDINGS)} finding(s) and --strict: failing. With "
-              f"--checkout-contract every vector must be compared and agree.")
+              f"--checkout-contract only explicitly staged arithmetic may be NOT-RUN.")
         return 1
     print(f"\nOK: the installed reader agrees with the compared subset; unsupported "
           f"current-contract values are not acceptance passes "

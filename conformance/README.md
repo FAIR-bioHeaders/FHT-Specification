@@ -1,5 +1,13 @@
 # FHT conformance vectors (development contract — issue #8)
 
+Adopted November 19, 2026: [D1–D3](../docs/FHT-DECISION-DOCKET.md)
+retain optional field behaviour, reject duplicate parent entries and noncanonical
+parent checksum encoding, and require complete BUSCO category counts to sum to
+total. Arithmetic is a separate C1 semantic check, not expressible by this JSON
+Schema contract. Missing counts are not zero. The reference reader/writer checks
+arithmetic; older installed consumers remain a publication handoff. Four parent
+expectations are accepted for file identity only, without changing fixture bytes.
+
 Byte-exact positive and rejection fixtures for the FHT 1.0 **development**
 contract, the generated [`fht.json`](../fht.json) of this repository
 ([revised spec 005](../specs/005-rna-transcriptome-header/spec.md), PR #21).

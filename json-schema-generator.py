@@ -159,6 +159,13 @@ def apply_fht_parent_rules(generated):
     parent = generated.get("$defs", {}).get("DerivedFrom")
     if parent is None:
         raise ValueError("generated schema has no DerivedFrom definition")
+    # Approved draft-local D2 constraints; pinned shared imports stay intact.
+    parent["properties"]["checksum"]["pattern"] = (
+        "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=(?![\\s\\S])"
+    )
+    roots = [generated, generated["$defs"]["FHT"]]
+    for node in roots:
+        node["properties"]["derivedFrom"]["uniqueItems"] = True
     parent["allOf"] = [
         {
             "description": (

@@ -162,7 +162,7 @@
         },
         "checksum": {
           "description": "FHR-family checksum of the parent file",
-          "pattern": "^[A-Za-z0-9+/]{43}=$",
+          "pattern": "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=(?![\\s\\S])",
           "type": "string",
           "minLength": 44,
           "maxLength": 44
@@ -263,7 +263,7 @@
         },
         "completeness": {
           "$ref": "#/$defs/Completeness",
-          "description": "Optional BUSCO completeness counts from the actual run. lineageDataset must match the pinned shared pattern (a name ending in _odb plus one or more dot-separated numeric version components, such as hymenoptera_odb10 or hymenoptera_odb12.2), as widened by shared #170 for v0.6.0. Do not rename or coerce a measured lineage to fit the pattern; if a measured value cannot be represented, omit completeness and keep the lineage and counts in documentation."
+          "description": "Optional BUSCO completeness counts from the actual run. lineageDataset must match the pinned shared pattern (a name ending in _odb plus one or more dot-separated numeric version components, such as hymenoptera_odb10 or hymenoptera_odb12.2), as widened by shared #170 for v0.6.0. Do not rename or coerce a measured lineage to fit the pattern; if a measured value cannot be represented, omit completeness and keep the lineage and counts in documentation. When completeSingle, completeDuplicated, fragmented, missing and total are all supplied as integers, the four mutually exclusive component counts must sum exactly to total (C1). This cross-field arithmetic is checked by the owning reader, not expressible in standard JSON Schema."
         },
         "dateCreated": {
           "description": "Date the transcriptome resource was created, not the sample collection date",
@@ -273,12 +273,13 @@
           "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
         },
         "derivedFrom": {
-          "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
+          "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link. Identical parent entries are not allowed. A parent checksum uses canonical padded base64 for the 32-byte SHA-512/256 digest.",
           "items": {
             "$ref": "#/$defs/DerivedFrom"
           },
           "minItems": 1,
-          "type": "array"
+          "type": "array",
+          "uniqueItems": true
         },
         "documentation": {
           "description": "Documentation about the transcriptome",
@@ -712,7 +713,7 @@
     },
     "completeness": {
       "$ref": "#/$defs/Completeness",
-      "description": "Optional BUSCO completeness counts from the actual run. lineageDataset must match the pinned shared pattern (a name ending in _odb plus one or more dot-separated numeric version components, such as hymenoptera_odb10 or hymenoptera_odb12.2), as widened by shared #170 for v0.6.0. Do not rename or coerce a measured lineage to fit the pattern; if a measured value cannot be represented, omit completeness and keep the lineage and counts in documentation."
+      "description": "Optional BUSCO completeness counts from the actual run. lineageDataset must match the pinned shared pattern (a name ending in _odb plus one or more dot-separated numeric version components, such as hymenoptera_odb10 or hymenoptera_odb12.2), as widened by shared #170 for v0.6.0. Do not rename or coerce a measured lineage to fit the pattern; if a measured value cannot be represented, omit completeness and keep the lineage and counts in documentation. When completeSingle, completeDuplicated, fragmented, missing and total are all supplied as integers, the four mutually exclusive component counts must sum exactly to total (C1). This cross-field arithmetic is checked by the owning reader, not expressible in standard JSON Schema."
     },
     "dateCreated": {
       "description": "Date the transcriptome resource was created, not the sample collection date",
@@ -722,12 +723,13 @@
       "pattern": "[^\\t-\\r \\x1c-\\x1f\\x85\\xa0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]"
     },
     "derivedFrom": {
-      "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link.",
+      "description": "Reviewed FAIR-bioHeaders parent-file relationships only. This contract permits an FHT filteredFrom parent or an FHR transcribedFrom parent when the transcript bases were extracted from that genome; genome guidance alone never justifies transcribedFrom. Annotation coordinates and other sources stay in relatedLink/documentation until the shared relationship vocabulary is decided (#54). A genome-guided set whose final sequences were actually extracted from that genome also uses FHR transcribedFrom; construction history alone does not establish the source of its bases. The shared DerivedFrom object requires the parent's FHR-family checksum; an accession alone is not a verified family link. Identical parent entries are not allowed. A parent checksum uses canonical padded base64 for the 32-byte SHA-512/256 digest.",
       "items": {
         "$ref": "#/$defs/DerivedFrom"
       },
       "minItems": 1,
-      "type": "array"
+      "type": "array",
+      "uniqueItems": true
     },
     "documentation": {
       "description": "Documentation about the transcriptome",
