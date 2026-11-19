@@ -79,6 +79,12 @@ class DecisionTests(unittest.TestCase):
         record["completeness"]["total"] = 5.0
         self.assertTrue(self.validator.is_valid(record))
         self.assertEqual(len(completeness_errors(record)), 1)
+        record["completeness"].update(completeSingle=float(2**53),
+                                      completeDuplicated=1, fragmented=0,
+                                      missing=0, total=float(2**53))
+        self.assertTrue(self.validator.is_valid(record))
+        self.assertEqual(len(completeness_errors(record)), 1,
+                         "count summation must not round through float")
         for invalid in (True, 2.5, float("inf"), float("nan")):
             record["completeness"]["total"] = invalid
             self.assertEqual(completeness_errors(record), [])

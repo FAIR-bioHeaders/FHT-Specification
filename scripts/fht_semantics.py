@@ -21,8 +21,8 @@ def completeness_errors(record):
 
     if not all(name in value and integer(value[name]) for name in BUSCO_COUNTS):
         return []
-    observed = sum(value[name] for name in BUSCO_COMPONENTS)
-    if observed != value["total"]:
+    observed = sum(int(value[name]) for name in BUSCO_COMPONENTS)
+    if observed != int(value["total"]):
         return ["C1: completeness component counts must sum to total "
                 f"(sum {observed}, total {value['total']})"]
     return []
