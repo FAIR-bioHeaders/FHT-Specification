@@ -58,6 +58,12 @@ jobs:
         run: |
           python scripts/audit_declared_references.py --checker-root "$GITHUB_WORKSPACE/_reference-checker" \
             > "$RUNNER_TEMP/fht-reference-audit.json"
+      - name: Record an unperformed audit
+        if: always()
+        run: |
+          if [ ! -s "$RUNNER_TEMP/fht-reference-audit.json" ]; then
+            printf '%s\n' '{"advisory":true,"wrote":[],"references":[{"id":"fht-audit-bootstrap","verdict":"QUERY_FAILED","localComparison":"not-run","reason":"The audit did not produce a report; see the job log."}]}' > "$RUNNER_TEMP/fht-reference-audit.json"
+          fi
       - name: Retain actual findings and query failures
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
