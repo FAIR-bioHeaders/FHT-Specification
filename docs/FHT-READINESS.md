@@ -1,17 +1,17 @@
 # FHT prepublication evidence and decisions
 
 Dated 2026-11-19 (historical measurements retain their dates); refs FHT-Specification #8, #9 and #10, and shared
-FAIR-bioHeaders-Specification #211. This packet prepares review. It neither
-changes acceptance criteria nor closes an issue, approves a candidate, publishes
-FHT, or establishes default toolkit support. FHT remains an unreleased draft.
+FAIR-bioHeaders-Specification #211. This packet records the adopted D1–D3 decisions and prepares final joint review.
+FHT remains an unreleased draft; default toolkit support is not established.
+See the [decision record](FHT-DECISION-DOCKET.md#d1d3-accepted--november-19-2026).
 
 ## Acceptance accounting
 
 The seven rows below follow [#8](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8)
 and its [per-box evidence](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6904199033).
 Use [the generated manifest](../conformance/manifest.json) for the current suite
-inventory and outcomes. Four parent-link cases carry
-`promotion: candidate-unreviewed`; executing them does not approve them.
+inventory and outcomes. The four reviewed parent-link expectations were accepted by David Molik under
+D3 for file identity only; manifest `expectationReviews` records that disposition.
 
 | #8 box | Existing evidence and this packet | Remaining gate |
 | --- | --- | --- |
@@ -19,22 +19,26 @@ inventory and outcomes. Four parent-link cases carry
 | 2 typed serializations | JSON/YAML/embedded FASTA plus seven canonical typed-HTML pairs and a test-only reference reader/writer; the browser job extracts each pair through Chromium | #11 still owns shared binding publication and installed runtime/website handoff; JSON-LD remains unsupported |
 | 3 byte-level vectors and streams | Existing U/T, line endings, comments, checksums and compressed vectors; installed lane now exercises actual stdin/stdout | Shared-manifest absorption and any shared vocabulary decision remain publication work; these process checks add no normative vector |
 | 4 strip/combine/conversion preservation | Independent payload expectation, metadata values/order/types and recomputed output verification; actual stream payload stdout is compared as bytes | Default-path acceptance belongs to #9 after publication; canonical header regeneration is not whole-file identity |
-| 5 parent outcomes | Existing matching, mismatching and unavailable cases, with distinct exit/report checks; independent technical derivations are recorded below | Four candidate expectations still need explicit maintainer/curator disposition; technical review is not promotion |
-| 6 version selection and reviewed expectations | Existing V1/V5/V7 cases and documented release-time V4 asymmetry, with recorded independent technical candidate review | Explicit candidate disposition and shared publication follow-through remain; no marker is removed here |
+| 5 parent outcomes | Existing matching, mismatching and unavailable cases, with distinct exit/report checks; independent technical derivations are recorded below | D3 accepts the four expectations for file identity only; final joint review remains |
+| 6 version selection and reviewed expectations | Existing V1/V5/V7 cases and documented release-time V4 asymmetry, with recorded independent technical candidate review | D3 disposition recorded; shared absorption/default checks are staged at publication |
 | 7 named toolkit and shared checks | `run_toolkit_lane.py` against installed 0.11.0; separate Linux CI job; independent fixture/model/provenance gates retained | Shared FHT format does not exist before publication; installed 0.11.0 bundles an older draft, whose digest is printed, not silently substituted |
 
 The installed lane's case counts and NOT-RUN cases come from the suite and the
 installed contract being exercised; they are **implementation comparisons**, not
 independently approved acceptance cases. The as-installed 0.11.0 contract is
-older than the owning draft. The separate `--checkout-contract --strict` lane
+older than the owning draft. The separate `--checkout-contract --strict --stage-completeness` lane
 checks that same installed implementation with this checkout's contract bytes;
-this overlay is a test configuration, not a published package refresh. The
+this overlay is a test configuration, not a published package refresh. The two
+new arithmetic-only invalid vectors are explicitly NOT-RUN by the older installed
+runtime, which accepts them under the overlay. All other discrepancies still
+fail strict mode. The owning checker and HTML reference enforce arithmetic; #9
+must obtain arithmetic-capable consumer evidence before publication. The
 printed toolkit identity and draft-byte digests bound each comparison.
 Default-path behavior is reported separately with the lane disabled. The
 independent job regenerates into a scratch tree and compares committed bytes;
 it does not depend on the toolkit job. See [the dated installed evidence](CI.md#installed-reader-against-this-checkouts-contract--2026-11-18).
 
-## Independent review request
+## Historical independent review request
 
 The derivation author must not approve their own expectations. The following is
 a review agenda, not a sign-off. Inspect the bytes, cited clauses and existing
@@ -73,13 +77,14 @@ masked-exact checked-pass; real-digest-wrong-file and case-folded-digest
 checked-fail. The latter does not isolate sequence case from header differences.
 A pass establishes cited file identity, not the scientific derivation claim.
 This is an independent **technical review**, not maintainer/curator acceptance.
-The existing normative promotion markers remain unchanged pending disposition.
+D3 subsequently accepted these expectations on November 19, 2026; the manifest
+now records acceptance and removes the four promotion markers.
 
 ## Remaining review and publication gates
 
 The Molik responses below settle the questionnaire's field choices; do not ask
-those questions again. Joint curator review and case-specific candidate promotion
-remain distinct from source implementation. The [#10 release/pilot split](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/10#issuecomment-6926906659)
+those questions again. Final joint curator review remains distinct from source implementation; the four
+file-identity expectations have received D3 disposition. The [#10 release/pilot split](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/10#issuecomment-6926906659)
 keeps producer-pilot metadata and dataset decisions outside foundation publication
 acceptance. Do not infer dateCreated, software or reuse terms for that separate
 pilot, or require a new dataset program to complete this source packet.

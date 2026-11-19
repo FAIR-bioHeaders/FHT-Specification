@@ -13,6 +13,7 @@ import json
 import math
 import re
 import subprocess
+import sys
 import warnings
 from html import escape
 from html.parser import HTMLParser
@@ -21,6 +22,8 @@ from pathlib import Path
 from jsonschema import Draft202012Validator, FormatChecker
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+from fht_semantics import completeness_errors  # noqa: E402
 FHT_ITEMTYPE = (
     "https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json"
 )
@@ -564,6 +567,9 @@ def _validate(record, schema):
         raise MicrodataError(
             "schema-invalid metadata: " + "; ".join(error.message for error in errors)
         )
+    semantic = completeness_errors(record)
+    if semantic:
+        raise MicrodataError("contract-invalid metadata: " + "; ".join(semantic))
 
 
 def _git(*args):

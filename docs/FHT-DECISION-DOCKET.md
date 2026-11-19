@@ -1,4 +1,34 @@
-# FHT remaining decision docket
+# FHT decision docket
+
+## D1–D3 accepted — November 19, 2026
+
+David Molik answered “Use the recommendations”; the
+[adopted decision record](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/211#issuecomment-7017854934)
+supersedes the pending choices below.
+
+- **D1 / #56:** retain existing software name/version and optional array,
+  string and object behaviour. Supplied assemblyAuthor names, taxon and sample
+  decisions remain settled. Empty optional values are regression-tested.
+- **D2 / #57:** reject identical duplicate derivedFrom entries and noncanonical
+  padded-base64 parent checksums. When all four integer BUSCO category counts
+  and total are supplied, their sum must equal total. Missing counts are never
+  zero; existing schema requiredness is unchanged. Cross-field arithmetic is a
+  C1 semantic check outside JSON Schema, enforced by the owning checker and HTML
+  reference reader/writer. The new self-parent C3 rule is deferred for the
+  cryptographic fixed-point limitation described below.
+- **D3:** accept the four reviewed parent expectations for exact file identity
+  only: subset-citing-whole and masked-exact pass; wrong-file and case-folded
+  fail. The manifest records human acceptance and prior independent technical
+  review. Promotion markers are removed without changing old fixture bytes,
+  IDs or outcomes. No biological extraction claim follows.
+
+The final prepublication matrix is [FHT-READINESS.md](FHT-READINESS.md).
+Joint final review (#8), publication/docs (#10), binding handoff (#11), and
+runtime coordination (#9) remain distinct gates under #5. Shared/default-path
+checks and arithmetic-capable consumer verification are publication work;
+prepublication reference acceptance does not require an already published FHT.
+
+## Historical decision agenda (now dispositioned above)
 
 This is a small publication/review agenda, not a request to repeat settled
 field decisions. [David Molik's Q1–Q9 answers](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/8#issuecomment-6928571815)

@@ -148,3 +148,14 @@ Q8 is about actual sequence origin: genome-guided construction followed by
 extraction can cite the exact genome through FHR/transcribedFrom/checksum;
 guidance alone cannot establish that relationship. No libraryProtocol field is
 adopted; protocol text and URLs use documentation and relatedLink.
+
+## Adopted draft constraint follow-through — 2026-11-19
+
+[D1–D3](../../docs/FHT-DECISION-DOCKET.md) retain existing optional-value
+behaviour. FR-005 requires the four fully supplied integer BUSCO category counts
+(completeSingle, completeDuplicated, fragmented, missing) to sum to total;
+missing values are never zero and existing requiredness is unchanged. This is a
+C1 semantic check outside JSON Schema. FR-007 rejects identical derivedFrom
+entries and noncanonical padded-base64 parent digests. A new self-parent C3
+rule is deferred because a byte-valid self-reference requires a hash fixed point.
+D3 accepts the four reviewed parent expectations for exact file identity only.

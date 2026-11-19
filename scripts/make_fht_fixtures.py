@@ -223,7 +223,8 @@ RULES = {
     "C1": "FHT development contract (text in conformance/README.md): the parsed header "
           "metadata must validate against fht.json — required fields, enums, "
           "patterns, nested cardinality and the closed top level (plus R15 "
-          "extension keys).",
+          "extension keys), and complete supplied BUSCO component counts must "
+          "sum exactly to total (a separate arithmetic check, not JSON Schema).",
     "C2": "FHT development contract (text in conformance/README.md): a record's schema value "
           "must be the one URL the FHT draft accepts, this repository's raw-main "
           "fht.json (rule V7: a draft never takes a release form; release forms "
@@ -560,7 +561,10 @@ PARENT_LINKS = {}  # keyed by short name; filled while building
 # independent executors, but have not yet been read by a second reader. Listed
 # in the manifest so a consumer or reviewer can see exactly which entries are
 # candidates; emptied by review, never by regeneration.
-PROMOTION_CANDIDATES = [
+PROMOTION_CANDIDATES = []
+# Human disposition D3 (2026-11-19), after independent technical derivations:
+# only file identity is accepted, never biological extraction/derivation.
+ACCEPTED_PARENT_EXPECTATIONS = [
     "fht-fasta-parent-subset-citing-whole",
     "fht-fasta-parent-real-digest-wrong-file",
     "fht-fasta-parent-masked-exact",
@@ -888,6 +892,21 @@ def build_vectors():
                         expected=dict(EXPECTED_METADATA, scholarlyArticle=article))
 
     # ---- valid: parent links (C3) ---------------------------------------------
+    empty_optionals = record_of(
+        assemblySoftware=[{"name": "", "version": "", "commandLineOption": []},
+                          {"name": "", "commandLineOption": [""]}],
+        relatedLink=[], identifier=[], documentation="", reuseConditions="",
+        funding="", voucherSpecimen="", accessionID={}, vitalStats={})
+    fht_lines_valid("fht-fasta-optional-empty-values-retained", lines_of(empty_optionals),
+                    ["C1"], "D1 retains existing software and optional empty values; "
+                    "an empty CLI argument is not a missing array item. "
+                    "This is syntax, not a recommendation to invent empty metadata.")
+    fht_lines_valid("fht-fasta-completeness-zero-components", lines_of(record_of(
+        completeness={"lineageDataset": "insecta_odb10", "completeSingle": 0,
+                      "completeDuplicated": 0, "fragmented": 0, "missing": 1,
+                      "total": 1})), ["C1"],
+                    "D2: complete supplied mutually exclusive BUSCO counts sum "
+                    "to total; measured zero components remain zero.")
     genome_checksum = PARENT_LINKS["genome"]["statedChecksum"]
     minimal_checksum = PARENT_LINKS["minimal"]["statedChecksum"]
     transcribed = record_of(derivedFrom=[{
@@ -1151,6 +1170,33 @@ def build_vectors():
                        "the extension pattern and is an unknown key.")
 
     # ---- invalid: FHT contract (C1) ----------------------------------------------
+    parent = {"headerType": "FHR", "checksum": PLACEHOLDER_PARENT,
+              "relationship": "transcribedFrom"}
+    fht_invalid_record("fht-fasta-derived-from-duplicate",
+                       record_of(derivedFrom=[parent, dict(parent)]), "C1",
+                       "D2 rejects identical derivedFrom entries (uniqueItems); "
+                       "the file checksum is valid and no parent lookup is needed.")
+    fht_invalid_record("fht-fasta-parent-checksum-noncanonical", record_of(
+        derivedFrom=[dict(parent, checksum="A" * 42 + "B=")]), "C1",
+                       "D2 requires canonical base64 in the parent checksum: "
+                       "B has nonzero unused bits; the root checksum still matches.")
+    counts = {"lineageDataset": "insecta_odb10", "completeSingle": 1,
+              "completeDuplicated": 0, "fragmented": 0, "missing": 0, "total": 1}
+    for name, changes, reason in (
+        ("fht-fasta-completeness-sum-exceeds-total", {"completeSingle": 5},
+         "All component counts are supplied; sum 5 exceeds total 1."),
+        ("fht-fasta-completeness-sum-below-total", {"total": 2},
+         "All component counts are supplied; sum 1 is below total 2."),
+    ):
+        fht_invalid_record(name, record_of(completeness=dict(counts, **changes)),
+                           "C1", "D2 arithmetic: " + reason +
+                           " This is schema-valid but violates the separate C1 sum rule.")
+    incomplete = dict(counts)
+    del incomplete["missing"]
+    fht_invalid_record("fht-fasta-completeness-missing-count",
+                       record_of(completeness=incomplete), "C1",
+                       "The pinned shared Completeness object already requires "
+                       "missing when supplied; no absent count is defaulted to zero.")
     for name, codepoint, label in (
         ("fht-fasta-doi-trailing-nbsp", "\u00a0", "U+00A0 NBSP"),
         ("fht-fasta-doi-trailing-narrow-nbsp", "\u202f", "U+202F narrow NBSP"),
@@ -1697,15 +1743,14 @@ def manifest():
                 f"rule {rule} needs valid and invalid coverage: {covered.get(rule)}"
     for rule in covered:
         assert rule in RULES, f"vector cites unknown rule {rule}"
-    return {
+    result = {
         "manifestVersion": MANIFEST_VERSION,
         "status": "Development vectors for the FHT 1.0 contract "
                   "(FHT-Specification#8). No FHT schema is released and no "
                   "installed toolkit reads FHT in its default path: every "
                   "expected outcome is derived from the rule text, never from "
-                  "an implementation under test. Vectors marked "
-                  "promotion=candidate-unreviewed additionally await a second "
-                  "reader (see promotionCandidates).",
+                  "an implementation under test. D3 file-identity expectation "
+                  "acceptance is recorded separately in expectationReviews.",
         "specification": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-"
                          "Specification/blob/main/docs/FORMAT.md (rules R1-R15)",
         "schemaVersionsSpecification": "https://github.com/FAIR-bioHeaders/"
@@ -1744,6 +1789,20 @@ def manifest():
         "vectors": vectors,
         "retired": [],
     }
+    if not PROMOTION_CANDIDATES:
+        result.pop("promotionCandidates")
+    result["expectationReviews"] = [{
+        "status": "accepted-file-identity-only",
+        "decision": "https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/211#issuecomment-7017854934",
+        "decisionId": "D3",
+        "date": "2026-11-19",
+        "review": "Independent clause derivations and SHA-512/256 recomputation "
+                  "were recorded before David Molik accepted the recommendations.",
+        "vectors": list(ACCEPTED_PARENT_EXPECTATIONS),
+        "limitation": "Matching proves exact cited parent-file identity only; "
+                      "no biological derivation or extraction is established.",
+    }]
+    return result
 
 
 def self_check():

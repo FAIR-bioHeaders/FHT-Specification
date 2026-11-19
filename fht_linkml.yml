@@ -99,6 +99,10 @@ slots:
       rename or coerce a measured lineage to fit the pattern; if a measured
       value cannot be represented, omit completeness and keep the lineage and
       counts in documentation.
+      When completeSingle, completeDuplicated, fragmented, missing and total
+      are all supplied as integers, the four mutually exclusive component
+      counts must sum exactly to total (C1). This cross-field arithmetic is
+      checked by the owning reader, not expressible in standard JSON Schema.
     range: Completeness
     inlined: true
   derivedFrom:
@@ -113,11 +117,13 @@ slots:
       construction history alone does not establish the source of its bases.
       The shared DerivedFrom object requires the
       parent's FHR-family checksum; an accession alone is not a verified family
-      link.
+      link. Identical parent entries are not allowed. A parent checksum uses
+      canonical padded base64 for the 32-byte SHA-512/256 digest.
     range: DerivedFrom
     multivalued: true
     inlined_as_list: true
     minimum_cardinality: 1
+    list_elements_unique: true
   assemblyAuthor:
     description: >-
       Legacy-compatible attribution for the people or organizations that

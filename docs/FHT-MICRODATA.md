@@ -1,5 +1,13 @@
 # FHT typed HTML microdata — draft binding proposal
 
+Adopted November 19, 2026: [D1–D3](FHT-DECISION-DOCKET.md)
+retain optional field behaviour, reject duplicate parent entries and noncanonical
+parent checksum encoding, and require complete BUSCO category counts to sum to
+total. Arithmetic is a separate C1 semantic check, not expressible by this JSON
+Schema contract. Missing counts are not zero. The reference reader/writer checks
+arithmetic; older installed consumers remain a publication handoff. Four parent
+expectations are accepted for file identity only, without changing fixture bytes.
+
 This is an **unreleased proposal** for [#11](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/11),
 against the owning FHT development contract, including the separately reviewed
 `moleculeType: mixed` addition. The binding adds no schema fields and changes

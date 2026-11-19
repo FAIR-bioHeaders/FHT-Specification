@@ -85,7 +85,7 @@ jobs:
         run: |
           python -m venv "$RUNNER_TEMP/toolkit-checkout"
           "$RUNNER_TEMP/toolkit-checkout/bin/python" -m pip install "fair-bioheaders==0.11.0"
-      - name: Same reader against this checkout's fht.json (overlay; every vector compared, findings fail)
+      - name: Checkout schema overlay (strict comparisons; C1 arithmetic explicitly staged to publication)
         run: |
           python scripts/run_toolkit_lane.py --venv "$RUNNER_TEMP/toolkit-checkout" \
-            --checkout-contract --strict
+            --checkout-contract --strict --stage-completeness

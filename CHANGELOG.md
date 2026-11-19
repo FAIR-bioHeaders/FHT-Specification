@@ -1,5 +1,18 @@
 # Development changelog
 
+## Unreleased — adopted FHT draft decisions, 2026-11-19
+
+- Retain optional software/array/string/object behaviour (D1, #56).
+- Tighten the owning draft rejection boundary: duplicate parent entries,
+  noncanonical parent checksums and complete BUSCO count sums (D2, #57).
+  Preserve existing requiredness; missing counts are not zero. Defer self-parent
+  policy because a byte-valid self-reference requires a checksum fixed point.
+- Accept four reviewed parent expectations for file identity only (D3), recording
+  human disposition and independent technical review. Preserve all old vector
+  bytes, IDs and outcomes. Add seven boundary regression vectors.
+- Keep consumer repins, publication and release identifiers separate. The older
+  installed runtime explicitly cannot enforce the two new arithmetic vectors.
+
 ## Unreleased
 
 - Existing-constraint coverage (#8; Java #16 handoff): add ASCII and internal-ZWJ
