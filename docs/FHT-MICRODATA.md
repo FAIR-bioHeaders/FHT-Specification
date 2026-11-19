@@ -1,6 +1,6 @@
 # FHT typed HTML microdata — draft binding proposal
 
-Adopted November 19, 2026: [D1–D3](../docs/FHT-DECISION-DOCKET.md)
+Adopted November 19, 2026: [D1–D3](FHT-DECISION-DOCKET.md)
 retain optional field behaviour, reject duplicate parent entries and noncanonical
 parent checksum encoding, and require complete BUSCO category counts to sum to
 total. Arithmetic is a separate C1 semantic check, not expressible by this JSON

@@ -190,6 +190,34 @@ class StreamControls(unittest.TestCase):
             lane.lane_installed_contract(Rejects(), [(vector, True)], None)
         self.assertIn("installed draft bytes accept", lane.FAILURES[0])
 
+    def test_staged_arithmetic_is_named_semantic_only_and_actual_runtime_probed(self):
+        suite = {v["id"]: v for v in lane.load_suite()}
+        arithmetic = suite["fht-fasta-completeness-sum-below-total"]
+        other = suite["fht-fasta-blank-version-separator"]
+
+        class Accepts:
+            def run(self, *args, **kwargs):
+                return 0, "Checksum verified."
+
+        class Rejects:
+            def run(self, *args, **kwargs):
+                return 1, "schema validation failed"
+
+        for toolkit, vector, staged, findings, failure in (
+                (Accepts(), arithmetic, 1, 0, False),
+                (Accepts(), other, 0, 1, False),
+                (Rejects(), arithmetic, 1, 0, True)):
+            lane.FAILURES.clear()
+            lane.FINDINGS.clear()
+            lane.STAGED_COMPLETENESS.clear()
+            with patch.object(lane, "place", return_value=Path("unused")), \
+                    contextlib.redirect_stdout(io.StringIO()):
+                lane.lane_installed_contract(toolkit, [(vector, True)], None,
+                                             stage_completeness=True)
+            self.assertEqual(len(lane.STAGED_COMPLETENESS), staged)
+            self.assertEqual(len(lane.FINDINGS), findings)
+            self.assertEqual(bool(lane.FAILURES), failure)
+
     def test_named_toolkit_default_cannot_accept_fht(self):
         class IncorrectDefault:
             def version(self):
