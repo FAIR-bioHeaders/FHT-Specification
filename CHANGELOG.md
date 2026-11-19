@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Existing-constraint coverage (#8; Java #16 handoff): add ASCII and internal-ZWJ
+  DOI positive controls and trailing-NBSP/narrow-NBSP C1 rejections under the
+  unchanged scholarlyArticle pattern. All previous fixture bytes, outcomes and
+  candidate markers remain unchanged; no schema or consumer pin moves. Refresh
+  the readiness table to distinguish the merged typed-HTML reference/browser
+  lane from unshipped runtime support, and record #56/#57's actual remaining
+  decisions without reopening settled taxon/sample/author choices.
+
 - Documentation and CI: state exactly which empty values `fht.json` rejects and
   which it still accepts, and label each statement as a current FHT draft
   requirement, shared family guidance (FORMAT.md / SCHEMA-VERSIONS.md v0.6.0,

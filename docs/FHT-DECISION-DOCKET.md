@@ -18,6 +18,29 @@ model generation pipeline and agreed review path are not reopened.
 | #8, concrete real-example review if promoted | Approve the annotation-derived pilot's resource creation date and actual extraction-software attribution before treating those assertions as release examples | Existing [#45](https://github.com/FAIR-bioHeaders/FHT-Specification/pull/45), [pilot handoff](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/10#issuecomment-6897167617); the model already defines resource creation and permits extraction software |
 | #11 / shared publication | Review this explicit draft binding and coordinate its eventual shared publication and runtime/website handoffs | [Binding proposal](FHT-MICRODATA.md), paired HTML examples and reference tests; no new schema fields |
 
+## Constraint decisions raised after the questionnaire
+
+These are specific proposals against the unreleased draft, not unanswered
+questionnaire items or automatic requirements for the first publication.
+
+| Owner | Exact remaining choice | Settled boundary |
+| --- | --- | --- |
+| [#56](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/56) | Keep or tighten the supplied software name/version, optional relatedLink/identifier/commandLineOption arrays, optional strings and optional objects | Supplied assemblyAuthor entries already require a nonblank name through merged #52; the field remains optional. Keep the recorded taxon/sample choices unless David explicitly revises them. Empty CLI argument strings may be real tokens; array cardinality and item content are separate choices. |
+| [#57](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/57) | Disposition duplicate parent entries, a parent checksum equal to the record's own checksum, canonical parent-checksum encoding and BUSCO count arithmetic | Existing schema/reader behaviour is not adoption. A count rule must state which optional counts are required to compare and whether it means equality or only an upper bound; missing counts must not silently become zero. A shared-family amendment is separate from an FHT-local draft change. |
+
+After the decisions, one owning PR can implement the selected constraints and
+their clause-derived C1/C3 rejection vectors. An explicit decision to retain or
+defer a proposal is a valid disposition; absence of an answer is not. Changes
+to shared released contracts, curator acceptance and publication are separate.
+
+The self-parent proposal needs special treatment: a nested parent checksum is
+itself covered by the child's checksum. Making a byte-valid file name its own
+recomputed checksum would require a cryptographic fixed point; copying the
+stated root checksum into a parent entry instead breaks the child's checksum.
+That mutation can demonstrate bad file integrity, but cannot independently
+prove a C3 self-parent rule. Any metadata-level equality rule must identify
+that narrower claim rather than promise a byte-valid same-file fixture.
+
 ## Keep the split pilot separate
 
 [November 14 decision 1D](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/issues/211#issuecomment-6880245660)
