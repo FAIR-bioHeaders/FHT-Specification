@@ -1,5 +1,12 @@
 # FHT prepublication evidence and decisions
 
+> Current publication status (November 20, 2026): shared v0.7.0 publishes FHT
+> contract 1.0 and its typed binding. The dated draft/candidate receipts below
+> describe the preserved owning V7 source, not normal published support.
+> [Published handoff and clause matrix](FHT-PUBLISHED-HANDOFF.md) supersedes
+> their prospective release gates; actual installed-release and downstream
+> receipts remain separately required.
+
 Dated 2026-11-19 (historical measurements retain their dates); refs FHT-Specification #8, #9 and #10, and shared
 FAIR-bioHeaders-Specification #211. This packet records the adopted D1–D3 decisions and prepares final joint review.
 FHT remains an unreleased draft; default toolkit support is not established.

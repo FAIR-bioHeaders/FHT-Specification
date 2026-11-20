@@ -1,5 +1,12 @@
 # FHT 1.0 development contract and legacy migration
 
+> Current publication status (November 20, 2026): shared v0.7.0 publishes FHT
+> contract 1.0 and its typed binding. The dated draft/candidate receipts below
+> describe the preserved owning V7 source, not normal published support.
+> [Published handoff and clause matrix](FHT-PUBLISHED-HANDOFF.md) supersedes
+> their prospective release gates; actual installed-release and downstream
+> receipts remain separately required.
+
 Status: **development contract for review under #7**, October 24, 2026. This is
 the model implemented from the design approved on #6 / PR #20. It is not a
 published release, not adopted community guidance, and not supported by the

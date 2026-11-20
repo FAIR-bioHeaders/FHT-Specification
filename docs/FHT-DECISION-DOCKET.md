@@ -1,5 +1,12 @@
 # FHT decision docket
 
+> Current publication status (November 20, 2026): shared v0.7.0 publishes FHT
+> contract 1.0 and its typed binding. The dated draft/candidate receipts below
+> describe the preserved owning V7 source, not normal published support.
+> [Published handoff and clause matrix](FHT-PUBLISHED-HANDOFF.md) supersedes
+> their prospective release gates; actual installed-release and downstream
+> receipts remain separately required.
+
 ## D1–D3 accepted — November 19, 2026
 
 David Molik answered “Use the recommendations”; the

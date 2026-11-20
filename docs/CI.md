@@ -1,5 +1,12 @@
 # Continuous integration and local checks
 
+> Current publication status (November 20, 2026): shared v0.7.0 publishes FHT
+> contract 1.0 and its typed binding. The dated draft/candidate receipts below
+> describe the preserved owning V7 source, not normal published support.
+> [Published handoff and clause matrix](FHT-PUBLISHED-HANDOFF.md) supersedes
+> their prospective release gates; actual installed-release and downstream
+> receipts remain separately required.
+
 Status: CI lanes for issue #14 (PR checks for the draft schema, examples and
 documentation) plus issue #8 (the byte-backed fixture lane). Every check
 below also runs locally with the commands given here. None of these lanes

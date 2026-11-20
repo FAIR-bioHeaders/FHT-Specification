@@ -55,7 +55,7 @@ jobs:
             echo '## FHT fixtures'
             echo "- scripts/check_fht_fixtures.py (independent reader, manifest, examples): ${{ steps.fixtures.outcome }}"
             echo "- scripts/make_fht_fixtures.py rerun into a scratch directory: ${{ steps.generator.outcome }}"
-            echo '- This independent job runs no toolkit; installed-draft is separate. FHT remains unreleased.'
+            echo '- This independent job runs no toolkit; installed-draft is separate. This job checks preserved owning V7 artifacts; shared v0.7.0 is the published FHT authority.'
           } >> "$GITHUB_STEP_SUMMARY"
           if [ "${{ steps.fixtures.outcome }}" != 'success' ] || \
              [ "${{ steps.generator.outcome }}" != 'success' ]; then
