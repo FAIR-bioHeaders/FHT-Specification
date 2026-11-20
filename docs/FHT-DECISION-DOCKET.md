@@ -7,7 +7,6 @@
 > their prospective release gates; actual installed-release and downstream
 > receipts remain separately required.
 
-
 ## D1–D3 accepted — November 19, 2026
 
 David Molik answered “Use the recommendations”; the

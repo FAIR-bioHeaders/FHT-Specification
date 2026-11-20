@@ -7,7 +7,6 @@
 > their prospective release gates; actual installed-release and downstream
 > receipts remain separately required.
 
-
 Status: **development contract for review under #7**, October 24, 2026. This is
 the model implemented from the design approved on #6 / PR #20. It is not a
 published release, not adopted community guidance, and not supported by the

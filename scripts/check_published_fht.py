@@ -35,7 +35,8 @@ def main():
     if head != SHARED_COMMIT or dirty:
         parser.error('shared checkout must be clean and exactly ' + SHARED_COMMIT)
     # A caller opting into a historical draft must not contaminate this lane.
-    for key in ('BIOHEADERS_EXPERIMENTAL_FHT', 'BIOHEADERS_FHT_SCHEMA'):
+    for key in ('BIOHEADERS_EXPERIMENTAL_FHT', 'BIOHEADERS_CANDIDATE_FHT',
+                'BIOHEADERS_FHT_SCHEMA'):
         if key in os.environ:
             parser.error('remove draft/overlay environment variable ' + key)
     sys.path.insert(0, str(shared / 'scripts'))
@@ -50,6 +51,34 @@ def main():
         converter = load('published_shared_converter_check', shared / 'scripts/check_conformance.py')
         conformance = shared / 'conformance/fht-v0.7.0'
         manifest = json.loads((conformance / 'manifest.json').read_text())
+        executable = args.venv.resolve() / 'bin/bioheaders'
+        if not executable.is_file():
+            parser.error('--venv has no installed bin/bioheaders executable')
+        # The immutable v0.7.0 command table predates FHT. Adapt only its
+        # command lookup to the supported generic CLI; all expectations,
+        # diagnostics and comparison logic remain in the shared checker.
+        adapter = """import json, pathlib, subprocess, sys
+exe, shared, child = sys.argv[1:]
+root = pathlib.Path(shared)
+manifest = json.loads((root / 'conformance/fht-v0.7.0/manifest.json').read_text())
+entry = next(v for v in manifest['vectors']
+             if root / 'conformance/fht-v0.7.0' / v['file'] == pathlib.Path(child))
+result = subprocess.run([exe, 'verify', child])
+if result.returncode == 0 and entry.get('parentLink'):
+    parents = [str(root / 'drafts/fht/upstream/conformance' / link['file'])
+               for link in entry['parentLink'] if link['file'] is not None]
+    required = ['--require-all'] if all(link['file'] is not None
+                                        for link in entry['parentLink']) else []
+    result = subprocess.run([exe, 'verify-links', *required, child, *parents])
+sys.exit(result.returncode)
+"""
+        def commands(location):
+            def command(kind):
+                if kind != 'fht-fasta':
+                    raise ValueError('unexpected format in FHT-only authority: ' + kind)
+                return [sys.executable, '-c', adapter, str(executable), str(shared)]
+            return command
+        converter.converter_commands = commands
         unsupported = set()
         problems = converter.check_converter(conformance, manifest, str(args.venv.resolve()),
                                              require=('fht-fasta',), unsupported=unsupported)

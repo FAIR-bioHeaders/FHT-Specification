@@ -7,7 +7,6 @@
 > their prospective release gates; actual installed-release and downstream
 > receipts remain separately required.
 
-
 Status: CI lanes for issue #14 (PR checks for the draft schema, examples and
 documentation) plus issue #8 (the byte-backed fixture lane). Every check
 below also runs locally with the commands given here. None of these lanes

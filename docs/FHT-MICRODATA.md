@@ -7,7 +7,6 @@
 > their prospective release gates; actual installed-release and downstream
 > receipts remain separately required.
 
-
 Adopted November 19, 2026: [D1–D3](FHT-DECISION-DOCKET.md)
 retain optional field behaviour, reject duplicate parent entries and noncanonical
 parent checksum encoding, and require complete BUSCO category counts to sum to

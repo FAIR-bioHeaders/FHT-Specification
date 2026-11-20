@@ -7,7 +7,6 @@
 > their prospective release gates; actual installed-release and downstream
 > receipts remain separately required.
 
-
 This record prepares the final #8/#9/#10/#11 handoff. It does not publish FHT,
 replace a released contract, or close an issue whose release/consumer acts are
 still outstanding. The owning model/schema remain accepted commit

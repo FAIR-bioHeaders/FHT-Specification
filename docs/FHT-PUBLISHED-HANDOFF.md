@@ -19,7 +19,7 @@ The owning source remains `4ddda69cbcbb3920a06ab657173c0198672cd7bf`,
 `fht.json` SHA-256
 `b62c4e227042e162b43d2c461cfe6c3ece3806636ca88a4cf9b0b2f902fb1fc3`.
 Its 239 frozen inputs and 93 legacy vectors are preserved. The published shared
-93 counterparts and seven JSON/YAML/FASTA/HTML example sets are separate
+93 counterparts and seven JSON/FASTA/HTML example triples are separate
 artifacts with an explicit crosswalk. Existing owning IDs, all fourteen
 published JSON/FASTA example files, and file-bound checksums are immutable.
 
@@ -69,10 +69,14 @@ python scripts/fht_publication.py --examples
 python scripts/check_conformance.py --help
 ```
 
-Use that checker's installed-converter arguments for the actual supported
-package and required `fht-fasta` format. Preserve its source-to-release crosswalk
-and semantic oracle; do not invent a parallel validator or regenerate a second
-corpus. Record installed wheel SHA-256/source provenance, actual registry/schema
+The immutable shared CLI command table does not include FHT. Use the owning
+helper below: its explicit command adapter maps the FHT-only manifest to
+`bioheaders verify`, then `verify-links` with the immutable manifest
+parent files when parent context exists (`--require-all` when all context
+files are supplied; unavailable parents retain their unchecked outcome), retaining the shared comparison logic and oracle. Direct
+`check_conformance.py --require-format fht-fasta` is unsupported at this tag.
+Preserve the source-to-release crosswalk and semantic oracle.
+Record installed wheel SHA-256/source provenance, actual registry/schema
 pins, all 93 outcomes, seven HTML round trips, default/version selector controls
 and supported commands. Execute rather than infer counts from exit status.
 
@@ -89,6 +93,7 @@ keep both lanes distinct. A source-candidate pass cannot fill that cell.
 to the exact clean tag's existing source crosswalk, semantic oracle and seven
 example checks. With `--venv /absolute/published-toolkit-venv` it additionally
 delegates all 93 normal FHT comparisons to that tag's shared converter checker
+using the explicit generic `bioheaders verify`/`verify-links` command adapter
 with required FHT support, no skips or known gaps. It rejects dirty/wrong
 authority checkouts and draft environment overrides. The no-venv run reports
 installed comparison explicitly NOT-RUN. Its inherited
@@ -107,3 +112,24 @@ v0.7.0 archive was independently verified across 1,744 files by the coordinating
 release lane. Nextflow's concrete FHT handoff belongs to its owner; unrelated
 external-pin/distribution completion of the whole Nextflow #7 is not a reverse
 FHT release gate. Published native FHGM v0.8.0 remains a separate deliverable.
+
+## Exercised adapter receipt (candidate only)
+
+Independent Python 3.13 environment `/tmp/fht65-independent013` was created
+from the immutable copied development wheel for Tools source
+`83a61e9824b5f47bccb1cddbe7f40fb70f60ba1f`, wheel SHA-256
+`0306c021d3f7a3f4e4b6547f7576cdb6332389952673a02a1587db01046f6fbe`.
+Its version string is 0.13.0; this is **candidate evidence only**, not a PyPI
+publication receipt. The actual installed helper run executed all 93 comparisons
+with zero disagreements/unsupported formats, following the 93-case authority
+check (34 valid) and seven example triples. No opt-in, schema overlay or staged
+arithmetic flag was set.
+
+The adapter checks the file with `verify`, then executes `verify-links` with
+immutable supplied parents. Complete supplied parent context uses `--require-all`
+so the mixed-verdict negative cannot become an unchecked success; genuinely
+unavailable context stays unchecked. The manifest and shared oracle provide all
+expectations. Accept-all and reject-all executable controls both fail: invalid
+fixtures expose accept-all, and valid fixtures expose reject-all. Wrong-authority
+and draft-opt-in controls also fail. This establishes the adapter path; actual
+published-package, broader command/HTML and downstream receipts remain pending.
