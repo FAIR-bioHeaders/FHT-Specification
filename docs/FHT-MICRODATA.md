@@ -1,5 +1,13 @@
 # FHT typed HTML microdata — draft binding proposal
 
+> Current publication status (November 20, 2026): shared v0.7.0 publishes FHT
+> contract 1.0 and its typed binding. The dated draft/candidate receipts below
+> describe the preserved owning V7 source, not normal published support.
+> [Published handoff and clause matrix](FHT-PUBLISHED-HANDOFF.md) supersedes
+> their prospective release gates; actual installed-release and downstream
+> receipts remain separately required.
+
+
 Adopted November 19, 2026: [D1–D3](FHT-DECISION-DOCKET.md)
 retain optional field behaviour, reject duplicate parent entries and noncanonical
 parent checksum encoding, and require complete BUSCO category counts to sum to

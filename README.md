@@ -6,18 +6,20 @@ taxon, how the transcript set was constructed and how to verify the exact file
 bytes. The published paper describes the shared FAIR Header Reference concept:
 Wright et al., *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122.
 
-**Status: development contract for review under issue #7.** The LinkML model and
-generated JSON Schema implement the design approved for #6. They are not a
-published release, not adopted community guidance, and have no default support in the
-family toolkit. Released toolkit 0.11.0 can read the revision-pinned development
-contract through the opt-in rule V7 lane; this is draft recognition. No release tag, w3id alias, DOI or toolkit support is
-established by this repository state. See
-[the contract and migration record](docs/FHT-MIGRATION.md).
+**Status: FHT contract 1.0 is published by the shared specification in
+[v0.7.0](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/releases/tag/v0.7.0),
+[version DOI 10.5281/zenodo.24385024](https://doi.org/10.5281/zenodo.24385024).
+This owning repository preserves the accepted development source and its legacy
+V7 selectors; its `fht.json` and examples are not substituted for the published
+root contract. Normal published/default toolkit delivery and website/Nextflow
+handoffs are tracked separately. See the
+[current acceptance matrix](docs/FHT-PUBLISHED-HANDOFF.md) for exact identities,
+completed release acts and remaining receipts.
 
 - Approved Q4/Q8 follow-up: [nonempty metadata values and actual genome extraction](docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17); taxon rules stay unchanged; supplied `assemblyAuthor` items need a nonblank `name` (merged #52).
 - Schema source: [`fht_linkml.yml`](fht_linkml.yml)
-- Generated contract: [`fht.json`](fht.json). It is the normative contract:
-  validate records with it, not with `linkml-validate` on the model, because the
+- Generated owning contract: [`fht.json`](fht.json). For the legacy owning lane:
+  validate legacy records with it, not with `linkml-validate` on the model, because the
   generator adds rules LinkML cannot express
   ([details](docs/FHT-MIGRATION.md#contract-version-and-urls)).
 - Design and evidence: [`specs/fht-field-decisions.md`](specs/fht-field-decisions.md)
@@ -25,7 +27,7 @@ established by this repository state. See
 - Revised spec 005 proposal: [`specs/005-rna-transcriptome-header/spec.md`](specs/005-rna-transcriptome-header/spec.md)
 - Proposed typed HTML: [`docs/FHT-MICRODATA.md`](docs/FHT-MICRODATA.md),
   [seven readable pairs](examples/html/) and a test-only extractor/writer (#11);
-  no installed runtime support or shared publication is established.
+  the preserved owning examples use legacy selectors; published counterparts live in shared v0.7.0.
 - Remaining review/publication docket: [`docs/FHT-DECISION-DOCKET.md`](docs/FHT-DECISION-DOCKET.md)
 - Legacy draft schema: [`legacy/fht-v0.1.json`](legacy/fht-v0.1.json)
 
