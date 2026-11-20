@@ -39,7 +39,7 @@ proves live w3id resolution. Alias verification remains an exact #10 dependency.
 | #8 current consumer readiness | C1 arithmetic-capable development-wheel evidence in ROUND15-CLOSEOUT; strict owning lane has zero NOT-RUN | Actual published toolkit receipt, not a candidate relabel |
 | #9 arithmetic and supported commands | Corrected owning harness in merged #64 measures real C1 failures; development CLI evidence is recorded separately | Published package verify/validate/combine/strip/convert/assess and selector coverage; explicit unsupported surfaces |
 | #9 bundle/default promotion | Shared publication is complete | Deliberate toolkit release promotion from actual published artifacts, installed wheel provenance and default 93-case receipt |
-| #9 website and Nextflow handoffs | Existing owning links identify website #15 and Nextflow #7/#21 | Actual owner receipts for supported package/pins; FHT website candidate #70 remains disabled/unmerged at this checkpoint |
+| #9 website and Nextflow handoffs | Existing owning links identify website #15 and Nextflow #7/#21 | Concrete FHT owner receipts using the supported package; website #70 head `2cf5556` prepares published forms/exports, with Pages activation awaiting the package |
 | #10 final contract/binding acceptance and readiness | Joint disposition and prepublication development evidence complete | No public pilot or FHGM release prerequisite is added |
 | #10 publication, archive and fixed identities | Real v0.7.0 tag, GitHub Release and version DOI above | Live fixed redirect verification and final supported-release handoffs; do not equate the tag with the Release |
 | #10 docs/citations | Published authority/DOI distinguished here from preserved owning source and historical FHR citations | Final runtime/site/Nextflow receipt links when available |
@@ -82,3 +82,28 @@ Consequently no normal published 0.13 CLI/HTML receipt or CI pin is asserted
 here. The existing pinned 0.11 historical lane stays explicitly legacy. Add the
 normal installed CI lane only after actual artifact publication and measurement;
 keep both lanes distinct. A source-candidate pass cannot fill that cell.
+
+## Prepared normal published CI entry point
+
+`scripts/check_published_fht.py --shared /absolute/shared-v0.7.0` delegates
+to the exact clean tag's existing source crosswalk, semantic oracle and seven
+example checks. With `--venv /absolute/published-toolkit-venv` it additionally
+delegates all 93 normal FHT comparisons to that tag's shared converter checker
+with required FHT support, no skips or known gaps. It rejects dirty/wrong
+authority checkouts and draft environment overrides. The no-venv run reports
+installed comparison explicitly NOT-RUN. Its inherited
+`publicationVerified: false` is intentional: a conformance run cannot prove
+Release/archive publication or live aliases.
+
+The `Published FHT authority` PR/push CI job runs this reference-only lane.
+This is CI preparation, not an installed-release receipt or a replacement for
+the broader supported-command, selector, HTML and owner handoffs. After the real
+package is published, pin its measured version/wheel hash in the normal CI job
+and call this helper alongside the existing legacy V7 job. No guessed package
+version or digest is wired into CI now.
+
+Owning main guidance `bcc6224` is integrated without fixture changes. The
+v0.7.0 archive was independently verified across 1,744 files by the coordinating
+release lane. Nextflow's concrete FHT handoff belongs to its owner; unrelated
+external-pin/distribution completion of the whole Nextflow #7 is not a reverse
+FHT release gate. Published native FHGM v0.8.0 remains a separate deliverable.
