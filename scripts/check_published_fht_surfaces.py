@@ -7,15 +7,23 @@ Metadata equivalence delegates to the shared oracle. No parser or corpus is copi
 import argparse
 import concurrent.futures,hashlib,importlib.util,json,os,subprocess,tempfile
 from pathlib import Path
+from published_authority import verified_shared
 parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--shared',required=True,type=Path)
 parser.add_argument('--venv',required=True,type=Path)
 args=parser.parse_args()
-shared=args.shared.resolve()
-assert subprocess.check_output(['git','-C',str(shared),'rev-parse','HEAD'],text=True).strip()=='623c79fe58edeb238a20fb6de518c62dd69b92bc'
-assert not subprocess.check_output(['git','-C',str(shared),'status','--porcelain'],text=True)
+# Keep the private authority alive through all concurrent read-only examples.
+# Explicit gates remain active even if the caller selects Python optimization.
+import atexit
+snapshot_context=verified_shared(args.shared)
+try:
+ shared=snapshot_context.__enter__()
+except (OSError,ValueError) as error:
+ parser.error(str(error))
+atexit.register(snapshot_context.__exit__,None,None,None)
 exe=str(args.venv.resolve()/'bin/bioheaders')
-assert subprocess.check_output([exe,'--version'],text=True).strip()=='0.13.1'
+if subprocess.check_output([exe,'--version'],text=True).strip()!='0.13.1':
+ parser.error('this receipt requires the actual published toolkit 0.13.1')
 spec=importlib.util.spec_from_file_location('comparison',shared/'scripts/check_conformance.py'); oracle=importlib.util.module_from_spec(spec);spec.loader.exec_module(oracle)
 env={k:v for k,v in os.environ.items() if k not in ('BIOHEADERS_EXPERIMENTAL_FHT','BIOHEADERS_CANDIDATE_FHT','BIOHEADERS_FHT_SCHEMA')}
 def run(*args,success=True):

@@ -66,3 +66,7 @@ PR branch stay active through human review.
 The PR handoff records actual test skips and CI. Browser, installed-package,
 network and external-owner checks are not silently credited by local Python
 checks. A human must merge; no release or website publication occurs here.
+
+## Independent source review follow-up
+
+Actual NRP Qwen3 source review prompted fail-closed maintenance checks and focused regressions. Published payloads, contracts and approved pins are unchanged. Detailed dispositions and actual commands are recorded in the Round 16 evidence packet and PR discussion; a further model delta review and current CI remain part of the human handoff.

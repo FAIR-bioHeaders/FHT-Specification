@@ -32,7 +32,10 @@ different identities; generator self-consistency does not publish a new contract
 in [CI.md](CI.md); do not regenerate the accepted tree to silence a failure.
 `scripts/check_published_fht.py --help` and
 `scripts/check_published_fht_surfaces.py --help` describe the immutable shared
-checker adapter and the published examples. Their exact outputs and requirements
+checker adapter and the published examples. Both adapters check executable
+SHA-256 pins and use a private object-derived Git checkout; mutable/ignored
+neighbor modules from the caller's shared tree are not executed. Temporary
+authority checkouts are removed after the run. Their exact outputs and requirements
 are recorded in [FHT-PUBLISHED-HANDOFF.md](FHT-PUBLISHED-HANDOFF.md).
 
 ## Using published FHT
