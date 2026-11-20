@@ -391,3 +391,16 @@ Missing fixture authority data fails that integration rather than becoming a
 skipped pass. Scheduled/manual network auditing retains JSON and summarizes `FRESH`,
 `DRIFT`, `ABSENT` or `QUERY_FAILED` without moving pins or adding live-network PR
 gates. Existing provenance, schema and fixture checks remain in force.
+
+## Current C1 runtime capability — Round 15
+
+The dated 0.11.0 receipts and staging command above remain historical evidence.
+The current installed harness no longer equates generic JSON Schema acceptance
+with missing semantic capability. For the two immutable complete-count C1
+vectors it probes the actual installed executable: only the specific
+completeness-sum rejection promotes a case into ordinary full comparisons.
+An unrelated failure or checksum diagnostic cannot count as C1 support.
+An older runtime that actually accepts the inputs retains explicit unsupported
+accounting. A current-capability run uses `--strict` without overlay or staging;
+[the closeout preparation](ROUND15-CLOSEOUT.md) distinguishes candidate receipt,
+shared publication and subsequent supported-release promotion.

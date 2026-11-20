@@ -252,7 +252,26 @@ def _reader():
     return reader
 
 
-def partition_installed_contract(vectors, installed_schema):
+def semantic_arithmetic_case(vector, record, installed_ok, reader=None):
+    """Only the independently specified, schema-valid complete-count controls."""
+    reader = _reader() if reader is None else reader
+    return (vector["id"] in reader.EXPECTED_SEMANTIC_ERRORS
+            and vector.get("rule") == "C1" and installed_ok
+            and not list(reader.VALIDATOR.iter_errors(record))
+            and reader.completeness_errors(record)
+            == reader.EXPECTED_SEMANTIC_ERRORS[vector["id"]])
+
+
+def arithmetic_rejection(code, output):
+    """An unrelated error or checksum failure cannot prove C1 enforcement."""
+    errors = [line for line in output.splitlines() if "schema validation failed" in line]
+    return (code == 1 and len(errors) == 1
+            and errors[0].endswith("C1: completeness component counts must sum to total")
+            and "checksum verification failed" not in output.casefold()
+            and "Checksum verified." not in output)
+
+
+def partition_installed_contract(vectors, installed_schema, *, toolkit=None, work=None):
     """Split off vectors whose outcome the installed draft bytes decide
     differently from this checkout's fht.json.
 
@@ -262,6 +281,10 @@ def partition_installed_contract(vectors, installed_schema):
     rule-text expectation would test the pin, not the reader. Such vectors
     are probed against the installed bytes instead (lane_installed_contract)
     and reported NOT-RUN for the current contract. No expectation changes.
+    JSON Schema alone cannot establish installed C1 arithmetic capability.
+    Probe the two named semantic controls against the actual installed runtime;
+    a specific C1 rejection promotes them to ordinary full comparison, while an
+    older accepting runtime retains its explicitly unsupported accounting.
     Returns (compared, dependent) where dependent holds (vector, installed_ok).
     """
     import jsonschema
@@ -281,6 +304,15 @@ def partition_installed_contract(vectors, installed_schema):
             continue
         current_ok = not reader.schema_errors(record)
         installed_ok = not list(installed.iter_errors(record))
+        if (toolkit is not None and semantic_arithmetic_case(
+                vector, record, installed_ok, reader)):
+            code, output = toolkit.run("verify", place(vector, work))
+            if arithmetic_rejection(code, output):
+                compared.append(vector)
+                continue
+            if code != 0 or "Checksum verified." not in output:
+                fail(f"{vector['id']}: installed C1 capability probe did not "
+                     "specifically reject arithmetic or verify the old-runtime input")
         if current_ok == installed_ok:
             compared.append(vector)
         else:
@@ -301,11 +333,7 @@ def lane_installed_contract(toolkit, dependent, work, *, stage_completeness=Fals
                  + (" with a checksum failure" if checksum_failed else ""))
         reader = _reader()
         record = reader.parse_metadata(vector_bytes(vector))
-        semantic_only = (vector["id"] in reader.EXPECTED_SEMANTIC_ERRORS
-                         and vector.get("rule") == "C1" and installed_ok
-                         and not list(reader.VALIDATOR.iter_errors(record))
-                         and reader.completeness_errors(record)
-                         == reader.EXPECTED_SEMANTIC_ERRORS[vector["id"]])
+        semantic_only = semantic_arithmetic_case(vector, record, installed_ok, reader)
         if stage_completeness and semantic_only:
             STAGED_COMPLETENESS.append(vector["id"])
             print(f"note {vector['id']}: C1 arithmetic NOT-RUN by installed toolkit; "
@@ -372,6 +400,9 @@ def lane_verify(toolkit, vectors, work):
             fail(f"{label}: expected invalid under {entry['rule']}, verify "
                  f"exited {code}: {output.strip().splitlines()[-1:]!r}")
             continue
+        if (entry["id"] in _reader().EXPECTED_SEMANTIC_ERRORS
+                and not arithmetic_rejection(code, output)):
+            fail(f"{label}: expected the specific C1 completeness arithmetic rejection")
         classification = entry["selfChecksum"]
         if classification == "unreachable" and (
                 "Checksum verification failed" in output or "Checksum verified." in output):
@@ -660,7 +691,8 @@ def main(argv=None):
         installed_schema = json.loads((toolkit.site_packages() / "bioheaders" / entry["file"]).read_bytes())
         compared, unsupported = partition_mixed_capability(vectors, installed_schema)
         lane_unsupported_mixed(toolkit, unsupported, work)
-        compared, dependent = partition_installed_contract(compared, installed_schema)
+        compared, dependent = partition_installed_contract(
+            compared, installed_schema, toolkit=toolkit, work=work)
         lane_installed_contract(toolkit, dependent, work,
                                 stage_completeness=args.stage_completeness)
         unsupported = unsupported + [vector for vector, _ in dependent]
