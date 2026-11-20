@@ -9,7 +9,7 @@ Wright et al., *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122.
 Start with the [reader and maintainer guide](docs/WORKING-GUIDE.md) for setup,
 checks and published-versus-legacy usage.
 
-**Status: FHT contract 1.0 is published by the shared specification in
+**Status: FHT contract 1.0 is published.** The shared specification release is
 [v0.7.0](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/releases/tag/v0.7.0),
 [version DOI 10.5281/zenodo.24385024](https://doi.org/10.5281/zenodo.24385024).
 This owning repository preserves the accepted development source and its legacy
@@ -17,7 +17,7 @@ V7 selectors; its `fht.json` and examples are not substituted for the published
 root contract. Normal published/default toolkit delivery and website/Nextflow
 handoffs are tracked separately. See the
 [current acceptance matrix](docs/FHT-PUBLISHED-HANDOFF.md) for exact identities,
-completed release acts and remaining receipts.**
+completed release acts and remaining receipts.
 
 - Approved Q4/Q8 follow-up: [nonempty metadata values and actual genome extraction](docs/FHT-MIGRATION.md#narrow-q4q8-follow-up-after-51--2026-11-17); taxon rules stay unchanged; supplied `assemblyAuthor` items need a nonblank `name` (merged #52).
 - Schema source: [`fht_linkml.yml`](fht_linkml.yml)
