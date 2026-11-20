@@ -177,6 +177,43 @@ class StreamControls(unittest.TestCase):
         self.assertEqual([v["id"] for v in compared], ["fht-fasta-lf", "fht-fasta-utf8-bom"])
         self.assertEqual(dependent, [(suite["fht-fasta-blank-version-separator"], True)])
 
+    def test_arithmetic_partition_uses_actual_semantic_runtime_not_generic_schema(self):
+        import json
+        suite = {v["id"]: v for v in lane.load_suite()}
+        vectors = [suite["fht-fasta-completeness-sum-exceeds-total"],
+                   suite["fht-fasta-completeness-sum-below-total"]]
+        schema = json.loads((Path(lane.ROOT) / "fht.json").read_text())
+
+        class Runtime:
+            def __init__(self, result):
+                self.result = result
+
+            def run(self, *args, **kwargs):
+                return self.result
+
+        for result, scored, failures in (
+                ((1, "FHT: schema validation failed at $: C1: completeness component counts must sum to total"), True, False),
+                ((0, "Checksum verified."), False, False),
+                ((1, "schema validation failed at $.other: unrelated"), False, True),
+                ((1, "Checksum verification failed."), False, True)):
+            with self.subTest(result=result):
+                lane.FAILURES.clear()
+                with patch.object(lane, "place", return_value=Path("unused")), \
+                        contextlib.redirect_stdout(io.StringIO()):
+                    compared, dependent = lane.partition_installed_contract(
+                        vectors, schema, toolkit=Runtime(result), work=None)
+                self.assertEqual(compared, vectors if scored else [])
+                self.assertEqual([v for v, _ in dependent], [] if scored else vectors)
+                self.assertEqual(bool(lane.FAILURES), failures)
+
+    def test_arithmetic_specific_rejection_cannot_be_faked_by_unrelated_error(self):
+        for code, output, wanted in (
+                (1, "FHT: schema validation failed at $: C1: completeness component counts must sum to total", True),
+                (0, "Checksum verified.", False),
+                (1, "schema validation failed", False),
+                (1, "FHT: schema validation failed at $: C1: completeness component counts must sum to total\nChecksum verification failed.", False)):
+            self.assertEqual(lane.arithmetic_rejection(code, output), wanted)
+
     def test_installed_contract_probe_requires_agreement_with_installed_bytes(self):
         vector = next(v for v in lane.load_suite()
                       if v["id"] == "fht-fasta-blank-version-separator")
