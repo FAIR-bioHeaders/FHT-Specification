@@ -35,10 +35,10 @@ proves live w3id resolution. Alias verification remains an exact #10 dependency.
 | --- | --- | --- |
 | #8 examples, byte vectors, typed reference and streams | Accepted owning 93, seven typed pairs, preserved RNA/cDNA/compression/checksum/parent cases | No new corpus or fixture rewrite |
 | #8 final joint acceptance | Concrete package disposition linked above | No repeat questionnaire or new curator field decision |
-| #8 shared absorption and selectors | Actual v0.7.0 root contract, registry, vocabulary, binding, 93 counterparts and seven example sets | Installed published-package normal-path receipt under #9 |
-| #8 current consumer readiness | C1 arithmetic-capable development-wheel evidence in ROUND15-CLOSEOUT; strict owning lane has zero NOT-RUN | Actual published toolkit receipt, not a candidate relabel |
+| #8 shared absorption and selectors | Actual v0.7.0 root contract, registry, vocabulary, binding, 93 counterparts and seven example sets | Actual 0.13.1 normal-path 93-case receipt is recorded below; downstream owner receipts remain separate |
+| #8 current consumer readiness | C1 arithmetic-capable development-wheel evidence in ROUND15-CLOSEOUT; strict owning lane has zero NOT-RUN | Actual published 0.13.1 installed receipt below; no candidate relabel |
 | #9 arithmetic and supported commands | Corrected owning harness in merged #64 measures real C1 failures; development CLI evidence is recorded separately | Published package verify/validate/combine/strip/convert/assess and selector coverage; explicit unsupported surfaces |
-| #9 bundle/default promotion | Shared publication is complete | Deliberate toolkit release promotion from actual published artifacts, installed wheel provenance and default 93-case receipt |
+| #9 bundle/default promotion | Shared publication is complete | Actual 0.13.1 published wheel provenance and default 93-case receipt below; downstream owner receipts remain separate |
 | #9 website and Nextflow handoffs | Existing owning links identify website #15 and Nextflow #7/#21 | Concrete FHT owner receipts using the supported package; website #70 head `2cf5556` prepares published forms/exports, with Pages activation awaiting the package |
 | #10 final contract/binding acceptance and readiness | Joint disposition and prepublication development evidence complete | No public pilot or FHGM release prerequisite is added |
 | #10 publication, archive and fixed identities | Real v0.7.0 tag, GitHub Release and version DOI above | Live fixed redirect verification and final supported-release handoffs; do not equate the tag with the Release |
@@ -80,14 +80,16 @@ Record installed wheel SHA-256/source provenance, actual registry/schema
 pins, all 93 outcomes, seven HTML round trips, default/version selector controls
 and supported commands. Execute rather than infer counts from exit status.
 
-At this checkpoint toolkit 0.13 is **not yet published**. Published 0.12 has the
-old gaps; its version string is also used by historical development wheels.
-Consequently no normal published 0.13 CLI/HTML receipt or CI pin is asserted
-here. The existing pinned 0.11 historical lane stays explicitly legacy. Add the
-normal installed CI lane only after actual artifact publication and measurement;
-keep both lanes distinct. A source-candidate pass cannot fill that cell.
+Toolkit **0.13.1** is actually published: [GitHub Release](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools/releases/tag/v0.13.1),
+release object 452294001 (November 20, 05:11:12 UTC), tag
+`531d98ea742277b1ec391c646f2d32d94f520b56`, and
+[version DOI 10.5281/zenodo.24387470](https://doi.org/10.5281/zenodo.24387470).
+The normal CI job now installs its actual PyPI wheel with the origin URL and
+SHA-256 pinned; the old 0.11 lane remains explicitly legacy. The public 0.13.0
+tag did not publish packages because its metadata guard failed; candidate 0.13.0
+receipts below remain historical preparation and are never relabeled 0.13.1.
 
-## Prepared normal published CI entry point
+## Normal published CI entry point
 
 `scripts/check_published_fht.py --shared /absolute/shared-v0.7.0` delegates
 to the exact clean tag's existing source crosswalk, semantic oracle and seven
@@ -100,12 +102,11 @@ installed comparison explicitly NOT-RUN. Its inherited
 `publicationVerified: false` is intentional: a conformance run cannot prove
 Release/archive publication or live aliases.
 
-The `Published FHT authority` PR/push CI job runs this reference-only lane.
-This is CI preparation, not an installed-release receipt or a replacement for
-the broader supported-command, selector, HTML and owner handoffs. After the real
-package is published, pin its measured version/wheel hash in the normal CI job
-and call this helper alongside the existing legacy V7 job. No guessed package
-version or digest is wired into CI now.
+The `Published FHT authority` PR/push CI job runs the authority and installed lanes.
+The normal CI job pins the actual 0.13.1 PyPI wheel by URL and SHA-256, then
+runs this helper alongside the separate legacy V7 job. The helper remains
+scoped to conformance; broader command/HTML and owner handoffs have their own
+receipts. A passing helper does not authenticate release publication or aliases.
 
 Owning main guidance `bcc6224` is integrated without fixture changes. The
 v0.7.0 archive was independently verified across 1,744 files by the coordinating
@@ -133,3 +134,38 @@ expectations. Accept-all and reject-all executable controls both fail: invalid
 fixtures expose accept-all, and valid fixtures expose reject-all. Wrong-authority
 and draft-opt-in controls also fail. This establishes the adapter path; actual
 published-package, broader command/HTML and downstream receipts remain pending.
+
+## Actual installed 0.13.1 receipt
+
+A fresh noneditable Python 3.13 environment `/tmp/fht65-published0131` installs
+the actual published wheel, SHA-256
+`9f600347711ee771c8bc8f8e545438c255685736206b1342413b16076da20a45`
+(338,797 bytes). All 65 installed source payloads were byte-compared with that
+wheel: zero differences. The coordinator additionally verified PyPI and GitHub
+Release artifact byte identity and source identity at the actual release tag.
+
+The normal installed helper executes all **93 comparisons**, with zero
+unexplained disagreements, zero unsupported formats and zero NOT-RUN. The
+independent authority still checks 93 cases (34 valid) and seven published
+JSON/FASTA/HTML triples. `publicationVerified: false` remains the oracle's
+intentional conformance-only statement, separate from the actual publication
+receipts above. No candidate/legacy flag or schema overlay is used.
+
+`scripts/check_published_fht_surfaces.py --shared /absolute/shared-v0.7.0
+--venv /absolute/published-toolkit-venv` exercises the seven immutable example
+sets through 105 actual commands: validate, verify, convert, strip, combine and
+offline assess. All seven published HTML files extract to their canonical JSON;
+all seven JSON→HTML→JSON and JSON→YAML→JSON paths preserve metadata types and
+values. YAML here is an actual toolkit output, not a fictional published source
+file. Seven strips preserve payload bytes. Seven combines preserve supplied
+metadata except the intentionally recomputed root checksum, whose output file
+passes verify; canonical header regeneration is not whole-file identity.
+Seven assessment JSON reports are produced without treating scores as schema or
+biological proof. All seven JSON-LD conversions explicitly fail as unsupported.
+
+Four additional selector controls accept the fixed v0.7.0 citation and immutable
+raw v0.7.0 citation, and reject an unknown release and unsupported schemaVersion.
+The fixed citation uses bundled resolution; this is not evidence of a live w3id
+redirect. The live alias and concrete website/Nextflow owner handoffs remain
+separate exact gates. CI pins the real wheel origin/hash and executes these
+normal installed lanes alongside the unchanged legacy V7 lane.

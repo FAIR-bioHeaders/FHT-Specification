@@ -28,7 +28,14 @@ jobs:
           python-version: '3.13'
       - name: Install reference dependencies
         run: python -m pip install 'jsonschema[format]==4.26.0' 'PyYAML==6.0.3'
-      - name: Check immutable published 93 counterparts and seven example sets
-        run: python owning/scripts/check_published_fht.py --shared shared
+      - name: Install actual published toolkit wheel (origin and SHA-256 pinned)
+        run: |
+          python -m venv "$RUNNER_TEMP/published-toolkit"
+          "$RUNNER_TEMP/published-toolkit/bin/python" -m pip install \
+            'https://files.pythonhosted.org/packages/92/10/a412a877fb8de6e4b28fa4bc5f6f0b65b62701e30d8433afbd5ccfb0629a/fair_bioheaders-0.13.1-py3-none-any.whl#sha256=9f600347711ee771c8bc8f8e545438c255685736206b1342413b16076da20a45'
+      - name: Check published authority and actual installed 93 comparisons
+        run: python owning/scripts/check_published_fht.py --shared shared --venv "$RUNNER_TEMP/published-toolkit"
+      - name: Exercise seven published example round trips and supported commands
+        run: python owning/scripts/check_published_fht_surfaces.py --shared shared --venv "$RUNNER_TEMP/published-toolkit"
       - name: State installed-runtime boundary
-        run: echo 'Reference authority checked. Installed published-package comparisons are NOT-RUN in this job; the legacy V7 job is separate.' >> "$GITHUB_STEP_SUMMARY"
+        run: echo 'Published toolkit 0.13.1 runs normal FHT comparisons; the preserved legacy V7 job is separate. Live alias and downstream publication checks remain separate.' >> "$GITHUB_STEP_SUMMARY"
