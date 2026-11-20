@@ -32,6 +32,18 @@ class LaneSafetyTests(unittest.TestCase):
                 with self.assertRaisesRegex(SystemExit,'NOTHING SCORED'):
                     toolkit.run_bytes('verify','some-file')
 
+    def test_crash_and_silent_failure_never_become_invalid_verdicts(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d);(root/'bin').mkdir();(root/'bin/bioheaders').write_text('placeholder')
+            toolkit=lane.Toolkit(root)
+            for code, out in [(1,b'Traceback (most recent call last):\ncrash'),
+                              (1,b''),(-9,b'killed')]:
+                result=subprocess.CompletedProcess(['reader'],code,b'',out)
+                with self.subTest(code=code,out=out), \
+                        mock.patch.object(lane.subprocess,'run',return_value=result):
+                    with self.assertRaisesRegex(SystemExit,'NOTHING SCORED'):
+                        toolkit.run_bytes('verify','invalid-file')
+
     def test_added_contract_vector_without_expectation_is_reported(self):
         vectors=[{'id':key,'expected':'invalid','rule':'C1'}
                  for key in set(fixtures.EXPECTED_SCHEMA_ERRORS)|set(fixtures.EXPECTED_SEMANTIC_ERRORS)]

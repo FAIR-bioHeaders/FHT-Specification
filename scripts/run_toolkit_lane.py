@@ -137,6 +137,10 @@ class Toolkit:
                                     capture_output=True, input=data, env=env, timeout=60)
         except subprocess.TimeoutExpired as error:
             raise SystemExit("Toolkit invocation exceeded 60 seconds: NOTHING SCORED") from error
+        output = result.stdout + result.stderr
+        if (result.returncode < 0 or b"Traceback (most recent call last)" in output
+                or (result.returncode != 0 and not output.strip())):
+            raise SystemExit("Toolkit invocation failed without a usable verdict: NOTHING SCORED")
         return result
 
     def run(self, *args, lane=True):
