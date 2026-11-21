@@ -26,3 +26,6 @@ def completeness_errors(record):
         return ["C1: completeness component counts must sum to total "
                 f"(sum {observed}, total {value['total']})"]
     return []
+
+# Range, type and requiredness constraints are owned by JSON Schema; callers
+# validate that layer before crediting this arithmetic predicate.

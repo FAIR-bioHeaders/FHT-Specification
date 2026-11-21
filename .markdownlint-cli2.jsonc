@@ -9,8 +9,8 @@
   "config": {
     // MD013/line-length: the INSDC coverage and mapping matrices in specs/ use
     // wide table rows (up to ~450 columns) that cannot be reflowed without
-    // rewriting recorded audit content, and AGENTS.md is ported byte-identical
-    // from the shared specification. Prose width here is not a correctness
+    // rewriting recorded audit content, and AGENTS.md preserves shared policy semantics
+    // alongside repository-local guidance. Prose width here is not a correctness
     // property; whitespace and link checks remain enforced.
     "MD013": false,
     // MD060/table-column-style: the coverage matrices use a compact pipe

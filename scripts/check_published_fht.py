@@ -13,12 +13,15 @@ from pathlib import Path
 import subprocess
 import sys
 
-SHARED_COMMIT = '623c79fe58edeb238a20fb6de518c62dd69b92bc'
+from published_authority import SHARED_COMMIT, verified_shared
 
 
 def load(name, location):
     spec = importlib.util.spec_from_file_location(name, location)
+    if spec is None or spec.loader is None:
+        raise ValueError('cannot load verified module: ' + str(location))
     module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -29,11 +32,15 @@ def main():
                         help='clean shared specification checkout at exact v0.7.0 commit')
     parser.add_argument('--venv', type=Path, help='noneditable published toolkit environment')
     args = parser.parse_args()
-    shared = args.shared.resolve()
-    head = subprocess.check_output(['git', '-C', str(shared), 'rev-parse', 'HEAD'], text=True).strip()
-    dirty = subprocess.check_output(['git', '-C', str(shared), 'status', '--porcelain'], text=True)
-    if head != SHARED_COMMIT or dirty:
-        parser.error('shared checkout must be clean and exactly ' + SHARED_COMMIT)
+    try:
+        with verified_shared(args.shared) as shared:
+            check(args, parser, shared)
+    except (OSError, ValueError) as error:
+        parser.error(str(error))
+
+
+def check(args, parser, shared):
+    head = SHARED_COMMIT
     # A caller opting into a historical draft must not contaminate this lane.
     for key in ('BIOHEADERS_EXPERIMENTAL_FHT', 'BIOHEADERS_CANDIDATE_FHT',
                 'BIOHEADERS_FHT_SCHEMA'):

@@ -132,8 +132,15 @@ class Toolkit:
         env.pop(DRAFT_ENV, None)
         if lane:
             env[DRAFT_ENV] = "1"
-        result = subprocess.run([str(self.binary), *[str(a) for a in args]],
-                                capture_output=True, input=data, env=env, timeout=60)
+        try:
+            result = subprocess.run([str(self.binary), *[str(a) for a in args]],
+                                    capture_output=True, input=data, env=env, timeout=60)
+        except subprocess.TimeoutExpired as error:
+            raise SystemExit("Toolkit invocation exceeded 60 seconds: NOTHING SCORED") from error
+        output = result.stdout + result.stderr
+        if (result.returncode < 0 or b"Traceback (most recent call last)" in output
+                or (result.returncode != 0 and not output.strip())):
+            raise SystemExit("Toolkit invocation failed without a usable verdict: NOTHING SCORED")
         return result
 
     def run(self, *args, lane=True):
@@ -168,9 +175,17 @@ def lane_identity(toolkit):
         fail("the installed toolkit registers no FHT draft: the V7 lane is "
              "absent, so no draft-lane expectation can be tested here")
         return version, None
+    if (not isinstance(entry, dict) or not isinstance(entry.get("file"), str)
+            or not isinstance(entry.get("sha256"), str)
+            or not re.fullmatch(r"[0-9a-f]{64}", entry["sha256"])):
+        fail("the installed FHT draft entry has no usable file/digest: NOTHING SCORED")
+        return version, None
     local = hashlib.sha256((ROOT / "fht.json").read_bytes()).hexdigest()
     package = site / "bioheaders"
-    schema_path = package / entry["file"]
+    schema_path = (package / entry["file"]).resolve()
+    if not schema_path.is_relative_to(package.resolve()):
+        fail("the installed FHT draft file escapes its package: NOTHING SCORED")
+        return version, None
     installed = (hashlib.sha256(schema_path.read_bytes()).hexdigest()
                  if schema_path.is_file() else None)
     measured(f"draft pin: commit {entry.get('revision')} retrieved "
@@ -682,7 +697,7 @@ def main(argv=None):
         install_checkout_contract(toolkit, entry)
         FINDINGS.clear()
     version, entry = lane_identity(toolkit)
-    if FAILURES:
+    if FAILURES or entry is None:
         print("Identity check failed: NOTHING SCORED")
         return 1
     vectors = load_suite()

@@ -6,7 +6,10 @@ taxon, how the transcript set was constructed and how to verify the exact file
 bytes. The published paper describes the shared FAIR Header Reference concept:
 Wright et al., *Briefings in Bioinformatics* 25, no. 3 (2024): bbae122.
 
-**Status: FHT contract 1.0 is published by the shared specification in
+Start with the [reader and maintainer guide](docs/WORKING-GUIDE.md) for setup,
+checks and published-versus-legacy usage.
+
+**Status: FHT contract 1.0 is published.** The shared specification release is
 [v0.7.0](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/releases/tag/v0.7.0),
 [version DOI 10.5281/zenodo.24385024](https://doi.org/10.5281/zenodo.24385024).
 This owning repository preserves the accepted development source and its legacy

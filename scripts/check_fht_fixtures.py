@@ -1028,7 +1028,11 @@ def lane_expectation_table(vectors):
     """Every contract vector has a recorded expectation and vice versa."""
     contract = {entry["id"] for entry in vectors
                 if entry["expected"] == "invalid" and entry["rule"] in CONTRACT_RULES}
-    stale = sorted((set(EXPECTED_SCHEMA_ERRORS) | set(EXPECTED_SEMANTIC_ERRORS)) - contract)
+    recorded = set(EXPECTED_SCHEMA_ERRORS) | set(EXPECTED_SEMANTIC_ERRORS)
+    missing = sorted(contract - recorded)
+    if missing:
+        fail(f"contract vectors lack recorded schema/arithmetic expectations: {missing}")
+    stale = sorted(recorded - contract)
     if stale:
         fail(f"EXPECTED_SCHEMA_ERRORS names no {sorted(CONTRACT_RULES)} "
              f"invalid vector: {stale}")
@@ -1094,9 +1098,9 @@ def main(argv=None):
     if FAILURES:
         print(f"\n{len(FAILURES)} failure(s)")
         return 1
-    note("no installed toolkit was invoked by this runner: fair-bioheaders has "
-         "no default FHT support (only the opt-in draft lane, #9); shared-suite "
-         "publication of these vectors awaits FHT release (#55 / lane F).")
+    note("no installed toolkit was invoked: this runner preserves the owning legacy "
+         "selectors; published FHT support and its installed-package comparisons "
+         "are separate from this historical draft replay.")
     print("OK: all fixture lanes pass")
     return 0
 
