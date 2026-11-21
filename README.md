@@ -32,8 +32,9 @@ completed release acts and remaining receipts.
 - Legacy draft schema: [`legacy/fht-v0.1.json`](legacy/fht-v0.1.json)
 
 Conversion, validation and checksum computation belong to the family
-[FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools);
-FHT support there is pending ([issue #9](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/9)).
+[FAIR-bioHeaders-Tools](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Tools).
+`fair-bioheaders` 0.13.1 reads published FHT 1.0 by default; the remaining
+toolkit handoffs are tracked in [issue #9](https://github.com/FAIR-bioHeaders/FHT-Specification/issues/9).
 The former FHT-File-Converter repository is retired.
 
 ## Header shape
@@ -41,10 +42,14 @@ The former FHT-File-Converter repository is retired.
 FHT uses the family `;~` comment block. The checksum below is a placeholder: real
 headers must carry a computed SHA-512/256, never a hand-written or invented
 value. See `docs/FORMAT.md` in the shared specification for the exact format and
-escaping rules.
+escaping rules. New files cite the published FHT 1.0 contract with its versioned
+w3id URL, as the shared `docs/SCHEMA-VERSIONS.md` asks for released types (rule
+V3; the raw tag URL
+`https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/v0.7.0/fht.json`
+selects the same contract under rule V2).
 
 ```text
-;~schema: https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json
+;~schema: https://w3id.org/fair-bioheaders/fht/v0.7.0
 ;~schemaVersion: "1.0"
 ;~transcriptome: Bombus impatiens reference transcriptome
 ;~assemblyType: de novo
@@ -59,6 +64,18 @@ escaping rules.
 >transcript_1
 ACGTACGT
 ```
+
+The files in [`examples/`](examples/) are different: they are the preserved
+owning development examples and keep the legacy raw-main selector
+`https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json`.
+Their bytes and checksums are frozen, and this repository's `fht.json` accepts only
+that selector, so they are not rewritten. A default toolkit reads that URL as FHR
+(rule V5) and rejects `schemaVersion: "1.0"`; check them through the opt-in draft
+lane, for example `BIOHEADERS_EXPERIMENTAL_FHT=1 bioheaders verify
+examples/de-novo.fht.fasta`. Do not copy their `schema` line into new files. The
+published counterparts, which cite `https://w3id.org/fair-bioheaders/fht/v0.7.0`
+and pass a default `bioheaders verify`, are in the shared specification's
+[`examples/fht/` at v0.7.0](https://github.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/tree/v0.7.0/examples/fht).
 
 The nine required fields are `schema`, `schemaVersion`, `transcriptome`,
 `assemblyType`, `taxon`, `version`, `metadataAuthor`, `dateCreated` and

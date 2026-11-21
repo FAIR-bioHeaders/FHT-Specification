@@ -1,5 +1,15 @@
 # Development changelog
 
+## Unreleased — published citation in new-file guidance, 2026-11-20
+
+- The README header template now cites the published FHT 1.0 contract,
+  `https://w3id.org/fair-bioheaders/fht/v0.7.0`, instead of the owning raw-main
+  draft URL, which `fair-bioheaders` 0.13.1 reads as FHR (rule V5) and rejects.
+- The README and `docs/FHT-MIGRATION.md` explain that the preserved `examples/`
+  keep the legacy raw-main selector, how to check them through the opt-in draft
+  lane, and where the published v0.7.0 counterparts live.
+- No example, vector, fixture, checksum, model or `fht.json` bytes change.
+
 ## Unreleased — reference integrity fixes, 2026-11-19
 
 - Verify optional RFC 1952 member header CRCs, with valid/corrupt/truncated

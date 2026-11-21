@@ -61,12 +61,17 @@ The proposed contract version is `schemaVersion: "1.0"` (a string, MAJOR.MINOR),
 separate from the transcriptome `version`, a repository release tag and the
 file checksum. The generated schema keeps the development `$id`
 `https://raw.githubusercontent.com/FAIR-bioHeaders/FHT-Specification/main/fht.json`.
-While FHT is a draft the only accepted `schema` value is that raw-main URL
-(shared rule V7: a draft is cited by its owning repository's raw-main URL and
-never takes a release form). The released forms, the shared repository's raw
-tag URL and `https://w3id.org/fair-bioheaders/fht/vX.Y.Z`, are added to the
-contract when FHT is published (issue #10). **No w3id alias or release tag is
-published by this change.**
+This owning contract accepts only that raw-main URL (shared rule V7: a draft is
+cited by its owning repository's raw-main URL and never takes a release form),
+and its examples and vectors keep it. FHT 1.0 is now published by the shared
+specification in v0.7.0, so new files cite
+`https://w3id.org/fair-bioheaders/fht/v0.7.0` (rule V3), or the equivalent raw
+tag URL
+`https://raw.githubusercontent.com/FAIR-bioHeaders/FAIR-bioHeaders-Specification/v0.7.0/fht.json`
+(rule V2), and are checked against the shared release's `fht.json`, not this
+file. A default toolkit reads the owning raw-main URL as FHR (rule V5); only the
+opt-in draft lane reads it as FHT. The w3id redirect itself is tracked in
+issue #10; toolkits resolve the citation from their bundled schemas.
 
 `fht.json` is the normative contract. `fht_linkml.yml` is its source, but
 `json-schema-generator.py` adds rules LinkML cannot express: the permitted
