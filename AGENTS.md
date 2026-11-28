@@ -150,9 +150,9 @@ Publishing releases, tags, DOIs or deployments remains a separate maintainer act
 ## Licensing and historical material
 
 **Software (new project-owned code from March 2025 onward):** MPL-2.0 — the family standard
-for new software contributions. David Molik left USDA in February 2025; contributions before
-that date carry public-domain / PDDL-era terms within the United States. The project's
-`LICENSE` file documents the provenance split between these eras. Do not normalize old
+for new software contributions. David Molik left USDA in February 2025. Historical USDA-ARS
+material released under the public-domain notice in `LICENSE` remains public domain
+within the United States; other contributions retain their applicable terms. Do not normalize old
 notices to the new license, and do not "clean up" a historical PDDL/public-domain line.
 
 **Test datasets and generated databases:** ODbL-1.0 (Open Database License) for newly created
